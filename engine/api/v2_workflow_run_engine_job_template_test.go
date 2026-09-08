@@ -77,7 +77,7 @@ func TestWorkflowTrigger_JobTemplateInsideTemplate(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -96,7 +96,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: myJobTemplate
 spec: |-
   jobs:
@@ -278,7 +278,7 @@ func TestWorkflowTrigger_JobTemplateDuplicateJob(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -297,7 +297,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: myJobTemplate
 spec: |-
   jobs:
@@ -426,7 +426,7 @@ func TestWorkflowTrigger_JobTemplateAddStageOnNonStagedWorkflow(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mytemplate
 spec: |-
   stages:
@@ -450,7 +450,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: myJobTemplate
 spec: |-
   jobs:
@@ -580,7 +580,7 @@ func TestWorkflowTrigger_JobTemplateNoStageOnTemplate(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -599,7 +599,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: myJobTemplate
 spec: |-
   jobs:
@@ -725,7 +725,7 @@ func TestWorkflowTrigger_JobTemplateWithFromAndRunsOnFails(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -855,7 +855,7 @@ func TestWorkflowTrigger_JobTemplateContainingMatrixJob(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mymodel
 type: docker
 osarch: linux-amd64
@@ -873,7 +873,7 @@ spec:
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -1049,7 +1049,7 @@ func TestWorkflowTrigger_JobTemplateContainingMatrixJobPartialPermutations(t *te
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mymodel
 type: docker
 osarch: linux-amd64
@@ -1067,7 +1067,7 @@ spec:
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -1239,7 +1239,7 @@ func TestWorkflowTrigger_JobTemplateWithVariableSets(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: mytemplate
 spec: |-
   jobs:
@@ -1367,6 +1367,7 @@ func TestWorkflowTrigger_NestedJobTemplateResolvedAgainstParentTemplate(t *testi
 	// Parent template on a non-default branch of another repository, referencing
 	// a nested template with a local path
 	entityT1 := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repoTmpl.ID,
 		Type:                sdk.EntityTypeWorkflowTemplate,
@@ -1390,9 +1391,9 @@ spec: |-
   jobs:
     %s:`
 	for _, e := range []sdk.Entity{
-		{ProjectRepositoryID: repoTmpl.ID, Ref: "refs/heads/branchX", Commit: "t1sha12345", Data: fmt.Sprintf(t2Data, "fromBranchX")},
-		{ProjectRepositoryID: repoTmpl.ID, Ref: "refs/heads/master", Commit: "othersha12", Data: fmt.Sprintf(t2Data, "fromMasterB")},
-		{ProjectRepositoryID: repoRun.ID, Ref: "refs/heads/master", Commit: "runsha1234", Data: fmt.Sprintf(t2Data, "fromRepoRun")},
+		{Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}, ProjectRepositoryID: repoTmpl.ID, Ref: "refs/heads/branchX", Commit: "t1sha12345", Data: fmt.Sprintf(t2Data, "fromBranchX")},
+		{Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}, ProjectRepositoryID: repoTmpl.ID, Ref: "refs/heads/master", Commit: "othersha12", Data: fmt.Sprintf(t2Data, "fromMasterB")},
+		{Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}, ProjectRepositoryID: repoRun.ID, Ref: "refs/heads/master", Commit: "runsha1234", Data: fmt.Sprintf(t2Data, "fromRepoRun")},
 	} {
 		e.ProjectKey = proj.Key
 		e.Type = sdk.EntityTypeWorkflowTemplate
@@ -1533,7 +1534,7 @@ func TestWorkflowTrigger_JobTemplateCycleFailsRun(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: tmplA
 spec: |-
   jobs:
@@ -1551,7 +1552,7 @@ spec: |-
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: tmplB
 spec: |-
   jobs:
@@ -1719,7 +1720,7 @@ spec: |-
 			Commit:              "123456789",
 			Ref:                 "refs/heads/master",
 			ProjectRepositoryID: repo.ID,
-			DeprecatedUserID:    &admin.ID,
+			Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 			Data:                tmpl.data,
 		}
 		require.NoError(t, entity.Insert(ctx, db, &e))
@@ -1864,7 +1865,7 @@ func TestWorkflowTrigger_SameJobTemplateReusedBySiblingJobs(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: xtmpl
 parameters:
 - key: name

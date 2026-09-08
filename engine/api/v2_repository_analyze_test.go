@@ -1465,6 +1465,7 @@ func TestManageWorkflowHooksAllDistantEntitiesOndefaultBranch(t *testing.T) {
 	//
 	e := sdk.EntityWithObject{
 		Entity: sdk.Entity{
+			Initiator:           &sdk.V2Initiator{},
 			ProjectKey:          proj.Key,
 			ProjectRepositoryID: repoDef.ID,
 			Ref:                 "refs/heads/main",
@@ -1538,6 +1539,7 @@ func TestManageWorkflowHooksAllDistantEntities(t *testing.T) {
 	//
 	e := sdk.EntityWithObject{
 		Entity: sdk.Entity{
+			Initiator:           &sdk.V2Initiator{},
 			ProjectKey:          proj.Key,
 			ProjectRepositoryID: repoDef.ID,
 			Ref:                 "refs/heads/main",
@@ -1593,6 +1595,7 @@ func TestManageWorkflowHooksAllDistantEntitiesWithModelOnDifferentRepo(t *testin
 	//
 	e := sdk.EntityWithObject{
 		Entity: sdk.Entity{
+			Initiator:           &sdk.V2Initiator{},
 			ProjectKey:          proj.Key,
 			ProjectRepositoryID: repoDef.ID,
 			Ref:                 "refs/heads/main",
@@ -1648,6 +1651,7 @@ func TestManageWorkflowHooksAllDistantEntitiesNonDefaultBranch(t *testing.T) {
 	//
 	e := sdk.EntityWithObject{
 		Entity: sdk.Entity{
+			Initiator:           &sdk.V2Initiator{},
 			ProjectKey:          proj.Key,
 			ProjectRepositoryID: repoDef.ID,
 			Ref:                 "refs/heads/test",
@@ -1784,6 +1788,7 @@ GDFkaTe3nUJdYV4=
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
 	workflowEntity := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		ProjectKey:          proj1.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkflow,
@@ -1795,6 +1800,7 @@ GDFkaTe3nUJdYV4=
 	require.NoError(t, entity.Insert(ctx, db, &workflowEntity))
 
 	actionEntity := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		ProjectKey:          proj1.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeAction,
@@ -2029,6 +2035,7 @@ GDFkaTe3nUJdYV4=
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
 	existingEntity := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		ID:                  sdk.UUID(),
 		ProjectKey:          proj1.Key,
 		ProjectRepositoryID: repo.ID,
@@ -2460,6 +2467,7 @@ GDFkaTe3nUJdYV4=
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
 	existingEntity := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		ID:                  sdk.UUID(),
 		ProjectKey:          proj1.Key,
 		ProjectRepositoryID: repo.ID,
@@ -2787,7 +2795,7 @@ GDFkaTe3nUJdYV4=
 		Name:                "mymodel",
 		Commit:              "HEAD",
 		Ref:                 "refs/heads/main",
-		DeprecatedUserID:    &u.ID,
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Data:                "name: mymodel",
 	}
 	require.NoError(t, entity.Insert(ctx, db, &entityWM))
@@ -3022,7 +3030,7 @@ GDFkaTe3nUJdYV4=
 		Name:                "mymodel",
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/main",
-		DeprecatedUserID:    &u.ID,
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Data:                "name: mymodel",
 		Head:                true,
 	}
@@ -3269,7 +3277,7 @@ GDFkaTe3nUJdYV4=
 		Name:                "mymodel",
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/main",
-		DeprecatedUserID:    &u.ID,
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Data:                "name: mymodel",
 		Head:                true,
 	}
@@ -3513,7 +3521,7 @@ GDFkaTe3nUJdYV4=
 		Name:                "mymodel",
 		Commit:              "HEAD",
 		Ref:                 "refs/heads/main",
-		DeprecatedUserID:    &u.ID,
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Data:                "name: mymodel",
 	}
 	require.NoError(t, entity.Insert(ctx, db, &entityWM))
@@ -3827,7 +3835,7 @@ GDFkaTe3nUJdYV4=
 		Ref:                 analysis.Ref,
 		Name:                "docker-debian",
 		Data:                "MyModel",
-		DeprecatedUserID:    &u.ID,
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 	}
 	require.NoError(t, entity.Insert(ctx, db, &previousEnt))
 

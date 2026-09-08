@@ -129,12 +129,13 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooks(t *testing.T) {
 	_, err := db.Exec("DELETE FROM v2_workflow_hook")
 	require.NoError(t, err)
 
-	_, pwd := assets.InsertAdminUser(t, db)
+	admin, pwd := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", sdk.VCSTypeGithub)
 	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, sdk.RandomString(10))
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                "MyWorkflow",
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          p.Key,
@@ -190,12 +191,13 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequest(t *t
 	_, err := db.Exec("DELETE FROM v2_workflow_hook")
 	require.NoError(t, err)
 
-	_, pwd := assets.InsertAdminUser(t, db)
+	admin, pwd := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", sdk.VCSTypeGithub)
 	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, sdk.RandomString(10))
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                "MyWorkflow",
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          p.Key,
@@ -253,12 +255,13 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequestFilte
 	_, err := db.Exec("DELETE FROM v2_workflow_hook")
 	require.NoError(t, err)
 
-	_, pwd := assets.InsertAdminUser(t, db)
+	admin, pwd := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", sdk.VCSTypeGithub)
 	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, sdk.RandomString(10))
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                "MyWorkflow",
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          p.Key,
@@ -336,12 +339,13 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 	_, err := db.Exec("DELETE FROM v2_workflow_hook")
 	require.NoError(t, err)
 
-	_, pwd := assets.InsertAdminUser(t, db)
+	admin, pwd := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", sdk.VCSTypeGithub)
 	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, sdk.RandomString(10))
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                "MyWorkflow",
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          p.Key,
@@ -419,12 +423,13 @@ func TestPostRetrieveWorkflowToTriggerHandler_WorkflowRun(t *testing.T) {
 	_, err := db.Exec("DELETE FROM v2_workflow_hook")
 	require.NoError(t, err)
 
-	_, pwd := assets.InsertAdminUser(t, db)
+	admin, pwd := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", sdk.VCSTypeGithub)
 	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, sdk.RandomString(10))
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                "MyWorkflow",
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          p.Key,
@@ -512,12 +517,13 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHook_SkippedWorkflow(
 	_, err := db.Exec("DELETE FROM v2_workflow_hook")
 	require.NoError(t, err)
 
-	_, pwd := assets.InsertAdminUser(t, db)
+	admin, pwd := assets.InsertAdminUser(t, db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", sdk.VCSTypeGithub)
 	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, sdk.RandomString(10))
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                "MyWorkflow",
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          p.Key,

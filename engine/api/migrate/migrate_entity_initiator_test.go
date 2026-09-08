@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/gorpmapper"
 	enginetest "github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
@@ -77,17 +78,33 @@ func TestMigrateEntityInitiators_RebuildsOwnersAndSkipsTheRest(t *testing.T) {
 	oldVersion.DeprecatedUserID = &userID
 	insertLegacyEntityRow(t, db, oldVersion)
 	unowned := insertLegacyEntityRow(t, db, newEntityRow(proj, repo, "unowned", "abcdef", true))
+	deletedUserID := sdk.UUID()
+	orphan := newEntityRow(proj, repo, "orphan", "abcdef", true)
+	orphan.DeprecatedUserID = &deletedUserID
+	insertLegacyEntityRow(t, db, orphan)
 	migrated := newEntityRow(proj, repo, "migrated", "abcdef", true)
 	migrated.Initiator = &sdk.V2Initiator{VCS: "vcs-server", VCSUsername: "octocat"}
 	require.NoError(t, entity.Insert(ctx, db, &migrated))
 
-	require.NoError(t, migrateEntityInitiators(ctx, db.DbMap, []string{owned.ID, oldVersion.ID, unowned.ID, migrated.ID, sdk.UUID()}))
+	require.NoError(t, migrateEntityInitiators(ctx, db.DbMap, []string{owned.ID, oldVersion.ID, unowned.ID, orphan.ID, migrated.ID, sdk.UUID()}))
 
+	// The owner carries the same user snapshot as a run initiator
+	uWithContacts, err := user.LoadByID(ctx, db, u.ID, user.LoadOptions.WithContacts)
+	require.NoError(t, err)
 	e, err := entity.LoadByID(ctx, db, owned.ID)
 	require.NoError(t, err)
 	require.Equal(t, u.ID, e.Initiator.UserID)
+	require.Equal(t, u.Username, e.Initiator.User.Username)
+	require.Equal(t, uWithContacts.Initiator().Email, e.Initiator.User.Email)
 	require.Equal(t, u.ID, *e.DeprecatedUserID)
 	require.True(t, e.Head)
+
+	// A user deleted since then keeps its id, with an empty snapshot
+	e, err = entity.LoadByID(ctx, db, orphan.ID)
+	require.NoError(t, err)
+	require.Equal(t, deletedUserID, e.Initiator.UserID)
+	require.NotNil(t, e.Initiator.User)
+	require.Empty(t, e.Initiator.Username())
 
 	e, err = entity.LoadByID(ctx, db, oldVersion.ID)
 	require.NoError(t, err)
@@ -106,7 +123,7 @@ func TestMigrateEntityInitiators_RebuildsOwnersAndSkipsTheRest(t *testing.T) {
 
 	ids, err := entity.LoadIDsWithoutInitiator(ctx, db)
 	require.NoError(t, err)
-	for _, id := range []string{owned.ID, oldVersion.ID, unowned.ID, migrated.ID} {
+	for _, id := range []string{owned.ID, oldVersion.ID, unowned.ID, orphan.ID, migrated.ID} {
 		require.NotContains(t, ids, id)
 	}
 

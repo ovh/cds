@@ -1985,6 +1985,7 @@ func TestPostWorkflowRunHandler(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                sdk.RandomString(10),
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          proj.Key,
@@ -2422,6 +2423,7 @@ func TestPostWorkflowRunHandler_JobInputs(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                sdk.RandomString(10),
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          proj.Key,
@@ -3257,7 +3259,7 @@ jobs:
 	require.False(t, wr.Initiator.IsAdminWithMFA)
 
 	// Nobody owns the workflow: refused
-	insertWorkflow("unowned", nil)
+	insertWorkflow("unowned", &sdk.V2Initiator{})
 	w = runFromHook("unowned")
 	require.Equal(t, 403, w.Code, w.Body.String())
 	require.Contains(t, w.Body.String(), "unknown workflow owner")

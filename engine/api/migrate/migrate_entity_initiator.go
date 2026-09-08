@@ -8,6 +8,7 @@ import (
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/entity"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -49,7 +50,9 @@ func migrateEntityInitiators(ctx context.Context, db *gorp.DbMap, ids []string) 
 	return nil
 }
 
-// migrateEntityInitiator rebuilds the owner of one entity from its user_id column
+// migrateEntityInitiator rebuilds the owner of one entity from its user_id column, with the same user
+// snapshot as a run initiator. It returns false when there is nothing to do: the row is gone,
+// unreadable, locked by another writer, or already carries an owner.
 func migrateEntityInitiator(ctx context.Context, db *gorp.DbMap, id string) (bool, error) {
 	tx, err := db.Begin()
 	if err != nil {
@@ -67,8 +70,28 @@ func migrateEntityInitiator(ctx context.Context, db *gorp.DbMap, id string) (boo
 	if e.Initiator != nil {
 		return false, nil
 	}
+	e.Initiator, err = legacyOwner(ctx, tx, e.DeprecatedUserID)
+	if err != nil {
+		return false, err
+	}
 	if err := entity.Update(ctx, tx, e); err != nil {
 		return false, err
 	}
 	return true, sdk.WithStack(tx.Commit())
+}
+
+// legacyOwner builds the owner from the user_id column written by former versions: nobody when unset,
+// the user with its snapshot otherwise. A deleted user keeps its id with an empty snapshot.
+func legacyOwner(ctx context.Context, db gorp.SqlExecutor, userID *string) (*sdk.V2Initiator, error) {
+	if userID == nil || *userID == "" {
+		return &sdk.V2Initiator{}, nil
+	}
+	u, err := user.LoadByID(ctx, db, *userID, user.LoadOptions.WithContacts)
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrUserNotFound) || sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return &sdk.V2Initiator{UserID: *userID, User: &sdk.V2InitiatorUser{}}, nil
+		}
+		return nil, err
+	}
+	return &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()}, nil
 }
