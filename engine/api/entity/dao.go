@@ -33,6 +33,7 @@ func getEntity(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 		log.Error(ctx, "entity %d / %s data corrupted", res.ID, res.Name)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
+	sanitizeLoadedOwner(&res.Entity)
 	return &res.Entity, nil
 }
 
@@ -51,18 +52,50 @@ func getEntities(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 			log.Error(ctx, "entity %d / %s data corrupted", r.ID, r.Name)
 			continue
 		}
+		sanitizeLoadedOwner(&r.Entity)
 		entities = append(entities, r.Entity)
 	}
 	return entities, nil
+}
+
+// syncDeprecatedUserID mirrors the owner's CDS user id into user_id (nil for a VCS-only or empty
+// owner), the column still read by older hooks services.
+func syncDeprecatedUserID(e *sdk.Entity) {
+	if e.Initiator.UserID == "" {
+		e.DeprecatedUserID = nil
+		return
+	}
+	userID := e.Initiator.UserID
+	e.DeprecatedUserID = &userID
+}
+
+// sanitizeLoadedOwner ensures that
+func sanitizeLoadedOwner(e *sdk.Entity) {
+	if e.Initiator == nil {
+		return
+	}
+	e.Initiator.IsAdminWithMFA = false
+	syncDeprecatedUserID(e)
+}
+
+// setInitiator ensures that initiator is there with MFA flag = false
+func setInitiator(e *sdk.Entity) {
+	if e.Initiator == nil {
+		if e.DeprecatedUserID == nil || *e.DeprecatedUserID == "" {
+			e.Initiator = &sdk.V2Initiator{}
+		} else {
+			e.Initiator = &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
+		}
+	}
+	e.Initiator.IsAdminWithMFA = false
+	syncDeprecatedUserID(e)
 }
 
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
 	if e.ID == "" {
 		e.ID = sdk.UUID()
 	}
-	if e.DeprecatedUserID != nil && *e.DeprecatedUserID == "" {
-		e.DeprecatedUserID = nil
-	}
+	setInitiator(e)
 
 	e.LastUpdate = time.Now()
 	dbData := &dbEntity{Entity: *e}
@@ -75,9 +108,7 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 
 func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
 	e.LastUpdate = time.Now()
-	if e.DeprecatedUserID != nil && *e.DeprecatedUserID == "" {
-		e.DeprecatedUserID = nil
-	}
+	setInitiator(e)
 	dbData := &dbEntity{Entity: *e}
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {
 		return err
@@ -240,6 +271,15 @@ func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, erro
 		entities = append(entities, r.Entity)
 	}
 	return entities, nil
+}
+
+// LoadIDsWithoutInitiator returns the ids of entities whose initiator column is NULL, head entities first.
+func LoadIDsWithoutInitiator(_ context.Context, db gorp.SqlExecutor) ([]string, error) {
+	var ids []string
+	if _, err := db.Select(&ids, "SELECT id FROM entity WHERE initiator IS NULL ORDER BY head DESC, id"); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return ids, nil
 }
 
 func LoadUnmigratedHeadEntities(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, error) {
