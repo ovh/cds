@@ -344,6 +344,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myactionEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeAction,
@@ -357,6 +358,7 @@ func TestCraftWorkflowRunDepsSameRepo(t *testing.T) {
 	require.NoError(t, entity.Insert(ctx, db, &myactionEnt))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -477,6 +479,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myactionEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repoAction1.ID,
 		Type:                sdk.EntityTypeAction,
@@ -491,6 +494,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	require.NoError(t, entity.Insert(ctx, db, &myactionEnt))
 
 	myactionEnt2 := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repoAction2.ID,
 		Type:                sdk.EntityTypeAction,
@@ -505,6 +509,7 @@ func TestCraftWorkflowRunDepsDifferentRepo(t *testing.T) {
 	require.NoError(t, entity.Insert(ctx, db, &myactionEnt2))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -646,6 +651,7 @@ func TestCraftWorkflowRunCustomVersion_Cargo(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -816,6 +822,7 @@ func TestCraftWorkflowRunCustomVersion_Helm(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -977,6 +984,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnBranch(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -1107,6 +1115,7 @@ func TestCraftWorkflowRunCustomVersion_GitOnTag(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -1235,6 +1244,7 @@ func TestCraftWorkflowRunCustomVersion_NpmYarn(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -1394,6 +1404,7 @@ func TestCraftWorkflowRunCustomVersion_File(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -1550,6 +1561,7 @@ func TestCraftWorkflowRunCustomVersion_PoetryProject(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -1721,6 +1733,7 @@ func TestCraftWorkflowRunCustomVersion_Poetry(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -1884,6 +1897,7 @@ func TestCraftWorkflowRunCustomVersion_Debian(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -2033,7 +2047,7 @@ func TestCraftWorkflowFromTemplateFail(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: db-schema-model
 spec: |-
   stages:
@@ -2098,6 +2112,7 @@ spec: |-
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myactionEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeAction,
@@ -2111,6 +2126,7 @@ spec: |-
 	require.NoError(t, entity.Insert(ctx, db, &myactionEnt))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -2253,6 +2269,7 @@ func TestComputeConcurrency(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -2445,6 +2462,7 @@ func TestConcurrencyLockWorkflow(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &newWR))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -2636,6 +2654,7 @@ func TestConcurrencyCancelWorkflow(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &newWR))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -2831,6 +2850,7 @@ func TestConcurrencyLockWorkflowWithCondition(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &newWR))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -2976,7 +2996,7 @@ func TestCraftWorkflowRun_Fallback(t *testing.T) {
 		Ref:                 "refs/heads/master",
 		Data:                string(entityData),
 		Head:                true,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entWkf))
 
@@ -3009,6 +3029,7 @@ func TestCraftWorkflowRun_Fallback(t *testing.T) {
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myactionEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeAction,
@@ -3022,6 +3043,7 @@ func TestCraftWorkflowRun_Fallback(t *testing.T) {
 	require.NoError(t, entity.Insert(ctx, db, &myactionEnt))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -3167,7 +3189,7 @@ func TestCraftWorkflowFromTemplateAndSemver(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: db-schema-model
 spec: |-
   semver:
@@ -3229,6 +3251,7 @@ spec: |-
 	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
 
 	myactionEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeAction,
@@ -3242,6 +3265,7 @@ spec: |-
 	require.NoError(t, entity.Insert(ctx, db, &myactionEnt))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -3312,7 +3336,7 @@ func TestCraftWorkflowFromTemplateWithEnv(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: my-template
 spec: |-
   env:
@@ -3438,6 +3462,7 @@ func TestCraftWorkflowFromTemplateCrossProjectWorkerModel(t *testing.T) {
 
 	// Worker model lives in project A
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          projRun.Key,
 		ProjectRepositoryID: repoWM.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -3460,7 +3485,7 @@ func TestCraftWorkflowFromTemplateCrossProjectWorkerModel(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		Head:                true,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: fmt.Sprintf(`name: my-template
 spec: |-
   integrations: [%s]
@@ -3599,6 +3624,7 @@ func TestCraftWorkflowRunWithJobTemplateReference(t *testing.T) {
 		).Times(1)
 
 	entityTmpl := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkflowTemplate,
@@ -3617,6 +3643,7 @@ spec: |-
 	require.NoError(t, entity.Insert(ctx, db, &entityTmpl))
 
 	myWMEnt := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkerModel,
@@ -3733,7 +3760,7 @@ func TestCraftWorkflowFromTemplateWithVariableSets(t *testing.T) {
 		Commit:              "123456789",
 		Ref:                 "refs/heads/master",
 		ProjectRepositoryID: repo.ID,
-		DeprecatedUserID:    &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Data: `name: my-template
 spec: |-
   jobs:
@@ -3890,6 +3917,7 @@ spec: |-
 		proj.Key, vcsProject.Name, repo.Name,
 		projOther.Key, vcsOther.Name, repoOther.Name)
 	entityTmpl := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,
 		Type:                sdk.EntityTypeWorkflowTemplate,
@@ -3910,11 +3938,11 @@ spec: |-
       steps:
       - run: echo hello`
 	for _, e := range []sdk.Entity{
-		{ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, FilePath: ".cds/workflow-templates/build.yml", Name: "buildtmpl", Ref: "refs/heads/mybranch", Commit: "tmplsha123", Head: true, Data: fmt.Sprintf(jobTmplData, "buildtmpl", "build_branch")},
-		{ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, FilePath: ".cds/workflow-templates/build.yml", Name: "buildtmpl", Ref: "refs/heads/master", Commit: "mastersha", Head: true, Data: fmt.Sprintf(jobTmplData, "buildtmpl", "build_master")},
-		{ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, FilePath: ".cds/workflow-templates/deploy.yml", Name: "deploytmpl", Ref: "refs/heads/mybranch", Commit: "tmplsha123", Head: true, Data: fmt.Sprintf(jobTmplData, "deploytmpl", "deploy_branch")},
-		{ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, FilePath: ".cds/workflow-templates/deploy.yml", Name: "deploytmpl", Ref: "refs/heads/master", Commit: "mastersha", Head: true, Data: fmt.Sprintf(jobTmplData, "deploytmpl", "deploy_master")},
-		{ProjectKey: projOther.Key, ProjectRepositoryID: repoOther.ID, FilePath: ".cds/workflow-templates/test.yml", Name: "testtmpl", Ref: "refs/heads/master", Commit: "abcdef123456", Head: true, Data: fmt.Sprintf(jobTmplData, "testtmpl", "test_master")},
+		{Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}, ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, FilePath: ".cds/workflow-templates/build.yml", Name: "buildtmpl", Ref: "refs/heads/mybranch", Commit: "tmplsha123", Head: true, Data: fmt.Sprintf(jobTmplData, "buildtmpl", "build_branch")},
+		{Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}, ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, FilePath: ".cds/workflow-templates/build.yml", Name: "buildtmpl", Ref: "refs/heads/master", Commit: "mastersha", Head: true, Data: fmt.Sprintf(jobTmplData, "buildtmpl", "build_master")},
+		{Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}, ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, FilePath: ".cds/workflow-templates/deploy.yml", Name: "deploytmpl", Ref: "refs/heads/mybranch", Commit: "tmplsha123", Head: true, Data: fmt.Sprintf(jobTmplData, "deploytmpl", "deploy_branch")},
+		{Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}, ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, FilePath: ".cds/workflow-templates/deploy.yml", Name: "deploytmpl", Ref: "refs/heads/master", Commit: "mastersha", Head: true, Data: fmt.Sprintf(jobTmplData, "deploytmpl", "deploy_master")},
+		{Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}, ProjectKey: projOther.Key, ProjectRepositoryID: repoOther.ID, FilePath: ".cds/workflow-templates/test.yml", Name: "testtmpl", Ref: "refs/heads/master", Commit: "abcdef123456", Head: true, Data: fmt.Sprintf(jobTmplData, "testtmpl", "test_master")},
 	} {
 		e.Type = sdk.EntityTypeWorkflowTemplate
 		require.NoError(t, entity.Insert(ctx, db, &e))

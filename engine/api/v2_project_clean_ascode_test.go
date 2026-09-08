@@ -67,6 +67,7 @@ func TestCleanWorkflowVersion(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, projKey, vcsProj.ID, "repo")
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{},
 		ID:                  sdk.UUID(),
 		ProjectKey:          projKey,
 		ProjectRepositoryID: repo.ID,
@@ -171,6 +172,7 @@ func Test_cleanAsCodeEntities(t *testing.T) {
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
 	wkfDelete := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{},
 		Name:                "model1",
 		Commit:              "123456",
 		Ref:                 "refs/heads/temp",
@@ -182,6 +184,7 @@ func Test_cleanAsCodeEntities(t *testing.T) {
 	require.NoError(t, entity.Insert(context.TODO(), db, &wkfDelete))
 
 	etoDelete := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{},
 		Name:                "model1",
 		Commit:              "123456",
 		Ref:                 "refs/heads/temp",
@@ -197,6 +200,7 @@ spec:
 	require.NoError(t, entity.Insert(context.TODO(), db, &etoDelete))
 
 	etoKeep := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{},
 		Name:                "model2",
 		Commit:              "987654",
 		Ref:                 "refs/heads/master",

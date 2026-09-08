@@ -105,6 +105,7 @@ func Test_deleteProjectV2Handler_CleanSchedulerHooks(t *testing.T) {
 
 	// Create an entity for the workflow
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		ID:                  sdk.UUID(),
 		ProjectKey:          proj.Key,
 		ProjectRepositoryID: repo.ID,

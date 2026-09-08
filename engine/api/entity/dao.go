@@ -69,33 +69,28 @@ func syncDeprecatedUserID(e *sdk.Entity) {
 	e.DeprecatedUserID = &userID
 }
 
-// sanitizeLoadedOwner ensures that
+// sanitizeLoadedOwner never trusts the stored admin MFA flag and mirrors the owner into user_id
 func sanitizeLoadedOwner(e *sdk.Entity) {
 	if e.Initiator == nil {
 		return
 	}
-	e.Initiator.IsAdminWithMFA = false
-	syncDeprecatedUserID(e)
+	normalizeOwner(e)
 }
 
-// setInitiator ensures that initiator is there with MFA flag = false
-func setInitiator(e *sdk.Entity) {
-	if e.Initiator == nil {
-		if e.DeprecatedUserID == nil || *e.DeprecatedUserID == "" {
-			e.Initiator = &sdk.V2Initiator{}
-		} else {
-			e.Initiator = &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
-		}
-	}
+// normalizeOwner strips the admin MFA flag and mirrors the owner into user_id before the row is signed.
+func normalizeOwner(e *sdk.Entity) {
 	e.Initiator.IsAdminWithMFA = false
 	syncDeprecatedUserID(e)
 }
 
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
+	if e.Initiator == nil {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "entity %s of type %s has no owner", e.Name, e.Type)
+	}
 	if e.ID == "" {
 		e.ID = sdk.UUID()
 	}
-	setInitiator(e)
+	normalizeOwner(e)
 
 	e.LastUpdate = time.Now()
 	dbData := &dbEntity{Entity: *e}
@@ -108,7 +103,10 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 
 func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
 	e.LastUpdate = time.Now()
-	setInitiator(e)
+	// A nil owner means the row is not migrated yet: it stays so until the migration completes it
+	if e.Initiator != nil {
+		normalizeOwner(e)
+	}
 	dbData := &dbEntity{Entity: *e}
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {
 		return err

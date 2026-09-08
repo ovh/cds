@@ -51,6 +51,7 @@ func newEntityFixture(t *testing.T) entityFixture {
 	return entityFixture{db: db, proj: proj, repo: repo, user: u}
 }
 
+// newEntity is owned by the fixture user, with the snapshot an analysis would store.
 func (f entityFixture) newEntity(name string) sdk.Entity {
 	return sdk.Entity{
 		ProjectKey:          f.proj.Key,
@@ -62,6 +63,7 @@ func (f entityFixture) newEntity(name string) sdk.Entity {
 		Ref:                 "refs/heads/master",
 		Data:                "name: " + name,
 		Head:                true,
+		Initiator:           &sdk.V2Initiator{UserID: f.user.ID, User: f.user.Initiator()},
 	}
 }
 
@@ -69,6 +71,7 @@ func (f entityFixture) insertLegacy(t *testing.T, name string, head bool, userID
 	e := f.newEntity(name)
 	e.ID = sdk.UUID()
 	e.Head = head
+	e.Initiator = nil
 	e.DeprecatedUserID = userID
 	e.LastUpdate = time.Now()
 	require.NoError(t, gorpmapping.InsertAndSign(context.TODO(), f.db, &legacyEntity{Entity: e}))
@@ -95,7 +98,7 @@ func TestInsert_PersistsTheOwnerWithoutPrivileges(t *testing.T) {
 	ctx := context.TODO()
 
 	e := f.newEntity("cds-user-owner")
-	e.Initiator = &sdk.V2Initiator{UserID: f.user.ID, User: f.user.Initiator(), IsAdminWithMFA: true}
+	e.Initiator.IsAdminWithMFA = true
 	require.NoError(t, entity.Insert(ctx, f.db, &e))
 
 	loaded, err := entity.LoadByID(ctx, f.db, e.ID)
@@ -124,26 +127,24 @@ func TestInsert_PersistsAVCSOwner(t *testing.T) {
 	require.Nil(t, loaded.DeprecatedUserID)
 }
 
-func TestInsert_RebuildsANilOwnerFromUserID(t *testing.T) {
+func TestInsert_RefusesAnEntityWithoutOwner(t *testing.T) {
 	f := newEntityFixture(t)
 	ctx := context.TODO()
 
-	withUser := f.newEntity("with-user-id")
+	unowned := f.newEntity("unowned")
+	unowned.Initiator = nil
 	userID := f.user.ID
-	withUser.DeprecatedUserID = &userID
-	require.NoError(t, entity.Insert(ctx, f.db, &withUser))
+	unowned.DeprecatedUserID = &userID
+	err := entity.Insert(ctx, f.db, &unowned)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrInvalidData), "got %v", err)
 
-	loaded, err := entity.LoadByID(ctx, f.db, withUser.ID)
-	require.NoError(t, err)
-	require.Equal(t, f.user.ID, loaded.Initiator.UserID)
-	require.Equal(t, f.user.ID, *loaded.DeprecatedUserID)
-
+	// An explicit nobody is a valid owner: some entities have no known committer
 	nobody := f.newEntity("nobody")
+	nobody.Initiator = &sdk.V2Initiator{}
 	require.NoError(t, entity.Insert(ctx, f.db, &nobody))
 
-	loaded, err = entity.LoadByID(ctx, f.db, nobody.ID)
+	loaded, err := entity.LoadByID(ctx, f.db, nobody.ID)
 	require.NoError(t, err)
-	require.NotNil(t, loaded.Initiator)
 	require.True(t, loaded.Initiator.IsUnknown())
 	require.Nil(t, loaded.DeprecatedUserID)
 	require.EqualValues(t, 1, f.countStoredOwner(t, nobody.ID), "nobody must be stored, NULL is reserved to rows not migrated yet")
@@ -186,39 +187,30 @@ func TestLoadIDsWithoutInitiator_ListsLegacyRowsHeadFirst(t *testing.T) {
 	require.Less(t, indexOf(ids, headVersion.ID), indexOf(ids, oldVersion.ID))
 }
 
-func TestUpdate_MigratesALegacyRow(t *testing.T) {
+func TestUpdate_LeavesALegacyRowUnmigrated(t *testing.T) {
 	f := newEntityFixture(t)
 	ctx := context.TODO()
 
 	userID := f.user.ID
-	owned := f.insertLegacy(t, "owned", true, &userID)
-	unowned := f.insertLegacy(t, "unowned", true, nil)
+	legacy := f.insertLegacy(t, "legacy", true, &userID)
 
-	loaded, err := entity.LoadByID(ctx, f.db, owned.ID)
+	loaded, err := entity.LoadByID(ctx, f.db, legacy.ID)
 	require.NoError(t, err)
 	require.Nil(t, loaded.Initiator)
+	loaded.Head = false
 	require.NoError(t, entity.Update(ctx, f.db, loaded))
-	require.Equal(t, f.user.ID, loaded.Initiator.UserID)
 
-	reloaded, err := entity.LoadByID(ctx, f.db, owned.ID)
+	// Only the migration builds owners from user_id: the row stays unmigrated, with its user_id
+	reloaded, err := entity.LoadByID(ctx, f.db, legacy.ID)
 	require.NoError(t, err)
-	require.Equal(t, f.user.ID, reloaded.Initiator.UserID)
+	require.Nil(t, reloaded.Initiator)
 	require.Equal(t, f.user.ID, *reloaded.DeprecatedUserID)
-
-	loaded, err = entity.LoadByID(ctx, f.db, unowned.ID)
-	require.NoError(t, err)
-	require.NoError(t, entity.Update(ctx, f.db, loaded))
-
-	reloaded, err = entity.LoadByID(ctx, f.db, unowned.ID)
-	require.NoError(t, err)
-	require.NotNil(t, reloaded.Initiator)
-	require.True(t, reloaded.Initiator.IsUnknown())
-	require.Nil(t, reloaded.DeprecatedUserID)
+	require.False(t, reloaded.Head)
+	require.EqualValues(t, 0, f.countStoredOwner(t, legacy.ID))
 
 	ids, err := entity.LoadIDsWithoutInitiator(ctx, f.db)
 	require.NoError(t, err)
-	require.NotContains(t, ids, owned.ID)
-	require.NotContains(t, ids, unowned.ID)
+	require.Contains(t, ids, legacy.ID)
 }
 
 func TestLoad_RejectsATamperedOwner(t *testing.T) {
@@ -236,6 +228,7 @@ func TestLoad_RejectsATamperedOwner(t *testing.T) {
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "an owner replaced inside the signed column must be rejected, got %v", err)
 
 	nobody := f.newEntity("nobody")
+	nobody.Initiator = &sdk.V2Initiator{}
 	require.NoError(t, entity.Insert(ctx, f.db, &nobody))
 
 	_, err = f.db.Exec(`UPDATE entity SET initiator = NULL, user_id = $1 WHERE id = $2`, attacker.ID, nobody.ID)

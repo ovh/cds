@@ -46,6 +46,7 @@ func TestGetV2ActionHandler(t *testing.T) {
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Name:                "test-action",
 		Commit:              "123456",
 		Ref:                 "refs/heads/master",
