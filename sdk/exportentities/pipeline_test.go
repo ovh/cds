@@ -906,3 +906,77 @@ jobs:
 	_, err := exportentities.ParsePipeline(exportentities.FormatYAML, []byte(in))
 	require.Error(t, err)
 }
+
+// A flavor requirement is exported, so it has to be imported back: without it the
+// requirement was read as empty and the pipeline was rejected as invalid. This is how a
+// workflow v1 sizes a virtual machine.
+func Test_ImportPipelineWithFlavorRequirement(t *testing.T) {
+	in := `name: build-all-images
+jobs:
+- job: build
+  requirements:
+  - model: MYPROJ/myvcs/my/repo/my-model@master
+  - flavor: M
+  steps:
+  - script: echo "nothing to do"
+`
+
+	payload := &exportentities.PipelineV1{}
+	test.NoError(t, yaml.Unmarshal([]byte(in), payload))
+
+	p, err := payload.Pipeline()
+	test.NoError(t, err)
+
+	reqs := p.Stages[0].Jobs[0].Action.Requirements
+	assert.Len(t, reqs, 2)
+
+	var flavor *sdk.Requirement
+	for i := range reqs {
+		assert.NotEmpty(t, reqs[i].Type, "a requirement with no type is rejected on import")
+		if reqs[i].Type == sdk.FlavorRequirement {
+			flavor = &reqs[i]
+		}
+	}
+	assert.NotNil(t, flavor, "the flavor requirement must survive the import")
+	assert.Equal(t, "M", flavor.Value)
+}
+
+// What the pipeline of a workflow v1 requiring a worker model v2 looks like, exported and
+// imported back unchanged.
+func Test_ExportAndImportPipelineWithFlavorRequirement(t *testing.T) {
+	pip := sdk.Pipeline{
+		Name: "my-pipeline",
+		Stages: []sdk.Stage{{
+			BuildOrder: 1,
+			Name:       "tests",
+			Enabled:    true,
+			Jobs: []sdk.Job{{
+				Enabled: true,
+				Action: sdk.Action{
+					Name:    "my-job",
+					Enabled: true,
+					Requirements: []sdk.Requirement{
+						{Name: "model", Type: sdk.ModelRequirement, Value: "MYPROJ/myvcs/my/repo/my-model@master"},
+						{Name: "flavor", Type: sdk.FlavorRequirement, Value: "M"},
+					},
+				},
+			}},
+		}},
+	}
+
+	exported := exportentities.NewPipelineV1(pip)
+	b, err := yaml.Marshal(exported)
+	test.NoError(t, err)
+
+	imported := &exportentities.PipelineV1{}
+	test.NoError(t, yaml.Unmarshal(b, imported))
+
+	back, err := imported.Pipeline()
+	test.NoError(t, err)
+
+	reqs := back.Stages[0].Jobs[0].Action.Requirements
+	assert.Len(t, reqs, 2)
+	for i := range reqs {
+		assert.NotEmpty(t, reqs[i].Type)
+	}
+}
