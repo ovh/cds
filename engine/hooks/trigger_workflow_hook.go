@@ -122,9 +122,7 @@ func (s *Service) handleScheduler(ctx context.Context, hre *sdk.HookRepositoryEv
 	if err != nil {
 		return err
 	}
-	if e.DeprecatedUserID != nil {
-		wh.Initiator = &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
-	}
+	wh.Initiator = entityOwner(e)
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
 	return nil
 }
@@ -136,9 +134,7 @@ func (s *Service) handleWorkflowRunHook(ctx context.Context, hre *sdk.HookReposi
 		if err != nil {
 			return err
 		}
-		if e.DeprecatedUserID != nil {
-			wh.Initiator = &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
-		}
+		wh.Initiator = entityOwner(e)
 	}
 	return nil
 }
@@ -218,9 +214,7 @@ func (s *Service) handleWorkflowHook(ctx context.Context, hre *sdk.HookRepositor
 			if err != nil {
 				return err
 			}
-			if e.DeprecatedUserID != nil {
-				w.Initiator = &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
-			}
+			w.Initiator = entityOwner(e)
 		}
 		hre.WorkflowHooks = append(hre.WorkflowHooks, w)
 	}
@@ -259,10 +253,8 @@ func (s *Service) handleWebhookHook(ctx context.Context, hre *sdk.HookRepository
 
 		},
 	}
-	if e.DeprecatedUserID != nil {
-		hre.Initiator = &sdk.V2Initiator{
-			UserID: *e.DeprecatedUserID,
-		}
+	if owner := entityOwner(e); owner != nil {
+		hre.Initiator = owner
 	}
 
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
@@ -324,5 +316,20 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 	}
 	// Create Manual Hook
 	hre.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{wh}
+	return nil
+}
+
+// entityOwner returns the owner of an entity as sent by the API, nil when nobody is identified. The
+// user_id field is only read when the API predates the initiator field.
+func entityOwner(e *sdk.Entity) *sdk.V2Initiator {
+	switch {
+	case e.Initiator != nil:
+		if e.Initiator.IsUnknown() {
+			return nil
+		}
+		return e.Initiator
+	case e.DeprecatedUserID != nil && *e.DeprecatedUserID != "":
+		return &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
+	}
 	return nil
 }
