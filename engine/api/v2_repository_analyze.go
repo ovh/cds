@@ -1480,6 +1480,16 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 			committerID = commit.Committer.ID
 		}
 
+		// The VCS account signing with its project key needs no CDS user, as for the other VCS types
+		for _, VCSGPGUser := range possibleVCSGPGUSers {
+			if VCSGPGUser.Username == committerName {
+				return &sdk.V2Initiator{
+					VCS:         vcsProjectWithSecret.Name,
+					VCSUsername: committerName,
+				}, "", "", nil
+			}
+		}
+
 		if committerID == "" {
 			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
 		}
