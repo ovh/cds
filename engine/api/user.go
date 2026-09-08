@@ -192,8 +192,14 @@ func (api *API) putUserHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
-		if err := data.IsValid(); err != nil {
+		// Validate what can change, not the whole entity: else an incomplete profile blocks every update
+		if err := sdk.IsValidUsername(data.Username); err != nil {
 			return err
+		}
+		switch data.Ring {
+		case sdk.UserRingAdmin, sdk.UserRingMaintainer, sdk.UserRingUser:
+		default:
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given ring value")
 		}
 
 		consumer := getUserConsumer(ctx)
@@ -238,6 +244,10 @@ func (api *API) putUserHandler() service.Handler {
 			}
 		}
 
+		// A profile can be incomplete, but an update must not degrade it
+		if data.Fullname == "" && oldUser.Fullname != "" {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given fullname")
+		}
 		newUser.Fullname = data.Fullname
 
 		// Only an admin can change the ring of a user

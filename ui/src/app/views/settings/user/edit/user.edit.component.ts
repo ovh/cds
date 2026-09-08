@@ -507,10 +507,8 @@ export class UserEditComponent implements OnInit {
 
     clickSave(): void {
         this.userPatternError = false;
-        if (!this.user.username || !this.user.fullname) {
-            return;
-        }
-        if (!usernamePattern.test(this.user.username)) {
+        // An empty fullname must not block the save, else an incomplete profile can't be disabled
+        if (!this.user.username || !usernamePattern.test(this.user.username)) {
             this.userPatternError = true;
             this._cd.markForCheck();
             return;
