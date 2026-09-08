@@ -501,6 +501,59 @@ func Test_putUserHandler_disableUserWithEmptyFullname(t *testing.T) {
 	require.True(t, reloaded.Disabled, "the user must be disabled in database")
 }
 
+// Test_putUserHandler_cannotBlankFullname checks both directions of the fullname rule,
+// because either one alone proves nothing: a profile-completeness check must not block a
+// security action, so a user that already has no fullname stays updatable and can be
+// disabled, but it must still stop a profile from being silently degraded, so an update
+// can't wipe a fullname that was set.
+func Test_putUserHandler_cannotBlankFullname(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	assets.DeleteAdmins(t, db)
+
+	_, jwtAdminRaw := assets.InsertAdminUser(t, db)
+
+	putUser := func(target *sdk.AuthentifiedUser, fullname string) *httptest.ResponseRecorder {
+		uri := api.Router.GetRoute(http.MethodPut, api.putUserHandler, map[string]string{
+			"permUsernamePublic": target.Username,
+		})
+		require.NotEmpty(t, uri)
+		req := assets.NewJWTAuthentifiedRequest(t, jwtAdminRaw, http.MethodPut, uri, sdk.AuthentifiedUser{
+			ID:       target.ID,
+			Created:  target.Created,
+			Username: target.Username,
+			Fullname: fullname,
+			Ring:     target.Ring,
+		})
+		rec := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(rec, req)
+		return rec
+	}
+
+	t.Run("An update can't blank a fullname that was set", func(t *testing.T) {
+		target, _ := assets.InsertLambdaUser(t, db)
+
+		rec := putUser(target, "")
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+
+		reloaded, err := user.LoadByUsername(context.TODO(), db, target.Username)
+		require.NoError(t, err)
+		require.Equal(t, target.Fullname, reloaded.Fullname, "the fullname must not have been degraded")
+	})
+
+	t.Run("An update of a user that has no fullname is still allowed", func(t *testing.T) {
+		target, _ := assets.InsertLambdaUser(t, db)
+
+		// Blank it through the DAO: rows are signed by gorpmapper and a raw UPDATE would
+		// break the signature.
+		target.Fullname = ""
+		require.NoError(t, user.Update(context.TODO(), db, target))
+
+		rec := putUser(target, "")
+		require.Equal(t, http.StatusOK, rec.Code, "an already empty fullname must not block an update")
+	})
+}
+
 func Test_deleteUserHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
