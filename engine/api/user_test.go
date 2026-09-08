@@ -440,6 +440,67 @@ func Test_putUserHandler_disableUser(t *testing.T) {
 	})
 }
 
+// Test_putUserHandler_disableUserWithEmptyFullname checks that an admin can revoke a
+// user's access whatever the state of that user's profile: disabling is a security
+// action, and a profile-completeness check must never be able to block it. Users created
+// before the fullname became mandatory have none, and they are exactly the ones an admin
+// is the most likely to want to neutralize.
+func Test_putUserHandler_disableUserWithEmptyFullname(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	assets.DeleteAdmins(t, db)
+
+	lambda, jwtLambdaRaw := assets.InsertLambdaUser(t, db)
+	_, jwtAdminRaw := assets.InsertAdminUser(t, db)
+
+	// The assets helpers always set a fullname, so blank it through the DAO: rows are
+	// signed by gorpmapper and a raw UPDATE would break the signature.
+	lambda.Fullname = ""
+	require.NoError(t, user.Update(context.TODO(), db, lambda))
+
+	getMeURI := api.Router.GetRoute(http.MethodGet, api.getUserHandler, map[string]string{
+		"permUsernamePublic": "me",
+	})
+	require.NotEmpty(t, getMeURI)
+	callGetMe := func(jwt string) int {
+		req := assets.NewJWTAuthentifiedRequest(t, jwt, http.MethodGet, getMeURI, nil)
+		rec := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(rec, req)
+		return rec.Code
+	}
+	require.Equal(t, http.StatusOK, callGetMe(jwtLambdaRaw), "user should be able to authenticate before being disabled")
+
+	uri := api.Router.GetRoute(http.MethodPut, api.putUserHandler, map[string]string{
+		"permUsernamePublic": lambda.Username,
+	})
+	require.NotEmpty(t, uri)
+
+	// Exactly the body `cdsctl admin user disable` sends: the user as returned by the
+	// API, with only the disabled flag flipped.
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdminRaw, http.MethodPut, uri, sdk.AuthentifiedUser{
+		ID:       lambda.ID,
+		Created:  lambda.Created,
+		Username: lambda.Username,
+		Fullname: "",
+		Ring:     lambda.Ring,
+		Disabled: true,
+	})
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, "an incomplete profile must not prevent an admin from disabling a user")
+
+	var modified sdk.AuthentifiedUser
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &modified))
+	require.True(t, modified.Disabled)
+
+	// The access is really revoked, not just a flag flipped in the response payload.
+	require.Equal(t, http.StatusUnauthorized, callGetMe(jwtLambdaRaw), "sessions of the disabled user must be revoked")
+
+	reloaded, err := user.LoadByUsername(context.TODO(), db, lambda.Username)
+	require.NoError(t, err)
+	require.True(t, reloaded.Disabled, "the user must be disabled in database")
+}
+
 func Test_deleteUserHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
