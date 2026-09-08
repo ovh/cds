@@ -818,6 +818,14 @@ GDFkaTe3nUJdYV4=
 	require.Equal(t, model, es[0].Data)
 	t.Logf("%+v", es[0])
 
+	// The committer found through its GPG key owns the entity, without any privilege
+	require.NotNil(t, es[0].Initiator)
+	require.Equal(t, u.ID, es[0].Initiator.UserID)
+	require.Equal(t, u.Username, es[0].Initiator.User.Username)
+	require.False(t, es[0].Initiator.IsAdminWithMFA)
+	require.NotNil(t, es[0].DeprecatedUserID)
+	require.Equal(t, u.ID, *es[0].DeprecatedUserID)
+
 	e, err := entity.LoadByRefTypeNameCommit(context.TODO(), db, repo.ID, "refs/heads/master", sdk.EntityTypeWorkerModel, "docker-debian", "abcdef")
 	require.NoError(t, err)
 	require.Equal(t, model, e.Data)

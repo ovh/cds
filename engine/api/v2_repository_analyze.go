@@ -614,7 +614,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 skipEntity:
 	for i := range entities {
 		e := &entities[i]
-		e.DeprecatedUserID = &analysis.Data.Initiator.UserID
+		e.Initiator = analysis.Data.Initiator.EntityOwner()
 
 		for entityIndex := range analysis.Data.Entities {
 			analysisEntity := &analysis.Data.Entities[entityIndex]
