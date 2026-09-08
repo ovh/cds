@@ -268,3 +268,35 @@ func TestLoad_ServesTheSignedOwnerNotTheUnsignedColumns(t *testing.T) {
 	require.False(t, es[0].Initiator.IsAdminWithMFA)
 	require.Equal(t, f.user.ID, *es[0].DeprecatedUserID)
 }
+
+func TestLoadAndLockByID(t *testing.T) {
+	f := newEntityFixture(t)
+	ctx := context.TODO()
+
+	e := f.newEntity("locked")
+	require.NoError(t, entity.Insert(ctx, f.db, &e))
+
+	tx, err := f.db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback() // nolint
+
+	loaded, err := entity.LoadAndLockByID(ctx, tx, e.ID)
+	require.NoError(t, err)
+	require.Equal(t, e.Name, loaded.Name)
+
+	_, err = entity.LoadAndLockByID(ctx, tx, sdk.UUID())
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "got %v", err)
+
+	// Another transaction does not wait for the lock: the row is reported missing until this one ends
+	other, err := f.db.Begin()
+	require.NoError(t, err)
+	defer other.Rollback() // nolint
+
+	_, err = entity.LoadAndLockByID(ctx, other, e.ID)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "a locked row must be skipped, got %v", err)
+
+	require.NoError(t, tx.Commit())
+	loaded, err = entity.LoadAndLockByID(ctx, other, e.ID)
+	require.NoError(t, err)
+	require.Equal(t, e.Name, loaded.Name)
+}
