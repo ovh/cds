@@ -54,6 +54,8 @@
                                     <nz-form-control>
                                         <input nz-input type="text" name="username" id="cds-field-username" [(ngModel)]="user.username"
                                                [disabled]="loading" readonly>
+                                        <nz-alert *ngIf="userPatternError" nzType="error"
+                                                  nzMessage="Invalid username. Allowed pattern is: a-zA-Z0-9._-"></nz-alert>
                                     </nz-form-control>
                                 </nz-form-item>
                                 <nz-form-item>
