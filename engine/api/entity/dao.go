@@ -127,6 +127,13 @@ func LoadByID(ctx context.Context, db gorp.SqlExecutor, entityID string) (*sdk.E
 	return getEntity(ctx, db, query)
 }
 
+// LoadAndLockByID loads an entity and locks its row until the transaction ends. A row already locked by
+// another transaction is not waited for and is treated as not found.
+func LoadAndLockByID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, entityID string) (*sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM entity WHERE id = $1 FOR UPDATE SKIP LOCKED`).Args(entityID)
+	return getEntity(ctx, db, query)
+}
+
 // LoadByRepositoryAndRef loads an entity by his repository, ref
 func LoadHeadEntitiesByRepositoryAndRef(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, ref string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
