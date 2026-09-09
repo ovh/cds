@@ -159,3 +159,31 @@ func TestMigrateEntityInitiator_WholeTable(t *testing.T) {
 	require.NotContains(t, ids, head.ID)
 	require.NotContains(t, ids, old.ID)
 }
+
+func TestLegacyOwners_LoadsEachUserOnce(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	ctx := context.TODO()
+	u, _ := assets.InsertLambdaUser(t, db)
+	owners := newLegacyOwners()
+
+	nobody, err := owners.owner(ctx, db, nil)
+	require.NoError(t, err)
+	require.True(t, nobody.IsUnknown())
+	require.Empty(t, owners.users)
+
+	first, err := owners.owner(ctx, db, &u.ID)
+	require.NoError(t, err)
+	second, err := owners.owner(ctx, db, &u.ID)
+	require.NoError(t, err)
+	require.Len(t, owners.users, 1)
+	require.Equal(t, u.Username, first.User.Username)
+	require.Equal(t, first.User, second.User)
+	require.NotSame(t, first.User, second.User)
+
+	deletedUserID := sdk.UUID()
+	orphan, err := owners.owner(ctx, db, &deletedUserID)
+	require.NoError(t, err)
+	require.Equal(t, deletedUserID, orphan.UserID)
+	require.Equal(t, &sdk.V2InitiatorUser{}, orphan.User)
+	require.Len(t, owners.users, 2)
+}
