@@ -59,8 +59,7 @@ func (s *Service) initWebsocket() error {
 				telemetry.Record(s.Router.Background, s.Metrics.WSClients, int64(len(s.WSServer.server.ClientIDs())))
 			case <-tickerPublish.C:
 				if err := s.sendWSEvent(ctx); err != nil {
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, err.Error())
+					log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				}
 			}
 		}

@@ -130,8 +130,7 @@ func (c *CommonClient) Listen(ctx context.Context, gorts *sdk.GoRoutines) error 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				err = sdk.WrapError(err, "websocket unexpected error occurred")
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "%v", err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "%v", err)
 			}
 			log.Debug(ctx, "websocket.Client.Listen> client %s disconnected", c.uuid)
 			break

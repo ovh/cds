@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"contrib.go.opencensus.io/exporter/prometheus"
+	prom "github.com/prometheus/client_golang/prometheus"
 	"go.opencensus.io/plugin/ochttp/propagation/b3"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace/propagation"
@@ -63,9 +64,12 @@ type ExposedView struct {
 
 type HTTPExporter struct {
 	*prometheus.Exporter `json:"-"`
-	ExposedViews         []ExposedView `json:"-"`
-	exposedViewMutex     sync.Mutex    `json:"-"`
-	Views                []HTTPExporterView
+	// Registry is the one the exporter serves, held so that a service can add the collectors of what
+	// only it knows. See RegisterCollector.
+	Registry         *prom.Registry `json:"-"`
+	ExposedViews     []ExposedView  `json:"-"`
+	exposedViewMutex sync.Mutex     `json:"-"`
+	Views            []HTTPExporterView
 }
 
 type HTTPExporterView struct {

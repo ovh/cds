@@ -17,41 +17,45 @@ func Test_adminRepositoriesLines(t *testing.T) {
 			Instance:   "repositories-b",
 			ComputedAt: &now,
 			Repositories: []sdk.RepositoriesAdminEntry{
-				{ID: "idB1", URL: "git@example.net:cds/small.git", Size: 1024, Expired: true},
-				{ID: "idB2", URL: "git@example.net:cds/big.git", Size: 3 * 1024 * 1024, ProtectedUntil: &until},
+				{ID: "idB1", Kind: "full", URL: "git@example.net:cds/small.git", Size: 1024, Expired: true},
+				{ID: "idB1", Kind: "bare", URL: "git@example.net:cds/small.git", Size: 1024, Expired: true},
+				{ID: "idB2", Kind: "full", URL: "git@example.net:cds/big.git", Size: 3 * 1024 * 1024, ProtectedUntil: &until},
 			},
 		},
 		{
 			Instance:   "repositories-a",
 			ComputedAt: &now,
 			Repositories: []sdk.RepositoriesAdminEntry{
-				{ID: "idA1", URL: "git@example.net:cds/small.git", Size: 1024, Expired: true},
+				{ID: "idA1", Kind: "full", URL: "git@example.net:cds/small.git", Size: 1024, Expired: true},
 			},
 		},
 		{
 			Instance: "repositories-c", // sizes not measured yet
 			Repositories: []sdk.RepositoriesAdminEntry{
-				{ID: "idC1", URL: "git@example.net:cds/fresh.git", Expired: true},
+				{ID: "idC1", Kind: "bare", URL: "git@example.net:cds/fresh.git", Expired: true},
 			},
 		},
 	}
 
 	lines := adminRepositoriesLines(lists)
-	require.Len(t, lines, 4)
+	require.Len(t, lines, 5)
 
 	require.Equal(t, adminRepositoryLine{
-		Instance: "repositories-b", URL: "git@example.net:cds/big.git", Size: "3.0 MiB",
+		Instance: "repositories-b", Kind: "full", URL: "git@example.net:cds/big.git", Size: "3.0 MiB",
 		ProtectedUntil: until.Local().Format(time.RFC3339), ID: "idB2",
 	}, lines[0], "largest first")
 
 	require.Equal(t, "repositories-a", lines[1].Instance, "same size: sorted by instance")
 	require.Equal(t, "repositories-b", lines[2].Instance)
+	require.Equal(t, "bare", lines[2].Kind, "same instance and URL: sorted by kind")
+	require.Equal(t, "full", lines[3].Kind)
 	require.Equal(t, "1.0 KiB", lines[1].Size)
 	require.True(t, lines[1].Expired)
 	require.Empty(t, lines[1].ProtectedUntil)
 
-	require.Equal(t, "unknown", lines[3].Size, "instance without a size snapshot")
-	require.Equal(t, "repositories-c", lines[3].Instance)
+	require.Equal(t, "unknown", lines[4].Size, "instance without a size snapshot")
+	require.Equal(t, "repositories-c", lines[4].Instance)
+	require.Equal(t, "bare", lines[4].Kind)
 }
 
 func Test_adminRepositoriesLines_empty(t *testing.T) {

@@ -37,8 +37,7 @@ func (s *Service) itemOrphanCleanup(ctx context.Context) {
 		case <-tick.C:
 			nextCursor, err := s.cleanOrphanItemsV1(ctx, createdCursor)
 			if err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, "cdn:orphan-cleanup: error: %v", err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:orphan-cleanup: error: %v", err)
 				continue
 			}
 			createdCursor = nextCursor

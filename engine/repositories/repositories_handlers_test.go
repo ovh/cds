@@ -140,3 +140,15 @@ func getWorkflowTarFile(t *testing.T, buf *bytes.Buffer) {
 		t.Fail()
 	}
 }
+
+func Test_getOperationsHandler_unknownOperation(t *testing.T) {
+	s, err := newTestService(t)
+	test.NoError(t, err)
+
+	uri := s.Router.GetRoute("GET", s.getOperationsHandler, map[string]string{"uuid": sdk.UUID()})
+	test.NotEmpty(t, uri)
+	rec := httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, newRequest(t, s, "GET", uri, nil))
+
+	assert.Equal(t, 404, rec.Code, rec.Body.String())
+}

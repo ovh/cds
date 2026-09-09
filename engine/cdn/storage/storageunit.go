@@ -333,8 +333,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 								r.RemoveFromRedisSyncQueue(ctx, s, id)
 							} else {
 								err = sdk.WrapError(err, "unable to load item")
-								ctx = sdk.ContextWithStacktrace(ctx, err)
-								log.Error(ctx, "%v", err)
+								log.Error(sdk.ContextWithStacktrace(ctx, err), "%v", err)
 							}
 							continue
 						}
@@ -342,10 +341,8 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						t0 := time.Now()
 						if err := r.processItem(ctx, r.db, s, id); err != nil {
 							if !sdk.ErrorIs(err, sdk.ErrNotFound) {
-								t1 := time.Now()
-								ctx = sdk.ContextWithStacktrace(ctx, err)
-								ctx = context.WithValue(ctx, cdslog.Duration, t1.Sub(t0).Milliseconds())
-								log.Error(ctx, "error processing item id=%q: %v", id, err)
+								errCtx := context.WithValue(sdk.ContextWithStacktrace(ctx, err), cdslog.Duration, time.Since(t0).Milliseconds())
+								log.Error(errCtx, "error processing item id=%q: %v", id, err)
 							} else {
 								log.Info(ctx, "item id=%q is locked", id)
 							}
@@ -370,8 +367,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						return
 					case <-tickrPurge.C:
 						if err := r.Purge(ctx, b); err != nil {
-							ctx = sdk.ContextWithStacktrace(ctx, err)
-							log.Error(ctx, "RunningStorageUnits.purge> error: %v", err)
+							log.Error(sdk.ContextWithStacktrace(ctx, err), "RunningStorageUnits.purge> error: %v", err)
 						}
 					}
 				}
@@ -392,8 +388,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						return
 					case <-tickrPurge.C:
 						if err := r.Purge(ctx, s); err != nil {
-							ctx = sdk.ContextWithStacktrace(ctx, err)
-							log.Error(ctx, "RunningStorageUnits.purge> error: %v", err)
+							log.Error(sdk.ContextWithStacktrace(ctx, err), "RunningStorageUnits.purge> error: %v", err)
 						}
 					}
 				}
@@ -420,8 +415,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 						func(ctx context.Context) {
 							wg.Add(1)
 							if err := r.FillSyncItemChannel(ctx, s, r.config.SyncNbElements); err != nil {
-								ctx = sdk.ContextWithStacktrace(ctx, err)
-								log.Error(ctx, "RunningStorageUnits.run> error: %v", err)
+								log.Error(sdk.ContextWithStacktrace(ctx, err), "RunningStorageUnits.run> error: %v", err)
 							}
 							wg.Done()
 						},
@@ -440,8 +434,7 @@ func (r *RunningStorageUnits) RemoveFromRedisSyncQueue(ctx context.Context, s St
 	bts, _ := json.Marshal(id)
 	if err := r.cache.ScoredSetRem(ctx, k, string(bts)); err != nil {
 		err = sdk.WrapError(err, "unable to remove sync item %s from redis %s", id, k)
-		ctx = sdk.ContextWithStacktrace(ctx, err)
-		log.Error(ctx, "%v", err)
+		log.Error(sdk.ContextWithStacktrace(ctx, err), "%v", err)
 	}
 }
 

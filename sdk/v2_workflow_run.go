@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
@@ -95,12 +96,19 @@ const (
 	V2WorkflowRunStatusCancelled V2WorkflowRunStatus = "Cancelled"
 )
 
-func (s V2WorkflowRunStatus) IsTerminated() bool {
-	switch s {
-	case V2WorkflowRunStatusBuilding, V2WorkflowRunStatusCrafting, V2WorkflowRunStatusBlocked:
-		return false
+// V2WorkflowRunNonTerminalStatuses returns the statuses of a run that is still
+// in flight. Queries selecting runs to delete must exclude them, so this is the
+// single source of truth they share with IsTerminated.
+func V2WorkflowRunNonTerminalStatuses() []string {
+	return []string{
+		string(V2WorkflowRunStatusBuilding),
+		string(V2WorkflowRunStatusCrafting),
+		string(V2WorkflowRunStatusBlocked),
 	}
-	return true
+}
+
+func (s V2WorkflowRunStatus) IsTerminated() bool {
+	return !slices.Contains(V2WorkflowRunNonTerminalStatuses(), string(s))
 }
 
 type WorkflowRunAnnotations map[string]string
@@ -183,6 +191,8 @@ type V2WorkflowRunData struct {
 	Workflow     V2Workflow               `json:"workflow"`
 	WorkerModels map[string]V2WorkerModel `json:"worker_models"`
 	Actions      map[string]V2Action      `json:"actions"`
+	// Use to detect template cycles and keep each job's template provenance
+	JobTemplateChains map[string][]string `json:"job_template_chains,omitempty"`
 }
 
 func (w V2WorkflowRunData) Value() (driver.Value, error) {

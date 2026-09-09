@@ -116,9 +116,17 @@ query params.
 
 ## 5 — Live Updates
 
-The run list subscribes to run events over the websocket. The current search — filters and free text
-alike — is sent along with the subscription, and the API re-evaluates it for every incoming event so
-that only runs matching the search are pushed into the list.
+The run list subscribes to the run events of the project over the websocket, and the search it shows
+is sent along with the subscription: an event is pushed only for a run that search matches, which the
+API reads from the run the event carries.
+
+Where such a run goes is the list's own decision, taken from the sort in effect. A run it already
+displays is replaced where it stands; a run arriving is inserted at the position the sort gives it,
+and dropped when that position falls past the page, since it then belongs to a later one. The result
+count only moves for a run that is new to the search.
+
+Only the first page follows the events. Further pages are left as they were read: a list showing one
+of them has nowhere to put a run arriving, and coming back to the first page reads it again.
 
 ---
 

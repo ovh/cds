@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, inject, OnDestroy, TemplateRef, ViewChild } from "@angular/core";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
 import { from, interval, lastValueFrom, Subscription } from "rxjs";
-import { RUN_SUMMARY_HEADERS, V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
+import { RUN_SUMMARY_HEADERS, runInsertIndex, V2WorkflowRunService } from "app/service/workflowv2/workflow.service";
 import { PreferencesState } from "app/store/preferences.state";
 import { Store } from "@ngxs/store";
 import * as actionPreferences from "app/store/preferences.action";
@@ -137,6 +137,9 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
 
     static INFO_PANEL_KEY = 'workflow-run-info';
     static JOB_PANEL_KEY = 'workflow-run-job';
+    /** The strip of runs of the same workflow: the last of them, as the search returns them. */
+    static RUNS_PAGESIZE = 50;
+    static RUNS_SORT = 'started:desc';
     /**
      * The view is driven by the events of the run. This refresh is only a safety net for what events
      * cannot carry (run infos written without any status change) and for what a disconnection may have
@@ -300,8 +303,12 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         if (idx !== -1) {
             this.runs[idx] = event.payload;
         } else {
-            this.runs = [event.payload].concat(...this.runs);
-            if (this.runs.length > 50) {
+            const at = runInsertIndex(this.runs, event.payload, ProjectV2RunComponent.RUNS_SORT, ProjectV2RunComponent.RUNS_PAGESIZE);
+            if (at === -1) {
+                return;
+            }
+            this.runs = this.runs.slice(0, at).concat(event.payload, this.runs.slice(at));
+            if (this.runs.length > ProjectV2RunComponent.RUNS_PAGESIZE) {
                 this.runs.pop();
             }
         }
@@ -599,7 +606,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         params = params.appendAll({
             workflow: `${this.workflowRun.vcs_server}/${this.workflowRun.repository}/${this.workflowRun.workflow_name}`,
             offset: 0,
-            limit: 50
+            limit: ProjectV2RunComponent.RUNS_PAGESIZE
         });
 
         this._eventV2Service.updateFilter(<WebsocketV2Filter>{

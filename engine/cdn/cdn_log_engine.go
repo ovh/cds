@@ -33,8 +33,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 			listKeys, err := s.Cache.Keys(keyListQueue)
 			if err != nil {
 				err = sdk.WrapError(err, "unable to list jobs queues %s", keyListQueue)
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				continue
 			}
 
@@ -46,8 +45,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 				jobQueueKey, err := s.canDequeue(ctx, queueIdentifier)
 				if err != nil {
 					err = sdk.WrapError(err, "unable to check canDequeue %s", jobQueueKey)
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, err.Error())
+					log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 					continue
 				}
 				if jobQueueKey == "" {
@@ -57,8 +55,7 @@ func (s *Service) waitingJobs(ctx context.Context) {
 				s.GoRoutines.Exec(ctx, "cdn-dequeue-job-message", func(ctx context.Context) {
 					if err := s.dequeueMessages(ctx, jobQueueKey, queueIdentifier); err != nil {
 						err = sdk.WrapError(err, "unable to dequeue redis incoming job queue")
-						ctx = sdk.ContextWithStacktrace(ctx, err)
-						log.Error(ctx, err.Error())
+						log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 					}
 				})
 			}
@@ -92,8 +89,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 			b, err := s.Cache.Exist(jobLogsQueueKey)
 			if err != nil {
 				err = sdk.WrapError(err, "unable to check if queue still exist")
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				continue
 			} else if !b {
 				// leave dequeue if queue does not exist anymore
@@ -104,8 +100,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 			heartbeatKey := cache.Key(keyJobHearbeat, queueIdentifier)
 			if err := s.Cache.SetWithTTL(heartbeatKey, true, 30); err != nil {
 				err = sdk.WrapError(err, "unable to heartbeat %s", heartbeatKey)
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				continue
 			}
 		default:
@@ -125,8 +120,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 				// Send TO CDN Buffer
 				if err := s.sendToBufferWithRetry(ctx, hms); err != nil {
 					err = sdk.WrapError(err, "unable to send log into buffer")
-					ctx = sdk.ContextWithStacktrace(ctx, err)
-					log.Error(ctx, err.Error())
+					log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				}
 				nbMessages += len(msgs)
 				t1 = time.Now()
@@ -136,8 +130,7 @@ func (s *Service) dequeueMessages(ctx context.Context, jobLogsQueueKey string, q
 					continue
 				}
 				err = sdk.WrapError(err, "unable to dequeue job logs queue %s", jobLogsQueueKey)
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				continue
 			}
 		}

@@ -1476,3 +1476,476 @@ spec: |-
 	_, has = wrAfter2.WorkflowData.Workflow.Jobs["fromBranchX"]
 	require.True(t, has, "expected job fromBranchX from t2@branchX, got jobs: %v", wrAfter2.WorkflowData.Workflow.Jobs)
 }
+
+// Two templates referencing each other through their jobs: the expansion that would
+// re-enter a template already present in the job's template chain must fail the run
+// with a message naming the cycle, instead of re-injecting jobs forever.
+func TestWorkflowTrigger_JobTemplateCycleFailsRun(t *testing.T) {
+	ctx := context.TODO()
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:        sdk.RegionRoleExecute,
+				AllProjects: true,
+				RegionID:    reg.ID,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "my/"+sdk.RandomString(8))
+
+	entityA := sdk.Entity{
+		ProjectKey:          proj.Key,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/tmpl-a.yml",
+		Name:                "tmplA",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		ProjectRepositoryID: repo.ID,
+		UserID:              &admin.ID,
+		Data: `name: tmplA
+spec: |-
+  jobs:
+    a1:
+    a2:
+      from: .cds/workflow-templates/tmpl-b.yml`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &entityA))
+
+	entityB := sdk.Entity{
+		ProjectKey:          proj.Key,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/tmpl-b.yml",
+		Name:                "tmplB",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		ProjectRepositoryID: repo.ID,
+		UserID:              &admin.ID,
+		Data: `name: tmplB
+spec: |-
+  jobs:
+    b1:
+      from: .cds/workflow-templates/tmpl-a.yml`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &entityB))
+
+	completeNameA := fmt.Sprintf("%s/%s/%s/tmplA@refs/heads/master", proj.Key, vcsServer.Name, repo.Name)
+	completeNameB := fmt.Sprintf("%s/%s/%s/tmplB@refs/heads/master", proj.Key, vcsServer.Name, repo.Name)
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123456789",
+		WorkflowRef:  "refs/heads/master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: "myworkflow",
+			Jobs: map[string]sdk.V2Job{
+				"root": {
+					From: ".cds/workflow-templates/tmpl-a.yml",
+				},
+			},
+		}},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	enqueue := sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}
+
+	// The engine lock may still be held by the previous trigger, in which case the
+	// enqueue is deferred and the run is left untouched: retry until the condition holds.
+	triggerUntil := func(done func(run *sdk.V2WorkflowRun) bool) *sdk.V2WorkflowRun {
+		var wrAfter *sdk.V2WorkflowRun
+		for retry := 0; retry < 20; retry++ {
+			require.NoError(t, api.workflowRunV2Trigger(context.Background(), enqueue))
+			var err error
+			wrAfter, err = workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+			require.NoError(t, err)
+			if done(wrAfter) {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		return wrAfter
+	}
+
+	// First trigger: root is expanded from tmplA
+	wrAfter1 := triggerUntil(func(run *sdk.V2WorkflowRun) bool { return len(run.WorkflowData.JobTemplateChains) == 2 })
+	require.Equal(t, map[string][]string{
+		"a1": {completeNameA},
+		"a2": {completeNameA},
+	}, wrAfter1.WorkflowData.JobTemplateChains)
+
+	// Second trigger: a2 is expanded from tmplB
+	wrAfter2 := triggerUntil(func(run *sdk.V2WorkflowRun) bool { _, has := run.WorkflowData.JobTemplateChains["b1"]; return has })
+	require.Equal(t, map[string][]string{
+		"a1": {completeNameA},
+		"b1": {completeNameA, completeNameB},
+	}, wrAfter2.WorkflowData.JobTemplateChains)
+
+	// Third trigger: b1 resolves back to tmplA, already in its chain
+	wrAfter3 := triggerUntil(func(run *sdk.V2WorkflowRun) bool { return run.Status.IsTerminated() })
+	require.Equal(t, sdk.V2WorkflowRunStatusFail, wrAfter3.Status)
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(runInfos))
+	require.Contains(t, runInfos[0].Message,
+		fmt.Sprintf("job b1: template cycle detected: %s -> %s -> %s", completeNameA, completeNameB, completeNameA))
+}
+
+// A legitimate three-level template nesting: each expansion must record on the
+// injected jobs the chain of templates they were resolved through, keyed by job ID,
+// and jobs coming from the workflow file must have no entry.
+func TestWorkflowTrigger_JobTemplateChainsTrackProvenance(t *testing.T) {
+	ctx := context.TODO()
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:        sdk.RegionRoleExecute,
+				AllProjects: true,
+				RegionID:    reg.ID,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "my/"+sdk.RandomString(8))
+
+	for _, tmpl := range []struct{ name, data string }{
+		{"l1tmpl", `name: l1tmpl
+spec: |-
+  jobs:
+    l1a:
+    l1b:
+      from: .cds/workflow-templates/l2.yml`},
+		{"l2tmpl", `name: l2tmpl
+spec: |-
+  jobs:
+    l2a:
+    l2b:
+      from: .cds/workflow-templates/l3.yml`},
+		{"l3tmpl", `name: l3tmpl
+spec: |-
+  jobs:
+    l3a:
+    l3b:`},
+	} {
+		e := sdk.Entity{
+			ProjectKey:          proj.Key,
+			Type:                sdk.EntityTypeWorkflowTemplate,
+			FilePath:            fmt.Sprintf(".cds/workflow-templates/l%c.yml", tmpl.name[1]),
+			Name:                tmpl.name,
+			Commit:              "123456789",
+			Ref:                 "refs/heads/master",
+			ProjectRepositoryID: repo.ID,
+			UserID:              &admin.ID,
+			Data:                tmpl.data,
+		}
+		require.NoError(t, entity.Insert(ctx, db, &e))
+	}
+
+	completeName := func(name string) string {
+		return fmt.Sprintf("%s/%s/%s/%s@refs/heads/master", proj.Key, vcsServer.Name, repo.Name, name)
+	}
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123456789",
+		WorkflowRef:  "refs/heads/master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: "myworkflow",
+			Jobs: map[string]sdk.V2Job{
+				"root": {
+					From: ".cds/workflow-templates/l1.yml",
+				},
+			},
+		}},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	enqueue := sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}
+
+	expectedChains := []map[string][]string{
+		{
+			"l1a": {completeName("l1tmpl")},
+			"l1b": {completeName("l1tmpl")},
+		},
+		{
+			"l1a": {completeName("l1tmpl")},
+			"l2a": {completeName("l1tmpl"), completeName("l2tmpl")},
+			"l2b": {completeName("l1tmpl"), completeName("l2tmpl")},
+		},
+		{
+			"l1a": {completeName("l1tmpl")},
+			"l2a": {completeName("l1tmpl"), completeName("l2tmpl")},
+			"l3a": {completeName("l1tmpl"), completeName("l2tmpl"), completeName("l3tmpl")},
+			"l3b": {completeName("l1tmpl"), completeName("l2tmpl"), completeName("l3tmpl")},
+		},
+	}
+
+	for i, expected := range expectedChains {
+		// The engine lock may still be held by the previous trigger, in which case the
+		// enqueue is deferred and the run is left untouched: retry until the expansion
+		// happened.
+		var chains map[string][]string
+		for retry := 0; retry < 20; retry++ {
+			require.NoError(t, api.workflowRunV2Trigger(context.Background(), enqueue))
+			wrAfter, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+			require.NoError(t, err)
+			chains = wrAfter.WorkflowData.JobTemplateChains
+			if len(chains) == len(expected) {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		require.Equal(t, expected, chains, "unexpected chains after trigger %d", i+1)
+	}
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(runInfos))
+}
+
+// The same job template used by two sibling jobs, one needing the other: reusing a
+// template already expanded upstream in the job graph is not a cycle and must pass.
+func TestWorkflowTrigger_SameJobTemplateReusedBySiblingJobs(t *testing.T) {
+	ctx := context.TODO()
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+
+	org, err := organization.LoadOrganizationByName(context.TODO(), db, "default")
+	require.NoError(t, err)
+
+	reg := sdk.Region{
+		Name: "build",
+	}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	rb := sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Regions: []sdk.RBACRegion{
+			{
+				RegionID:            reg.ID,
+				AllUsers:            true,
+				RBACOrganizationIDs: []string{org.ID},
+				Role:                sdk.RegionRoleExecute,
+			},
+		},
+		RegionProjects: []sdk.RBACRegionProject{
+			{
+				Role:        sdk.RegionRoleExecute,
+				AllProjects: true,
+				RegionID:    reg.ID,
+			},
+		},
+	}
+	require.NoError(t, rbac.Insert(context.TODO(), db, &rb))
+
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "my/"+sdk.RandomString(8))
+
+	entityTmpl := sdk.Entity{
+		ProjectKey:          proj.Key,
+		Type:                sdk.EntityTypeWorkflowTemplate,
+		FilePath:            ".cds/workflow-templates/x.yml",
+		Name:                "xtmpl",
+		Commit:              "123456789",
+		Ref:                 "refs/heads/master",
+		ProjectRepositoryID: repo.ID,
+		UserID:              &admin.ID,
+		Data: `name: xtmpl
+parameters:
+- key: name
+spec: |-
+  jobs:
+    [[.params.name]]:`,
+	}
+	require.NoError(t, entity.Insert(ctx, db, &entityTmpl))
+
+	completeNameX := fmt.Sprintf("%s/%s/%s/xtmpl@refs/heads/master", proj.Key, vcsServer.Name, repo.Name)
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123456789",
+		WorkflowRef:  "refs/heads/master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: "myworkflow",
+			Jobs: map[string]sdk.V2Job{
+				"build": {
+					From:       ".cds/workflow-templates/x.yml",
+					Parameters: map[string]string{"name": "bx1"},
+				},
+				"test": {
+					From:       ".cds/workflow-templates/x.yml",
+					Parameters: map[string]string{"name": "bx2"},
+					Needs:      []string{"build"},
+				},
+			},
+		}},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.Background(), db, &wr))
+
+	enqueue := sdk.V2WorkflowRunEnqueue{
+		RunID: wr.ID,
+		Initiator: sdk.V2Initiator{
+			UserID:         admin.ID,
+			User:           admin.Initiator(),
+			IsAdminWithMFA: true,
+		},
+	}
+
+	var wrAfter *sdk.V2WorkflowRun
+	for i := 0; i < 6; i++ {
+		require.NoError(t, api.workflowRunV2Trigger(context.Background(), enqueue))
+		wrAfter, err = workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+		require.NoError(t, err)
+		if wrAfter.Status.IsTerminated() {
+			break
+		}
+	}
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	for _, ri := range runInfos {
+		t.Logf("RunInfo: %s", ri.Message)
+	}
+	require.Equal(t, 0, len(runInfos))
+	require.Equal(t, sdk.V2WorkflowRunStatusSuccess, wrAfter.Status)
+
+	_, has := wrAfter.WorkflowData.Workflow.Jobs["bx1"]
+	require.True(t, has)
+	_, has = wrAfter.WorkflowData.Workflow.Jobs["bx2"]
+	require.True(t, has)
+	require.Equal(t, []string{"bx1"}, wrAfter.WorkflowData.Workflow.Jobs["bx2"].Needs)
+	require.Equal(t, map[string][]string{
+		"bx1": {completeNameX},
+		"bx2": {completeNameX},
+	}, wrAfter.WorkflowData.JobTemplateChains)
+}

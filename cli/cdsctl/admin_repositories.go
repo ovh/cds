@@ -48,6 +48,7 @@ var adminRepositoriesListCmd = cli.Command{
 	Short: "list the git repositories stored on disk by each repositories service instance, with their size",
 	Example: `cdsctl admin repositories list
 cdsctl admin repositories list --name repositories-01
+cdsctl admin repositories list --filter kind=bare
 cdsctl admin repositories list --filter expired=true --format json`,
 	Flags: []cli.Flag{
 		{
@@ -61,6 +62,7 @@ cdsctl admin repositories list --filter expired=true --format json`,
 // adminRepositoryLine is one git repository of one instance, as displayed.
 type adminRepositoryLine struct {
 	Instance       string `cli:"instance"`
+	Kind           string `cli:"kind"`
 	URL            string `cli:"url,key"`
 	Size           string `cli:"size"`
 	Expired        bool   `cli:"expired"`
@@ -69,7 +71,7 @@ type adminRepositoryLine struct {
 }
 
 // adminRepositoriesLines flattens per-instance listings into display lines,
-// largest repositories first, then by instance and URL.
+// largest repositories first, then by instance, URL and kind.
 func adminRepositoriesLines(lists []sdk.RepositoriesAdminList) []adminRepositoryLine {
 	type sized struct {
 		line adminRepositoryLine
@@ -80,6 +82,7 @@ func adminRepositoriesLines(lists []sdk.RepositoriesAdminList) []adminRepository
 		for _, r := range l.Repositories {
 			line := adminRepositoryLine{
 				Instance: l.Instance,
+				Kind:     r.Kind,
 				URL:      r.URL,
 				Size:     humanize.IBytes(uint64(r.Size)),
 				Expired:  r.Expired,
@@ -102,7 +105,10 @@ func adminRepositoriesLines(lists []sdk.RepositoriesAdminList) []adminRepository
 		if a.line.Instance != b.line.Instance {
 			return a.line.Instance < b.line.Instance
 		}
-		return a.line.URL < b.line.URL
+		if a.line.URL != b.line.URL {
+			return a.line.URL < b.line.URL
+		}
+		return a.line.Kind < b.line.Kind
 	})
 	lines := make([]adminRepositoryLine, 0, len(all))
 	for _, s := range all {

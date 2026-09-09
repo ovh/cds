@@ -85,8 +85,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	for {
 		// Can i try to read the next 1024B
 		if err := globalRateLimit.WaitN(1024); err != nil {
-			ctx = sdk.ContextWithStacktrace(ctx, err)
-			log.Error(ctx, err.Error())
+			log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 			continue
 		}
 
@@ -105,14 +104,12 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 
 			// Check if we can send line
 			if err := lineRateLimiter.WaitN(1); err != nil {
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				continue
 			}
 			if err := s.handleLogMessage(ctx, currentBuffer); err != nil {
 				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
-				ctx = sdk.ContextWithStacktrace(ctx, err)
-				log.Error(ctx, err.Error())
+				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 			}
 			currentBuffer = make([]byte, 0)
 		}

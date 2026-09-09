@@ -11,6 +11,31 @@ import { CDNLogLink, CDNLogLinks } from "app/model/cdn.model";
  */
 export const RUN_SUMMARY_HEADERS = new HttpHeaders({ Accept: 'application/vnd.cds.workflow-run-summary+json' });
 
+/**
+ * Where a run pushed by the websocket goes in a list showing one page of a search. The API answers
+ * whether the run matches the search, not where it sits in it: sort and paging are the list's
+ * business, and it has everything to decide - the sort in effect, what it displays, and the dates
+ * the run carries.
+ *
+ * Returns the index to insert the run at, or -1 when this page does not reach it: under a descending
+ * sort a run older than the last one shown is on a later page, and under an ascending sort a run
+ * that has just started is at the far end of the result.
+ */
+export function runInsertIndex(runs: Array<V2WorkflowRun>, run: V2WorkflowRun, sort: string, pageSize: number): number {
+	const [field, direction] = (sort ?? '').split(':');
+	// Compared as instants: the same one can be written with any offset.
+	const at = (r: V2WorkflowRun) => new Date(field === 'last_modified' ? r.last_modified : r.started).getTime();
+
+	const value = at(run);
+	for (let i = 0; i < runs.length; i++) {
+		if (direction === 'asc' ? value <= at(runs[i]) : value >= at(runs[i])) {
+			return i;
+		}
+	}
+	// Past the last run shown, so it only belongs to this page while the page has room for it.
+	return runs.length < pageSize ? runs.length : -1;
+}
+
 @Injectable()
 export class V2WorkflowRunService {
     private _http = inject(HttpClient);

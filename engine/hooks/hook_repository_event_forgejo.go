@@ -29,6 +29,7 @@ func (s *Service) extractDataFromForgejoPushEvent(ctx context.Context, body []by
 		extractedData.Paths = append(extractedData.Paths, c.Modified...)
 		extractedData.Paths = append(extractedData.Paths, c.Removed...)
 	}
+	extractedData.Paths = sortedUniquePaths(extractedData.Paths)
 
 	if !extractedData.CDSEventType.IsValidForEventName(extractedData.CDSEventName) {
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)

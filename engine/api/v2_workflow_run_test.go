@@ -171,6 +171,9 @@ func TestSearchWorkflowRunsFreeTextQuery(t *testing.T) {
 		{"unmatched word excludes the run", "query=" + url.QueryEscape("awesome dev"), []string{}},
 		{"like wildcards are escaped", "query=" + url.QueryEscape("%"), []string{}},
 		{"query combines with filters", "query=workflow&status=Success&ref=" + url.QueryEscape("refs/heads/main"), []string{runAwesome.ID}},
+		{"workflow filter", "workflow=" + url.QueryEscape(vcsServer.Name+"/"+repo.Name+"/my-awesome-workflow"), []string{runAwesome.ID}},
+		{"commit filter", "commit=abcdef123456", []string{runOther.ID, runAwesome.ID}},
+		{"unmatched commit filter", "commit=999999999999", []string{}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			require.ElementsMatch(t, tc.expected, search(t, tc.query))

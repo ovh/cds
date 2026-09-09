@@ -163,7 +163,9 @@ type RepositoriesAdminList struct {
 // RepositoriesAdminEntry is one git repository directory of a repositories
 // service instance.
 type RepositoriesAdminEntry struct {
-	ID   string `json:"id"`
+	ID string `json:"id"`
+	// Kind is the cache holding this copy: "full" clone or "bare" partial clone.
+	Kind string `json:"kind"`
 	URL  string `json:"url"`
 	Size int64  `json:"size"`
 	// Expired is true when no retention protects the repository on this

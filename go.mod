@@ -26,7 +26,7 @@ require (
 	github.com/eapache/go-resiliency v1.3.0
 	github.com/fatih/color v1.18.0
 	github.com/fsamin/go-dump v1.8.0
-	github.com/fsamin/go-repo v0.11.1
+	github.com/fsamin/go-repo v0.12.0
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/fujiwara/shapeio v0.0.0-20170602072123-c073257dd745
 	github.com/go-gorp/gorp v2.0.0+incompatible
@@ -75,6 +75,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rockbears/log v0.12.0
 	github.com/rockbears/yaml v0.4.0
@@ -269,7 +270,6 @@ require (
 	github.com/pjbgf/sha1cd v0.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
-	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect

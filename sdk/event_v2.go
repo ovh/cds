@@ -406,6 +406,7 @@ func NewEventWorkflowRunPayload(wr V2WorkflowRun, rjs map[string]V2WorkflowRunJo
 		WorkflowData: wr.WorkflowData,
 		UserID:       wr.Initiator.UserID,
 		Username:     wr.Initiator.Username(),
+		VCSUsername:  wr.Initiator.VCSUsername,
 		AdminMFA:     wr.Initiator.IsAdminWithMFA,
 		RunEvent:     wr.RunEvent,
 		RunJobEvent:  wr.RunJobEvent,
@@ -467,6 +468,9 @@ type EventWorkflowRunPayload struct {
 	RunEvent     V2WorkflowRunEvent     `json:"event,omitempty"`
 	RunJobEvent  V2WorkflowRunJobEvents `json:"job_events,omitempty"`
 	Annotations  WorkflowRunAnnotations `json:"annotations,omitempty"`
+	// VCSUsername is the VCS user that started the run, as the run holds it. Username flattens it
+	// into "vcs/username", which is not the form the runs are searched on.
+	VCSUsername string `json:"vcs_username,omitempty"`
 
 	Contexts EventWorkflowRunPayloadContexts `json:"contexts" db:"contexts"`
 }

@@ -91,8 +91,7 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 				case *sdk.Worker:
 					log.Error(ctx, "Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", v.Name, v.Status)
 					if err := h.CDSClient().WorkerDisable(ctx, v.ID); err != nil {
-						ctx = sdk.ContextWithStacktrace(ctx, err)
-						log.Error(ctx, "Hatchery > WorkerPool> Unable to disable worker [%s]%s: %v", v.ID, v.Name, err)
+						log.Error(sdk.ContextWithStacktrace(ctx, err), "Hatchery > WorkerPool> Unable to disable worker [%s]%s: %v", v.ID, v.Name, err)
 					}
 					v.Status = sdk.StatusDisabled
 				case *sdk.V2Worker:

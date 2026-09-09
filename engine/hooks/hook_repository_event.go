@@ -3,6 +3,7 @@ package hooks
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -11,6 +12,13 @@ import (
 const (
 	NoCommit = "0000000000000000000000000000000000000000"
 )
+
+// sortedUniquePaths sorts paths and drops duplicates in place. Webhook payloads list a file
+// once per commit touching it; sorting also matches the order produced by git diff --name-status.
+func sortedUniquePaths(paths []string) []string {
+	slices.Sort(paths)
+	return slices.Compact(paths)
+}
 
 func (s *Service) extractDataFromPayload(ctx context.Context, _ http.Header, vcsServerType string, body []byte, eventName, eventType string) (string, sdk.HookRepositoryEventExtractData, error) {
 	switch vcsServerType {
@@ -101,6 +109,7 @@ func (s *Service) extractDataFromGiteaRequest(body []byte, eventName string) (st
 		extractedData.Paths = append(extractedData.Paths, c.Modified...)
 		extractedData.Paths = append(extractedData.Paths, c.Removed...)
 	}
+	extractedData.Paths = sortedUniquePaths(extractedData.Paths)
 
 	if !extractedData.CDSEventType.IsValidForEventName(extractedData.CDSEventName) {
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)
@@ -132,6 +141,7 @@ func (s *Service) extractDataFromGitlabRequest(body []byte, eventName string) (s
 		extractedData.Paths = append(extractedData.Paths, c.Modified...)
 		extractedData.Paths = append(extractedData.Paths, c.Removed...)
 	}
+	extractedData.Paths = sortedUniquePaths(extractedData.Paths)
 
 	switch eventName {
 	case "Push Hook":
@@ -178,6 +188,7 @@ func (s *Service) extractDataFromGithubRequest(body []byte, eventName string) (s
 		extractedData.Paths = append(extractedData.Paths, c.Modified...)
 		extractedData.Paths = append(extractedData.Paths, c.Removed...)
 	}
+	extractedData.Paths = sortedUniquePaths(extractedData.Paths)
 
 	switch eventName {
 	case "push":

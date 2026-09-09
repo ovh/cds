@@ -8,6 +8,8 @@ import (
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/prometheus"
 	"github.com/pkg/errors"
+	prom "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/rockbears/log"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -84,17 +86,45 @@ func Init(ctx context.Context, cfg Configuration, s Service) (context.Context, e
 
 	log.Info(ctx, "observability> initializing prometheus exporter for %q", serviceName(s))
 
-	e, err := prometheus.NewExporter(prometheus.Options{})
+	// The registry is built here rather than left to the exporter, which would create an empty one:
+	// the runtime of the process is described by the collectors registered on it, and nothing of it
+	// goes through a view. Without them the metrics say what the service did and nothing about what
+	// it costs, which is what a goroutine leak or a heap growing out of hand is read from.
+	registry := prom.NewRegistry()
+	if err := registry.Register(collectors.NewGoCollector()); err != nil {
+		return ctx, errors.WithStack(err)
+	}
+	if err := registry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{})); err != nil {
+		return ctx, errors.WithStack(err)
+	}
+
+	e, err := prometheus.NewExporter(prometheus.Options{Registry: registry})
 	if err != nil {
 		return ctx, errors.WithStack(err)
 	}
 	view.RegisterExporter(e)
 	he := new(HTTPExporter)
 	he.Exporter = e
+	he.Registry = registry
 	view.RegisterExporter(he)
 	ctx = context.WithValue(ctx, contextStatsExporter, he)
 
 	return ctx, nil
+}
+
+// RegisterCollector exposes a prometheus collector on the metrics of the service. It is for what the
+// service knows and this package does not, such as the pool of its database.
+func RegisterCollector(ctx context.Context, cs ...prom.Collector) error {
+	e := StatsExporter(ctx)
+	if e == nil || e.Registry == nil {
+		return errors.New("telemetry: no stats exporter to register a collector on")
+	}
+	for _, c := range cs {
+		if err := e.Registry.Register(c); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+	return nil
 }
 
 // Tags contants

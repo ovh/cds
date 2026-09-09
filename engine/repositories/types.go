@@ -4,6 +4,7 @@ package repositories
 import (
 	"path/filepath"
 	"sync/atomic"
+	"time"
 
 	gocache "github.com/patrickmn/go-cache"
 
@@ -38,14 +39,80 @@ type Configuration struct {
 		TTL   int           `toml:"ttl" default:"60" json:"ttl"`
 		Redis sdk.RedisConf `toml:"redis" json:"redis"`
 	} `toml:"cache" comment:"######################\n CDS Repositories Cache Settings \n######################" json:"cache"`
-	MaxWorkers int `toml:"maxWorkers" comment:"Maximum of operations that can be done in parallel" default:"10" json:"maxWorkers"`
+	MaxWorkers        int  `toml:"maxWorkers" comment:"Maximum of operations that can be done in parallel" default:"10" json:"maxWorkers"`
+	BareAnalysisCache bool `toml:"bareAnalysisCache" comment:"Process analysis-only operations (signature, semver, changeset) on a cache of bare partial clones, much lighter on disk. Requires git partial clone support on the VCS" default:"false" json:"bareAnalysisCache"`
 }
 
-// Repo retiens a sdk.OperationRepo from an sdk.Operation
-func (s *Service) Repo(op sdk.Operation) *sdk.OperationRepo {
+// cacheRoot is one of the clone caches under Basedir: full clones serve
+// checkout/loadfiles/push operations, bare partial clones serve analyses.
+type cacheRoot struct {
+	kind string
+}
+
+var (
+	cacheRootFull = cacheRoot{kind: "full"}
+	cacheRootBare = cacheRoot{kind: "bare"}
+	cacheRoots    = []cacheRoot{cacheRootFull, cacheRootBare}
+)
+
+// cloneKey identifies a clone ("<kind>/<id>"): its retention entry, in-progress
+// marker and size snapshot key; full and bare copies never share one.
+func (c cacheRoot) cloneKey(repoID string) string {
+	return c.kind + "/" + repoID
+}
+
+// rootDir is the directory holding the clones of this cache.
+func (s *Service) rootDir(c cacheRoot) string {
+	return filepath.Join(s.Cfg.Basedir, c.kind)
+}
+
+// clonePath is the directory of one clone.
+func (s *Service) clonePath(c cacheRoot, repoID string) string {
+	return filepath.Join(s.rootDir(c), repoID)
+}
+
+// cacheRootFor returns the cache an operation works on.
+func (s *Service) cacheRootFor(op sdk.Operation) cacheRoot {
+	if s.useBareAnalysisCache(op) {
+		return cacheRootBare
+	}
+	return cacheRootFull
+}
+
+// repositoryLockTTL bounds how long a repository stays locked if its holder never releases it.
+const repositoryLockTTL = 10 * time.Minute
+
+// tryLockRepository marks a repository as in use on this instance (processor operation
+// or cleaner pass); false when it is already held, the caller must step back.
+func (s *Service) tryLockRepository(cloneKey string) bool {
+	return s.localCache.Add(cloneKey, true, repositoryLockTTL) == nil
+}
+
+// unlockRepository releases a repository locked by tryLockRepository.
+func (s *Service) unlockRepository(cloneKey string) {
+	s.localCache.Delete(cloneKey)
+}
+
+// cloneKey identifies the clone an operation works on.
+func (s *Service) cloneKey(op sdk.Operation) string {
+	return s.cacheRootFor(op).cloneKey(s.Repo(op).ID())
+}
+
+// repoIn maps an operation to its clone location in the given cache.
+func (s *Service) repoIn(c cacheRoot, op sdk.Operation) *sdk.OperationRepo {
 	r := new(sdk.OperationRepo)
 	r.URL = op.URL
-	r.Basedir = filepath.Join(s.Cfg.Basedir, r.ID())
 	r.RepositoryStrategy = op.RepositoryStrategy
+	r.Basedir = s.clonePath(c, r.ID())
 	return r
+}
+
+// Repo maps an operation to its full clone.
+func (s *Service) Repo(op sdk.Operation) *sdk.OperationRepo {
+	return s.repoIn(cacheRootFull, op)
+}
+
+// BareRepo maps an operation to its bare partial clone.
+func (s *Service) BareRepo(op sdk.Operation) *sdk.OperationRepo {
+	return s.repoIn(cacheRootBare, op)
 }

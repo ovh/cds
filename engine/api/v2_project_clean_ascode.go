@@ -259,14 +259,15 @@ func cleanAscodeProject(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		return err
 	}
 	for _, vcsServer := range vcsRepos {
-		ctx = context.WithValue(ctx, cdslog.VCSServer, vcsServer.Name)
+		// Shadowed per iteration so that the context chain does not grow with the number of items
+		ctx := context.WithValue(ctx, cdslog.VCSServer, vcsServer.Name)
 		repos, err := repository.LoadAllRepositoriesByVCSProjectID(ctx, db, vcsServer.ID)
 		if err != nil {
 			return err
 		}
 
 		for _, r := range repos {
-			ctx = context.WithValue(ctx, cdslog.Repository, r.Name)
+			ctx := context.WithValue(ctx, cdslog.Repository, r.Name)
 			entities, err := entity.LoadByRepository(ctx, db, r.ID)
 			if err != nil {
 				return err
