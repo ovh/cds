@@ -58,17 +58,6 @@ func getEntities(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 	return entities, nil
 }
 
-// syncDeprecatedUserID mirrors the owner's CDS user id into user_id (nil for a VCS-only or empty
-// owner), the column still read by older hooks services.
-func syncDeprecatedUserID(e *sdk.Entity) {
-	if e.Initiator.UserID == "" {
-		e.DeprecatedUserID = nil
-		return
-	}
-	userID := e.Initiator.UserID
-	e.DeprecatedUserID = &userID
-}
-
 // sanitizeLoadedOwner never trusts the stored admin MFA flag and mirrors the owner into user_id
 func sanitizeLoadedOwner(e *sdk.Entity) {
 	if e.Initiator == nil {
@@ -80,7 +69,12 @@ func sanitizeLoadedOwner(e *sdk.Entity) {
 // normalizeOwner strips the admin MFA flag and mirrors the owner into user_id before the row is signed.
 func normalizeOwner(e *sdk.Entity) {
 	e.Initiator.IsAdminWithMFA = false
-	syncDeprecatedUserID(e)
+	if e.Initiator.UserID == "" {
+		e.DeprecatedUserID = nil
+		return
+	}
+	userID := e.Initiator.UserID
+	e.DeprecatedUserID = &userID
 }
 
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {

@@ -27,9 +27,10 @@ func MigrateEntityInitiator(ctx context.Context, db *gorp.DbMap) error {
 }
 
 func migrateEntityInitiators(ctx context.Context, db *gorp.DbMap, ids []string) error {
+	owners := newLegacyOwners()
 	var migrated, skipped, failed int
 	for i, id := range ids {
-		done, err := migrateEntityInitiator(ctx, db, id)
+		done, err := migrateEntityInitiator(ctx, db, id, owners)
 		switch {
 		case err != nil:
 			failed++
@@ -53,7 +54,7 @@ func migrateEntityInitiators(ctx context.Context, db *gorp.DbMap, ids []string) 
 // migrateEntityInitiator rebuilds the owner of one entity from its user_id column, with the same user
 // snapshot as a run initiator. It returns false when there is nothing to do: the row is gone,
 // unreadable, locked by another writer, or already carries an owner.
-func migrateEntityInitiator(ctx context.Context, db *gorp.DbMap, id string) (bool, error) {
+func migrateEntityInitiator(ctx context.Context, db *gorp.DbMap, id string, owners *legacyOwners) (bool, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return false, sdk.WithStack(err)
@@ -70,7 +71,7 @@ func migrateEntityInitiator(ctx context.Context, db *gorp.DbMap, id string) (boo
 	if e.Initiator != nil {
 		return false, nil
 	}
-	e.Initiator, err = legacyOwner(ctx, tx, e.DeprecatedUserID)
+	e.Initiator, err = owners.owner(ctx, tx, e.DeprecatedUserID)
 	if err != nil {
 		return false, err
 	}
@@ -80,18 +81,34 @@ func migrateEntityInitiator(ctx context.Context, db *gorp.DbMap, id string) (boo
 	return true, sdk.WithStack(tx.Commit())
 }
 
-// legacyOwner builds the owner from the user_id column written by former versions: nobody when unset,
-// the user with its snapshot otherwise. A deleted user keeps its id with an empty snapshot.
-func legacyOwner(ctx context.Context, db gorp.SqlExecutor, userID *string) (*sdk.V2Initiator, error) {
+// legacyOwners builds owners from the user_id column written by former versions, loading each user
+// once per migration run.
+type legacyOwners struct {
+	users map[string]*sdk.V2Initiator
+}
+
+func newLegacyOwners() *legacyOwners {
+	return &legacyOwners{users: make(map[string]*sdk.V2Initiator)}
+}
+
+// owner returns nobody when user_id is unset, otherwise a copy of the user's owner, with its snapshot.
+// A deleted user keeps its id with an empty snapshot.
+func (c *legacyOwners) owner(ctx context.Context, db gorp.SqlExecutor, userID *string) (*sdk.V2Initiator, error) {
 	if userID == nil || *userID == "" {
 		return &sdk.V2Initiator{}, nil
 	}
-	u, err := user.LoadByID(ctx, db, *userID, user.LoadOptions.WithContacts)
-	if err != nil {
-		if sdk.ErrorIs(err, sdk.ErrUserNotFound) || sdk.ErrorIs(err, sdk.ErrNotFound) {
-			return &sdk.V2Initiator{UserID: *userID, User: &sdk.V2InitiatorUser{}}, nil
+	owner, known := c.users[*userID]
+	if !known {
+		u, err := user.LoadByID(ctx, db, *userID, user.LoadOptions.WithContacts)
+		switch {
+		case err == nil:
+			owner = &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()}
+		case sdk.ErrorIs(err, sdk.ErrUserNotFound) || sdk.ErrorIs(err, sdk.ErrNotFound):
+			owner = &sdk.V2Initiator{UserID: *userID, User: &sdk.V2InitiatorUser{}}
+		default:
+			return nil, err
 		}
-		return nil, err
+		c.users[*userID] = owner
 	}
-	return &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()}, nil
+	return owner.EntityOwner(), nil
 }
