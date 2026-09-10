@@ -13,8 +13,10 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -22,6 +24,7 @@ import (
 	"github.com/rockbears/log"
 	"github.com/rockbears/yaml"
 	"go.opencensus.io/trace"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/entity"
@@ -2010,6 +2013,34 @@ func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, anal
 	return keyId, analyzeError, nil
 }
 
+// defaultEntityFileFetchConcurrency is used when entity.fileFetchConcurrency
+// is not set.
+const defaultEntityFileFetchConcurrency = 8
+
+// listCdsFilePaths walks the .cds tree and returns the entity files in it.
+func (api *API) listCdsFilePaths(ctx context.Context, client sdk.VCSAuthorizedClientService, repoName, commit, directory string) ([]string, error) {
+	contents, err := client.ListContent(ctx, repoName, commit, directory, "0", "100")
+	if err != nil {
+		return nil, sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
+	}
+	paths := make([]string, 0, len(contents))
+	for _, c := range contents {
+		if c.IsFile && (strings.HasSuffix(c.Name, ".yml") || strings.HasSuffix(c.Name, ".yaml")) {
+			paths = append(paths, directory+"/"+c.Name)
+		}
+		if c.IsDirectory {
+			sub, err := api.listCdsFilePaths(ctx, client, repoName, commit, directory+"/"+c.Name)
+			if err != nil {
+				return nil, err
+			}
+			paths = append(paths, sub...)
+		}
+	}
+	return paths, nil
+}
+
+// getCdsFilesOnVCSDirectory reads every entity file under a directory,
+// concurrently, bounded by entity.fileFetchConcurrency.
 func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsName, repoName, commit, directory string) (map[string][]byte, error) {
 	ctx, next := telemetry.Span(ctx, "api.getCdsFilesOnVCSDirectory")
 	defer next()
@@ -2019,33 +2050,55 @@ func (api *API) getCdsFilesOnVCSDirectory(ctx context.Context, analysis *sdk.Pro
 		return nil, sdk.WithStack(err)
 	}
 
-	filesContent := make(map[string][]byte)
-	contents, err := client.ListContent(ctx, repoName, commit, directory, "0", "100")
+	paths, err := api.listCdsFilePaths(ctx, client, repoName, commit, directory)
 	if err != nil {
-		return nil, sdk.WrapError(err, "unable to list content on commit [%s] in directory %s: %v", commit, directory, err)
+		return nil, err
 	}
-	for _, c := range contents {
-		if c.IsFile && (strings.HasSuffix(c.Name, ".yml") || strings.HasSuffix(c.Name, ".yaml")) {
-			filePath := directory + "/" + c.Name
-			vcsContent, err := client.GetContent(ctx, repoName, commit, filePath)
+
+	filesContent := make(map[string][]byte, len(paths))
+	var mu sync.Mutex
+	group, groupCtx := errgroup.WithContext(ctx)
+	// errgroup.SetLimit(0) admits no goroutines and Wait then blocks forever,
+	// so an unset bound falls back to the default here as well as in Serve.
+	fileFetchConcurrency := int(api.Config.Entity.FileFetchConcurrency)
+	if fileFetchConcurrency <= 0 {
+		fileFetchConcurrency = defaultEntityFileFetchConcurrency
+	}
+	group.SetLimit(fileFetchConcurrency)
+	for i := range paths {
+		// A failed read cancels groupCtx; every read started after that can
+		// only fail with the same error.
+		if groupCtx.Err() != nil {
+			break
+		}
+		filePath := paths[i]
+		group.Go(func() (err error) {
+			// errgroup starts a bare goroutine with no recovery of its own,
+			// so a panic here would reach the runtime and end the process.
+			defer func() {
+				if r := recover(); r != nil {
+					buf := make([]byte, 1<<16)
+					buf = buf[:runtime.Stack(buf, false)]
+					log.Error(groupCtx, "[PANIC] getCdsFilesOnVCSDirectory> reading %s: %v\n%s", filePath, r, string(buf))
+					err = sdk.WithStack(fmt.Errorf("panic while reading %s: %v", filePath, r))
+				}
+			}()
+			vcsContent, err := client.GetContent(groupCtx, repoName, commit, filePath)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			contentBts, err := base64.StdEncoding.DecodeString(vcsContent.Content)
 			if err != nil {
-				return nil, sdk.WithStack(err)
+				return sdk.WithStack(err)
 			}
+			mu.Lock()
 			filesContent[filePath] = contentBts
-		}
-		if c.IsDirectory {
-			contents, err := api.getCdsFilesOnVCSDirectory(ctx, analysis, vcsName, repoName, commit, directory+"/"+c.Name)
-			if err != nil {
-				return nil, err
-			}
-			for k, v := range contents {
-				filesContent[k] = v
-			}
-		}
+			mu.Unlock()
+			return nil
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return nil, err
 	}
 	return filesContent, nil
 }
