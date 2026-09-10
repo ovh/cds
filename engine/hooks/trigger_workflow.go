@@ -103,13 +103,18 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			// Check path filter
 			canTriggerWithChangeSet := false
 			if len(wh.PathFilters) > 0 {
+				// A workflow-run hook filters on the parent run changesets; UpdatedFiles holds the target repository ones
+				updatedFiles := wh.UpdatedFiles
+				if wh.Type == string(sdk.WorkflowHookTypeWorkflowRun) {
+					updatedFiles = wh.ParentUpdatedFiles
+				}
 			pathLoop:
 				for _, hookPathFilter := range wh.PathFilters {
 					g := glob.New(hookPathFilter)
-					for _, file := range wh.UpdatedFiles {
+					for _, file := range updatedFiles {
 						result, err := g.MatchString(file)
 						if err != nil {
-							log.Error(ctx, "unable to check file %s with pattern %s", hookPathFilter)
+							log.Error(ctx, "unable to check file %s with pattern %s", file, hookPathFilter)
 							continue
 						}
 						if result == nil {
