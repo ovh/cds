@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"sort"
 	"testing"
 
@@ -119,6 +120,22 @@ func TestPropertiesMap(t *testing.T) {
 		"deb.distribution": {"focal", "jammy"},
 		"deb.component":    {"main"},
 	}, props)
+}
+
+// TestSearchResultResponseTruncation locks the JSON path of the hard-limit marker: artifactory
+// reports it under the range object, not at the top level.
+func TestSearchResultResponseTruncation(t *testing.T) {
+	var res grpcplugins.SearchResultResponse
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"results": [{"repo": "proj-debian-snapshot", "path": "pool", "name": "a.deb"}],
+		"range": {"start_pos": 0, "end_pos": 1, "total": 1, "notification": "AQL query reached the search hard limit, results are trimmed."}
+	}`), &res))
+	require.Len(t, res.Results, 1)
+	require.Equal(t, "AQL query reached the search hard limit, results are trimmed.", res.Range.Notification)
+
+	var complete grpcplugins.SearchResultResponse
+	require.NoError(t, json.Unmarshal([]byte(`{"results": [], "range": {"start_pos": 0, "end_pos": 0, "total": 0}}`), &complete))
+	require.Equal(t, "", complete.Range.Notification)
 }
 
 // TestGlobSelection covers the candidate filtering as done by enumerateGlobMatches, on

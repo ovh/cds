@@ -466,8 +466,10 @@ type ArtifactoryFileInfo struct {
 
 type SearchResultResponse struct {
 	Results []SearchResult `json:"results"`
-	// set by artifactory when the result set was trimmed by a server-side limit
-	Notification string `json:"notification"`
+	Range   struct {
+		// set by artifactory when the result set was trimmed by the server-side hard limit
+		Notification string `json:"notification"`
+	} `json:"range"`
 }
 
 type SearchResult struct {

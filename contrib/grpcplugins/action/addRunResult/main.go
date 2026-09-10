@@ -1122,8 +1122,8 @@ func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfi
 	if err != nil {
 		return nil, err
 	}
-	if res.Notification != "" {
-		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search truncated by artifactory (%s): use a more specific pattern", res.Notification)
+	if res.Range.Notification != "" {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search truncated by artifactory (%s): use a more specific pattern", res.Range.Notification)
 	}
 	if len(res.Results) >= aqlSearchLimit {
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search returned %d items or more, results may be truncated: use a more specific pattern", len(res.Results))
