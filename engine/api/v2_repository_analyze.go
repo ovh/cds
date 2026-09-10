@@ -453,7 +453,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}()
 
 	defer func() {
-		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis, analysis.Data.Initiator)
+		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis)
 	}()
 
 	entitiesUpdated := make([]sdk.Entity, 0)
@@ -614,7 +614,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 skipEntity:
 	for i := range entities {
 		e := &entities[i]
-		e.UserID = &analysis.Data.Initiator.UserID
+		e.Initiator = analysis.Data.Initiator.EntityOwner()
 
 		for entityIndex := range analysis.Data.Entities {
 			analysisEntity := &analysis.Data.Entities[entityIndex]
@@ -1256,7 +1256,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 
 	if analysis.Data.Initiator != nil {
 		callback.AnalysisCallback.Initiator = analysis.Data.Initiator
-		callback.AnalysisCallback.DeprecatedUsername = analysis.Data.Initiator.Username()
+		callback.AnalysisCallback.DeprecatedUsername = analysis.Data.InitiatorUsername()
 		callback.AnalysisCallback.DeprecatedUserID = analysis.Data.Initiator.UserID
 	}
 
@@ -1478,6 +1478,16 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 		} else {
 			committerName = commit.Committer.Name
 			committerID = commit.Committer.ID
+		}
+
+		// The VCS account signing with its project key needs no CDS user, as for the other VCS types
+		for _, VCSGPGUser := range possibleVCSGPGUSers {
+			if VCSGPGUser.Username == committerName {
+				return &sdk.V2Initiator{
+					VCS:         vcsProjectWithSecret.Name,
+					VCSUsername: committerName,
+				}, "", "", nil
+			}
 		}
 
 		if committerID == "" {

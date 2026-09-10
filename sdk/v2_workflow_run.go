@@ -553,6 +553,26 @@ func (i *V2Initiator) IsUser() bool {
 	return i.VCSUsername == "" && i.UserID != ""
 }
 
+// IsUnknown returns true when neither a CDS user nor a VCS user is identified.
+func (i *V2Initiator) IsUnknown() bool {
+	return i == nil || (i.UserID == "" && i.VCSUsername == "")
+}
+
+// EntityOwner returns a copy to persist as an entity owner; the admin MFA flag is
+// dropped so a sudo analysis does not grant permanent privileges to future triggers.
+func (i *V2Initiator) EntityOwner() *V2Initiator {
+	if i == nil {
+		return nil
+	}
+	owner := *i
+	owner.IsAdminWithMFA = false
+	if i.User != nil {
+		u := *i.User
+		owner.User = &u
+	}
+	return &owner
+}
+
 func (i V2Initiator) Value() (driver.Value, error) {
 	m, err := json.Marshal(i)
 	return m, WrapError(err, "cannot marshal V2Initiator")

@@ -82,27 +82,33 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 	switch hre.Status {
 	case sdk.HookEventStatusAnalysis:
 		if callback.AnalysisCallback != nil {
+			found := false
 			for i := range hre.Analyses {
 				a := &hre.Analyses[i]
 				if a.AnalyzeID == callback.AnalysisCallback.AnalysisID {
+					found = true
 					if a.Status == sdk.RepositoryAnalysisStatusInProgress {
 						a.Status = callback.AnalysisCallback.AnalysisStatus
 						a.Error = callback.AnalysisCallback.Error
 						hre.ModelUpdated = append(hre.ModelUpdated, callback.AnalysisCallback.Models...)
 						hre.WorkflowUpdated = append(hre.WorkflowUpdated, callback.AnalysisCallback.Workflows...)
-						hre.DeprecatedUserID = callback.AnalysisCallback.Initiator.UserID
-						hre.DeprecatedUsername = callback.AnalysisCallback.Initiator.Username()
-						hre.Initiator = callback.AnalysisCallback.Initiator
+						// Initiator is nil when the analysis stopped before the committer was resolved
+						if initiator := callback.AnalysisCallback.Initiator; initiator != nil {
+							hre.DeprecatedUserID = initiator.UserID
+							hre.DeprecatedUsername = callback.AnalysisCallback.DeprecatedUsername
+							hre.Initiator = initiator
+						}
 						hre.SkippedWorkflows = append(hre.SkippedWorkflows, callback.AnalysisCallback.SkippedWorkflows...)
 						hre.SkippedHooks = append(hre.SkippedHooks, callback.AnalysisCallback.SkippedHooks...)
 						hre.SignKey = callback.AnalysisCallback.SignKey
-
-						if err := s.Dao.SaveRepositoryEvent(ctx, &hre); err != nil {
-							return err
-						}
-						break
+					} else {
+						log.Warn(ctx, "analysis %s callback ignored on hook event %s: analysis already %s", a.AnalyzeID, hre.UUID, a.Status)
 					}
+					break
 				}
+			}
+			if !found {
+				log.Warn(ctx, "analysis %s callback ignored on hook event %s: unknown analysis", callback.AnalysisCallback.AnalysisID, hre.UUID)
 			}
 		} else {
 			return sdk.Errorf("missing analysis callback data")
@@ -114,9 +120,10 @@ func (s *Service) updateHookEventWithCallback(ctx context.Context, callback sdk.
 				return err
 			}
 		} else {
-			return sdk.Errorf("missing analysis callback data")
+			return sdk.Errorf("missing signing key callback data")
 		}
 	default:
+		log.Warn(ctx, "callback ignored on hook event %s: unexpected status %s", hre.UUID, hre.Status)
 		return nil
 	}
 

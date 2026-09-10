@@ -1985,6 +1985,7 @@ func TestPostWorkflowRunHandler(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                sdk.RandomString(10),
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          proj.Key,
@@ -2422,6 +2423,7 @@ func TestPostWorkflowRunHandler_JobInputs(t *testing.T) {
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 		Name:                sdk.RandomString(10),
 		Type:                sdk.EntityTypeWorkflow,
 		ProjectKey:          proj.Key,
@@ -3178,4 +3180,93 @@ func TestPostStartJobWorkflowRunHandler_MultipleJobs(t *testing.T) {
 	}
 	require.True(t, findJob1)
 	require.True(t, findjob2)
+}
+
+func TestPostWorkflowRunFromHookV2Handler_InsecureSkipUsesTheEntityOwner(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	insertWorkflow := func(name string, owner *sdk.V2Initiator, insecureSkip bool) {
+		e := sdk.Entity{
+			Name:                name,
+			Type:                sdk.EntityTypeWorkflow,
+			ProjectKey:          proj.Key,
+			ProjectRepositoryID: repo.ID,
+			FilePath:            ".cds/workflows/" + name + ".yml",
+			Ref:                 "refs/heads/master",
+			Commit:              "123456",
+			Head:                true,
+			Initiator:           owner,
+			Data: `name: ` + name + `
+repository:
+  vcs: github
+  name: ` + repo.Name + `
+  insecure_skip_signature_verify: ` + strconv.FormatBool(insecureSkip) + `
+jobs:
+  myFirstJob:
+    worker_model: buildpack-deps-buster
+    region: default
+    steps:
+      - run: echo hello`,
+		}
+		require.NoError(t, entity.Insert(context.TODO(), db, &e))
+	}
+	runFromHook := func(name string) *httptest.ResponseRecorder {
+		vars := map[string]string{
+			"projectKey":           proj.Key,
+			"vcsIdentifier":        vcsServer.Name,
+			"repositoryIdentifier": repo.Name,
+			"workflow":             name,
+		}
+		uri := api.Router.GetRouteV2("POST", api.postWorkflowRunFromHookV2Handler, vars) + "?ref=refs/heads/master&commit=123456"
+		req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, sdk.V2WorkflowRunHookRequest{
+			HookEventID:  sdk.UUID(),
+			HookType:     sdk.WorkflowHookTypeScheduler,
+			EventName:    sdk.WorkflowHookEventNameScheduler,
+			Ref:          "refs/heads/master",
+			Sha:          "123456",
+			Cron:         "* * * * *",
+			CronTimezone: "UTC",
+		})
+		w := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(w, req)
+		return w
+	}
+
+	// The workflow committed by a VCS user runs on its behalf, without any privilege
+	require.NoError(t, rbac.Insert(context.TODO(), db, &sdk.RBAC{
+		Name: sdk.RandomString(10),
+		Workflows: []sdk.RBACWorkflow{{
+			Role:               sdk.WorkflowRoleTrigger,
+			ProjectKey:         proj.Key,
+			RBACWorkflowsNames: sdk.RBACWorkflowNames{vcsServer.Name + "/" + repo.Name + "/owned"},
+			RBACVCSUsers:       sdk.RBACVCSUsers{{VCSServer: vcsServer.Name, VCSUsername: "octocat"}},
+		}},
+	}))
+	insertWorkflow("owned", &sdk.V2Initiator{VCS: vcsServer.Name, VCSUsername: "octocat", IsAdminWithMFA: true}, true)
+
+	w := runFromHook("owned")
+	require.Equal(t, 200, w.Code, w.Body.String())
+	var wr sdk.V2WorkflowRun
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wr))
+	require.Equal(t, vcsServer.Name, wr.Initiator.VCS)
+	require.Equal(t, "octocat", wr.Initiator.VCSUsername)
+	require.Empty(t, wr.Initiator.UserID)
+	require.False(t, wr.Initiator.IsAdminWithMFA)
+
+	// Nobody owns the workflow: refused
+	insertWorkflow("unowned", &sdk.V2Initiator{}, true)
+	w = runFromHook("unowned")
+	require.Equal(t, 403, w.Code, w.Body.String())
+	require.Contains(t, w.Body.String(), "unknown workflow owner")
+
+	// Without the insecure flag the request must identify its initiator, here it sends none
+	insertWorkflow("strict", &sdk.V2Initiator{VCS: vcsServer.Name, VCSUsername: "octocat"}, false)
+	w = runFromHook("strict")
+	require.Equal(t, 403, w.Code, w.Body.String())
+	require.Contains(t, w.Body.String(), "unknown user")
 }

@@ -22,7 +22,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 
 	// Check if we know the user that trigger the event
 	isPushOnWorkflowDistant := hre.SignKey == "" && (hre.EventName == sdk.WorkflowHookEventNamePush)
-	if isPushOnWorkflowDistant || (hre.SignKey != "" && (hre.Initiator == nil || (hre.Initiator.UserID == "" && hre.Initiator.VCSUsername == ""))) {
+	if isPushOnWorkflowDistant || (hre.SignKey != "" && hre.Initiator.IsUnknown()) {
 		var req sdk.HookRetrieveUserRequest
 		switch {
 		case hre.ExtractData.WorkflowRun != nil && hre.ExtractData.WorkflowRun.OutgoingHookEventUUID != "":
@@ -53,7 +53,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		}
 		hre.SignKey = r.SignKey
 
-		if hre.SignKey != "" && (r.Initiator == nil || (r.Initiator.UserID == "" && r.Initiator.VCSUsername == "")) {
+		if hre.SignKey != "" && r.Initiator.IsUnknown() {
 			hre.Status = sdk.HookEventStatusSkipped
 			if hre.SignKey == "" {
 				hre.LastError = "Commit not signed"
@@ -91,7 +91,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		if wh.Initiator != nil {
 			initiator = wh.Initiator
 		}
-		if !wh.Data.InsecureSkipSignatureVerify && (initiator == nil || (initiator.UserID == "" && initiator.VCSUsername == "")) {
+		if !wh.Data.InsecureSkipSignatureVerify && initiator.IsUnknown() {
 			wh.Status = sdk.HookEventWorkflowStatusSkipped
 			wh.Error = "unknown user"
 			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
