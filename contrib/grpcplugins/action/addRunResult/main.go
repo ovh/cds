@@ -153,11 +153,22 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		return false, nil
 	}
 
+	// a conan/oci run result must list every file of the package; the enumeration only carried
+	// the manifest marker, so those types go through performOne whose AQL fetches the full
+	// listing. File-based types (1 artifact = 1 file) reuse the enumeration item directly.
+	needsPackageFilesListing := resultType == sdk.V2WorkflowRunResultTypeConan || resultType == sdk.V2WorkflowRunResultTypeOCI
+
 	var nbKO int
 	for _, candidate := range candidates {
-		ko, err := p.performOne(ctx, resultType, artiConfig, jobCtx.Integrations.ArtifactManager, repository, candidate)
+		var ko bool
+		var err error
+		if needsPackageFilesListing {
+			ko, err = p.performOne(ctx, resultType, artiConfig, jobCtx.Integrations.ArtifactManager, repository, candidate.path)
+		} else {
+			ko, err = p.performOneFromItem(ctx, resultType, jobCtx.Integrations.ArtifactManager, artiConfig, repository, candidate)
+		}
 		if err != nil {
-			grpcplugins.Errorf(&p.Common, "unable to create run result for %q: %v", candidate, err)
+			grpcplugins.Errorf(&p.Common, "unable to create run result for %q: %v", candidate.path, err)
 			nbKO++
 			continue
 		}
@@ -235,6 +246,14 @@ func (p *addRunResultPlugin) performOne(ctx context.Context, resultType sdk.V2Wo
 	// compute maturity
 	maturity := strings.TrimPrefix(localRepo, virtualRepo+"-")
 
+	return p.createRunResult(ctx, resultType, integ, virtualRepo, localRepo, maturity, path, fileInfo, fileProps, itemSearch)
+}
+
+// createRunResult builds the typed detail from the artifact data and submits the run result.
+// itemSearch carries the package files listing, only read for conan and oci.
+func (p *addRunResultPlugin) createRunResult(ctx context.Context, resultType sdk.V2WorkflowRunResultType, integ sdk.JobIntegrationsContext, virtualRepo, localRepo, maturity, path string, fileInfo *grpcplugins.ArtifactoryFileInfo, fileProps map[string][]string, itemSearch *grpcplugins.SearchResultResponse) (bool, error) {
+	_, fileName := filepath.Split(fileInfo.Path)
+
 	runResult := sdk.V2WorkflowRunResult{
 		IssuedAt:                       fileInfo.Created,
 		Status:                         sdk.V2WorkflowRunResultStatusCompleted,
@@ -243,7 +262,6 @@ func (p *addRunResultPlugin) performOne(ctx context.Context, resultType sdk.V2Wo
 
 	grpcplugins.ExtractFileInfoIntoRunResult(&runResult, *fileInfo, fileName, resultType, localRepo, virtualRepo, maturity)
 
-	mustReturnKO := false
 	switch resultType {
 	case sdk.V2WorkflowRunResultTypeDebian:
 		runResult.Type = sdk.V2WorkflowRunResultTypeDebian
@@ -252,7 +270,7 @@ func (p *addRunResultPlugin) performOne(ctx context.Context, resultType sdk.V2Wo
 		}
 	case sdk.V2WorkflowRunResultTypeTest:
 		runResult.Type = sdk.V2WorkflowRunResultTypeTest
-		nbKo, err := performTests(ctx, &p.Common, *fileInfo, &runResult, integ, repository, path)
+		nbKo, err := performTests(ctx, &p.Common, *fileInfo, &runResult, integ, virtualRepo, path)
 		if err != nil {
 			return true, err
 		}
@@ -334,7 +352,20 @@ func (p *addRunResultPlugin) performOne(ctx context.Context, resultType sdk.V2Wo
 		return true, err
 	}
 	grpcplugins.Success(&p.Common, fmt.Sprintf("run result %s created", runResult.Name()))
-	return mustReturnKO, err
+	return false, nil
+}
+
+// performOneFromItem creates a run result for a file enumerated by the glob search, reusing
+// the data carried by the AQL item instead of re-fetching it from artifactory.
+func (p *addRunResultPlugin) performOneFromItem(ctx context.Context, resultType sdk.V2WorkflowRunResultType, integ sdk.JobIntegrationsContext, artiConfig grpcplugins.ArtifactoryConfig, repository string, candidate globCandidate) (bool, error) {
+	item := candidate.item
+	virtualRepo := virtualRepoFor(item.Repo, repository)
+	if virtualRepo == "" {
+		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to match local repository %s with virtual repository %s", item.Repo, repository)
+	}
+	maturity := strings.TrimPrefix(item.Repo, virtualRepo+"-")
+	fileInfo := fileInfoFromItem(artiConfig, virtualRepo, item)
+	return p.createRunResult(ctx, resultType, integ, virtualRepo, item.Repo, maturity, candidate.path, fileInfo, propertiesMap(item.Properties), nil)
 }
 
 // performDocker is very specific to docker artifactory layout. It doesn't share anything with other perform functions
@@ -981,6 +1012,62 @@ func repoCriteria(repository string) string {
 	return fmt.Sprintf(`{"repo":{"$match":"%s-*"}}`, repository)
 }
 
+// globCandidate is an artifact matched by the glob pattern: the path to register and the
+// enumeration item it came from, carrying repo, checksums, size, dates and properties.
+type globCandidate struct {
+	path string
+	item grpcplugins.SearchResult
+}
+
+// virtualRepoFor returns the virtual repository a local repository (maturity) belongs to:
+// the searched one, or its -generic sibling for -cds (both families are enumerated,
+// mirroring the 404 fallback of the single path flow).
+func virtualRepoFor(localRepo, repository string) string {
+	if strings.HasPrefix(localRepo, repository+"-") {
+		return repository
+	}
+	if prefix, ok := strings.CutSuffix(repository, "-cds"); ok {
+		if generic := prefix + "-generic"; strings.HasPrefix(localRepo, generic+"-") {
+			return generic
+		}
+	}
+	return ""
+}
+
+// fileInfoFromItem rebuilds the storage-API view of a file from its AQL item: path in the
+// "/dir/file" form expected downstream, uri/downloadURI on the virtual repository (the form
+// stored in run results). mimeType is left empty, it has no consumer.
+func fileInfoFromItem(config grpcplugins.ArtifactoryConfig, virtualRepo string, item grpcplugins.SearchResult) *grpcplugins.ArtifactoryFileInfo {
+	url := config.URL
+	if !strings.HasSuffix(url, "/") {
+		url += "/"
+	}
+	fullPath := "/" + strings.Trim(pathpkg.Join(item.Path, item.Name), "/")
+	fi := &grpcplugins.ArtifactoryFileInfo{
+		Repo:        virtualRepo,
+		Path:        fullPath,
+		Created:     item.Created,
+		CreatedBy:   item.CreatedBy,
+		Size:        strconv.FormatInt(item.Size, 10),
+		URI:         url + "api/storage/" + virtualRepo + fullPath,
+		DownloadURI: url + virtualRepo + fullPath,
+	}
+	fi.Checksums.Md5 = item.ActualMd5
+	fi.Checksums.Sha1 = item.ActualSha1
+	fi.Checksums.Sha256 = item.Sha256
+	return fi
+}
+
+// propertiesMap converts AQL item properties to the properties-API shape, preserving
+// multi-valued keys.
+func propertiesMap(props []grpcplugins.SearchResultProperty) map[string][]string {
+	m := make(map[string][]string, len(props))
+	for _, p := range props {
+		m[p.Key] = append(m[p.Key], p.Value)
+	}
+	return m
+}
+
 // deriveCandidate returns the path to match against the glob pattern: the file path for
 // file-based types, the package folder for oci and conan. It returns "" when the item must
 // be ignored.
@@ -1006,12 +1093,17 @@ func deriveCandidate(r grpcplugins.SearchResult, resultType sdk.V2WorkflowRunRes
 
 // enumerateGlobMatches lists the artifacts matching the glob pattern in the local
 // repositories behind the virtual repository. One AQL search scoped to the static prefix of
-// the pattern enumerates the candidates, then the glob matcher selects them in Go:
+// the pattern enumerates the candidates with the data needed to build the run results
+// (checksums, size, dates, properties), then the glob matcher selects them in Go:
 //   - file-based types: every file is a candidate;
 //   - oci: a package is the folder directly holding a manifest.json or list.manifest.json
 //     (digest folders <image>/sha256:<digest> are standalone packages and are kept);
 //   - conan: a package revision is the parent of the export folder holding conanmanifest.txt.
-func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfig grpcplugins.ArtifactoryConfig, repository, pattern string, resultType sdk.V2WorkflowRunResultType) ([]string, error) {
+//
+// The search is not paginated (AQL ignores offset/limit alongside the property include):
+// when the results are trimmed, by our limit or a server-side one, the search fails rather
+// than registering an incomplete set.
+func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfig grpcplugins.ArtifactoryConfig, repository, pattern string, resultType sdk.V2WorkflowRunResultType) ([]globCandidate, error) {
 	criteria := []string{repoCriteria(repository)}
 	if base := staticPrefix(pattern); base != "" {
 		criteria = append(criteria, fmt.Sprintf(`{"$or":[{"path":{"$eq":"%s"}},{"path":{"$match":"%s/*"}}]}`, base, base))
@@ -1024,19 +1116,22 @@ func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfi
 	default:
 		criteria = append(criteria, `{"type":"file"}`)
 	}
-	aql := fmt.Sprintf(`items.find({"$and":[%s]}).include("repo","path","name").limit(%d)`, strings.Join(criteria, ","), aqlSearchLimit)
+	aql := fmt.Sprintf(`items.find({"$and":[%s]}).include("repo","path","name","actual_md5","actual_sha1","sha256","size","created","created_by","property").limit(%d)`, strings.Join(criteria, ","), aqlSearchLimit)
 
 	res, err := grpcplugins.SearchItem(ctx, &p.Common, artiConfig, aql)
 	if err != nil {
 		return nil, err
 	}
+	if res.Notification != "" {
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search truncated by artifactory (%s): use a more specific pattern", res.Notification)
+	}
 	if len(res.Results) >= aqlSearchLimit {
-		grpcplugins.Warnf(&p.Common, "glob search returned %d items: results may be truncated, consider a more specific pattern", len(res.Results))
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search returned %d items or more, results may be truncated: use a more specific pattern", len(res.Results))
 	}
 
 	g := glob.New(pattern)
 	seen := make(map[string]struct{}, len(res.Results))
-	var candidates []string
+	var candidates []globCandidate
 	for _, r := range res.Results {
 		candidate := deriveCandidate(r, resultType)
 		if candidate == "" {
@@ -1052,10 +1147,10 @@ func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfi
 			return nil, err
 		}
 		if m != nil {
-			candidates = append(candidates, candidate)
+			candidates = append(candidates, globCandidate{path: candidate, item: r})
 		}
 	}
-	sort.Strings(candidates)
+	sort.Slice(candidates, func(i, j int) bool { return candidates[i].path < candidates[j].path })
 	return candidates, nil
 }
 

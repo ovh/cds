@@ -80,6 +80,47 @@ func TestDeriveCandidate(t *testing.T) {
 	require.Equal(t, "", deriveCandidate(grpcplugins.SearchResult{Path: "_/abseil/20250127.0/_/e0dcc4b8/package/37fd2c/28874d", Name: "conanmanifest.txt"}, sdk.V2WorkflowRunResultTypeConan))
 }
 
+func TestVirtualRepoFor(t *testing.T) {
+	require.Equal(t, "proj-debian", virtualRepoFor("proj-debian-snapshot", "proj-debian"))
+	require.Equal(t, "proj-cds", virtualRepoFor("proj-cds-release", "proj-cds"))
+	// -cds also enumerates the -generic family
+	require.Equal(t, "proj-generic", virtualRepoFor("proj-generic-snapshot", "proj-cds"))
+	require.Equal(t, "", virtualRepoFor("other-debian-snapshot", "proj-debian"))
+	require.Equal(t, "", virtualRepoFor("proj-debian2-snapshot", "proj-debian"))
+}
+
+func TestFileInfoFromItem(t *testing.T) {
+	item := grpcplugins.SearchResult{
+		Repo: "proj-debian-snapshot", Path: "pool", Name: "a.deb",
+		ActualMd5: "md5", ActualSha1: "sha1", Sha256: "sha256", Size: 42,
+	}
+	fi := fileInfoFromItem(grpcplugins.ArtifactoryConfig{URL: "https://rt.local/artifactory"}, "proj-debian", item)
+	require.Equal(t, "/pool/a.deb", fi.Path)
+	require.Equal(t, "42", fi.Size)
+	require.Equal(t, "https://rt.local/artifactory/api/storage/proj-debian/pool/a.deb", fi.URI)
+	require.Equal(t, "https://rt.local/artifactory/proj-debian/pool/a.deb", fi.DownloadURI)
+	require.Equal(t, "md5", fi.Checksums.Md5)
+	require.Equal(t, "sha1", fi.Checksums.Sha1)
+	require.Equal(t, "sha256", fi.Checksums.Sha256)
+
+	// file at the repository root
+	fi = fileInfoFromItem(grpcplugins.ArtifactoryConfig{URL: "https://rt.local/artifactory/"}, "proj-debian", grpcplugins.SearchResult{Path: ".", Name: "b.deb"})
+	require.Equal(t, "/b.deb", fi.Path)
+	require.Equal(t, "https://rt.local/artifactory/proj-debian/b.deb", fi.DownloadURI)
+}
+
+func TestPropertiesMap(t *testing.T) {
+	props := propertiesMap([]grpcplugins.SearchResultProperty{
+		{Key: "deb.distribution", Value: "focal"},
+		{Key: "deb.distribution", Value: "jammy"},
+		{Key: "deb.component", Value: "main"},
+	})
+	require.Equal(t, map[string][]string{
+		"deb.distribution": {"focal", "jammy"},
+		"deb.component":    {"main"},
+	}, props)
+}
+
 // TestGlobSelection covers the candidate filtering as done by enumerateGlobMatches, on
 // synthetic search results mimicking the layouts audited on real repositories.
 func TestGlobSelection(t *testing.T) {
