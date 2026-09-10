@@ -76,6 +76,7 @@ func TestMigrateEntityInitiators_RebuildsOwnersAndSkipsTheRest(t *testing.T) {
 	insertLegacyEntityRow(t, db, owned)
 	oldVersion := newEntityRow(proj, repo, "owned", "123456", false)
 	oldVersion.DeprecatedUserID = &userID
+	oldVersion.LastUpdate = time.Now().Add(-72 * time.Hour)
 	insertLegacyEntityRow(t, db, oldVersion)
 	unowned := insertLegacyEntityRow(t, db, newEntityRow(proj, repo, "unowned", "abcdef", true))
 	deletedUserID := sdk.UUID()
@@ -106,10 +107,12 @@ func TestMigrateEntityInitiators_RebuildsOwnersAndSkipsTheRest(t *testing.T) {
 	require.NotNil(t, e.Initiator.User)
 	require.Empty(t, e.Initiator.Username())
 
+	// A historical row keeps its last update date, so the as-code retention still applies to it
 	e, err = entity.LoadByID(ctx, db, oldVersion.ID)
 	require.NoError(t, err)
 	require.Equal(t, u.ID, e.Initiator.UserID)
 	require.False(t, e.Head)
+	require.WithinDuration(t, oldVersion.LastUpdate, e.LastUpdate, time.Second)
 
 	e, err = entity.LoadByID(ctx, db, unowned.ID)
 	require.NoError(t, err)

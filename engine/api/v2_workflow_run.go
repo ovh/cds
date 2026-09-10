@@ -910,6 +910,9 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				}
 				runRequest.Initiator = workflowEntity.Initiator
 			}
+			if runRequest.Initiator.IsUnknown() {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown user")
+			}
 
 			var (
 				theOneWhoTriggers = runRequest.Initiator

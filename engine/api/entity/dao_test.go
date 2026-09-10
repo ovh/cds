@@ -110,6 +110,30 @@ func TestInsert_PersistsTheOwnerWithoutPrivileges(t *testing.T) {
 	require.Equal(t, f.user.ID, *loaded.DeprecatedUserID)
 }
 
+func TestInsert_GivesACDSOwnerASnapshotObject(t *testing.T) {
+	f := newEntityFixture(t)
+	ctx := context.TODO()
+
+	e := f.newEntity("id-only-owner")
+	e.Initiator = &sdk.V2Initiator{UserID: f.user.ID}
+	require.NoError(t, entity.Insert(ctx, f.db, &e))
+	require.NotNil(t, e.Initiator.User)
+
+	loaded, err := entity.LoadByID(ctx, f.db, e.ID)
+	require.NoError(t, err)
+	require.Equal(t, f.user.ID, loaded.Initiator.UserID)
+	require.NotNil(t, loaded.Initiator.User)
+	require.Empty(t, loaded.Initiator.Username())
+
+	// The snapshot is not part of the signature: a null stored by a former writer is completed on read
+	_, err = f.db.Exec(`UPDATE entity SET initiator = initiator || '{"user": null}'::jsonb WHERE id = $1`, e.ID)
+	require.NoError(t, err)
+	loaded, err = entity.LoadByID(ctx, f.db, e.ID)
+	require.NoError(t, err)
+	require.NotNil(t, loaded.Initiator.User)
+	require.Empty(t, loaded.Initiator.Username())
+}
+
 func TestInsert_PersistsAVCSOwner(t *testing.T) {
 	f := newEntityFixture(t)
 	ctx := context.TODO()
@@ -211,6 +235,45 @@ func TestUpdate_LeavesALegacyRowUnmigrated(t *testing.T) {
 	ids, err := entity.LoadIDsWithoutInitiator(ctx, f.db)
 	require.NoError(t, err)
 	require.Contains(t, ids, legacy.ID)
+}
+
+func TestUpdateOwner_SignsTheOwnerAndKeepsLastUpdate(t *testing.T) {
+	f := newEntityFixture(t)
+	ctx := context.TODO()
+	attacker, _ := assets.InsertLambdaUser(t, f.db)
+
+	// A historical row written long ago by a former version
+	legacy := f.newEntity("legacy")
+	legacy.ID = sdk.UUID()
+	legacy.Head = false
+	legacy.Initiator = nil
+	legacy.LastUpdate = time.Now().Add(-72 * time.Hour)
+	require.NoError(t, gorpmapping.InsertAndSign(ctx, f.db, &legacyEntity{Entity: legacy}))
+
+	loaded, err := entity.LoadByID(ctx, f.db, legacy.ID)
+	require.NoError(t, err)
+	require.Nil(t, loaded.Initiator)
+	require.True(t, sdk.ErrorIs(entity.UpdateOwner(ctx, f.db, loaded), sdk.ErrInvalidData))
+
+	loaded.Initiator = &sdk.V2Initiator{UserID: f.user.ID, User: f.user.Initiator(), IsAdminWithMFA: true}
+	require.NoError(t, entity.UpdateOwner(ctx, f.db, loaded))
+
+	// Only the owner columns change: the row keeps its data and its last update date
+	reloaded, err := entity.LoadByID(ctx, f.db, legacy.ID)
+	require.NoError(t, err)
+	require.Equal(t, f.user.ID, reloaded.Initiator.UserID)
+	require.Equal(t, f.user.Username, reloaded.Initiator.User.Username)
+	require.False(t, reloaded.Initiator.IsAdminWithMFA)
+	require.Equal(t, f.user.ID, *reloaded.DeprecatedUserID)
+	require.Equal(t, legacy.Data, reloaded.Data)
+	require.False(t, reloaded.Head)
+	require.WithinDuration(t, legacy.LastUpdate, reloaded.LastUpdate, time.Second)
+
+	// The owner is covered by the new signature
+	_, err = f.db.Exec(`UPDATE entity SET initiator = jsonb_set(initiator, '{user_id}', to_jsonb($1::text)) WHERE id = $2`, attacker.ID, legacy.ID)
+	require.NoError(t, err)
+	_, err = entity.LoadByID(ctx, f.db, legacy.ID)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "got %v", err)
 }
 
 func TestLoad_RejectsATamperedOwner(t *testing.T) {

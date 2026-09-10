@@ -74,6 +74,53 @@ func TestManageAnalysisCallback(t *testing.T) {
 
 }
 
+func TestManageAnalysisCallback_NilInitiator(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+
+	hr := sdk.HookRepositoryEvent{
+		UUID:           sdk.UUID(),
+		VCSServerName:  "private-github",
+		RepositoryName: "ovh/cds",
+		Status:         sdk.HookEventStatusAnalysis,
+		EventName:      sdk.WorkflowHookEventNamePush,
+		Created:        time.Now().UnixNano(),
+		Analyses: []sdk.HookRepositoryEventAnalysis{{
+			ProjectKey: "MYPROJECT",
+			Status:     sdk.RepositoryAnalysisStatusInProgress,
+			AnalyzeID:  sdk.UUID(),
+		}},
+	}
+	require.NoError(t, s.Dao.SaveRepositoryEvent(context.TODO(), &hr))
+	_, err := s.Dao.CreateRepository(context.TODO(), hr.VCSServerName, hr.RepositoryName)
+	require.NoError(t, err)
+
+	// Analysis stopped before the committer was resolved: the API sends no initiator
+	eventKey := strings.ToLower(cache.Key(repositoryEventRootKey, s.Dao.GetRepositoryMemberKey(hr.VCSServerName, hr.RepositoryName), hr.UUID))
+	callback := sdk.HookEventCallback{
+		RepositoryName: hr.RepositoryName,
+		VCSServerName:  hr.VCSServerName,
+		HookEventUUID:  hr.UUID,
+		HookEventKey:   eventKey,
+		AnalysisCallback: &sdk.HookAnalysisCallback{
+			AnalysisID:     hr.Analyses[0].AnalyzeID,
+			AnalysisStatus: sdk.RepositoryAnalysisStatusError,
+			Error:          "unable to check the commit signature",
+		},
+	}
+	require.NoError(t, s.updateHookEventWithCallback(context.TODO(), callback))
+
+	var hreUpdate sdk.HookRepositoryEvent
+	f, err := s.Cache.Get(eventKey, &hreUpdate)
+	require.NoError(t, err)
+	require.True(t, f)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, hreUpdate.Analyses[0].Status)
+	require.Equal(t, "unable to check the commit signature", hreUpdate.Analyses[0].Error)
+	require.Nil(t, hreUpdate.Initiator)
+	require.Empty(t, hreUpdate.DeprecatedUsername)
+}
+
 func TestManageRepositoryEvent_PushEventTriggerAnalysis(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)
