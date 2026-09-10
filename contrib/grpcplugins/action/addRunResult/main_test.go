@@ -38,8 +38,8 @@ func TestContainsGlob(t *testing.T) {
 }
 
 func TestGlobSupportedType(t *testing.T) {
-	require.False(t, globSupportedType(sdk.V2WorkflowRunResultTypeDocker))
 	require.False(t, globSupportedType(sdk.V2WorkflowRunResultTypeStaticFiles))
+	require.True(t, globSupportedType(sdk.V2WorkflowRunResultTypeDocker))
 	require.True(t, globSupportedType(sdk.V2WorkflowRunResultTypeDebian))
 	require.True(t, globSupportedType(sdk.V2WorkflowRunResultTypeGeneric))
 	require.True(t, globSupportedType(sdk.V2WorkflowRunResultTypeOCI))
@@ -59,11 +59,49 @@ func TestStaticPrefix(t *testing.T) {
 	require.Equal(t, "mirror", staticPrefix("mirror/** !**/sha256:*"))
 	// wildcard inside a segment: the segment is not part of the prefix
 	require.Equal(t, "pool", staticPrefix("pool/sub*/file.deb"))
+	// docker patterns are image references, staticPrefix only splits on "/": see
+	// TestDockerPatternToPath for the rewrite that puts the image folder in the prefix
+	require.Equal(t, "ovhcom", staticPrefix("ovhcom/*:*-1234"))
+	require.Equal(t, "ovhcom", staticPrefix("ovhcom/venom:*"))
 }
 
 func TestRepoCriteria(t *testing.T) {
 	require.Equal(t, `{"repo":{"$match":"proj-debian-*"}}`, repoCriteria("proj-debian"))
 	require.Equal(t, `{"$or":[{"repo":{"$match":"proj-cds-*"}},{"repo":{"$match":"proj-generic-*"}}]}`, repoCriteria("proj-cds"))
+}
+
+func TestDockerRepoCriteria(t *testing.T) {
+	require.Equal(t, `{"repo":{"$eq":"proj-docker-snapshot"}}`, dockerRepoCriteria("proj-docker", "snapshot"))
+}
+
+// TestDockerPatternToPath locks the rewrite feeding staticPrefix: the ":" of an image
+// reference is a "/" in the artifactory layout, and the image folder belongs to the prefix.
+func TestDockerPatternToPath(t *testing.T) {
+	require.Equal(t, "busybox/*", dockerPatternToPath("busybox:*"))
+	require.Equal(t, "ovhcom/venom/*", dockerPatternToPath("ovhcom/venom:*"))
+	require.Equal(t, "ovhcom/*/*-1234", dockerPatternToPath("ovhcom/*:*-1234"))
+	// no tag part to rewrite
+	require.Equal(t, "ovhcom/**", dockerPatternToPath("ovhcom/**"))
+	// exclusions keep their "!" and are rewritten too
+	require.Equal(t, "ovhcom/venom/* !ovhcom/venom/latest-*", dockerPatternToPath("ovhcom/venom:* !ovhcom/venom:latest-*"))
+
+	// without the rewrite, "busybox:*" has no static folder and the AQL scans the whole repo
+	require.Equal(t, "", staticPrefix("busybox:*"))
+	require.Equal(t, "busybox", staticPrefix(dockerPatternToPath("busybox:*")))
+	require.Equal(t, "ovhcom/venom", staticPrefix(dockerPatternToPath("ovhcom/venom:*")))
+	require.Equal(t, "ovhcom", staticPrefix(dockerPatternToPath("ovhcom/*:*-1234")))
+}
+
+// TestDockerArchPath locks which items the enumeration keeps apart: the per-architecture
+// manifests of a manifest list, so the detail is built without going back to artifactory.
+func TestDockerArchPath(t *testing.T) {
+	require.Equal(t, "ovhcom/venom/sha256:1899ab", dockerArchPath(grpcplugins.SearchResult{Path: "ovhcom/venom/sha256:1899ab", Name: "manifest.json"}))
+	require.Equal(t, "busybox/sha256:1899ab", dockerArchPath(grpcplugins.SearchResult{Path: "busybox/sha256:1899ab", Name: "manifest.json"}))
+	// tag folders are candidates, not architectures
+	require.Equal(t, "", dockerArchPath(grpcplugins.SearchResult{Path: "ovhcom/venom/v1.3.0-1234", Name: "manifest.json"}))
+	require.Equal(t, "", dockerArchPath(grpcplugins.SearchResult{Path: "ovhcom/venom/latest-1234", Name: "list.manifest.json"}))
+	require.Equal(t, "", dockerArchPath(grpcplugins.SearchResult{Path: "venom", Name: "manifest.json"}))
+	require.Equal(t, "", dockerArchPath(grpcplugins.SearchResult{Path: ".", Name: "manifest.json"}))
 }
 
 func TestDeriveCandidate(t *testing.T) {
@@ -74,6 +112,14 @@ func TestDeriveCandidate(t *testing.T) {
 	// oci: the candidate is the folder holding the manifest, whatever the name depth
 	require.Equal(t, "services/core-platform/0.0.0-dev.50", deriveCandidate(grpcplugins.SearchResult{Path: "services/core-platform/0.0.0-dev.50", Name: "manifest.json"}, sdk.V2WorkflowRunResultTypeOCI))
 	require.Equal(t, "mirror/registry/postgres/sha256:1899ab", deriveCandidate(grpcplugins.SearchResult{Path: "mirror/registry/postgres/sha256:1899ab", Name: "manifest.json"}, sdk.V2WorkflowRunResultTypeOCI))
+
+	// docker: the same folder as oci, rebuilt into an image reference
+	require.Equal(t, "ovhcom/venom:v1.3.0-1234", deriveCandidate(grpcplugins.SearchResult{Path: "ovhcom/venom/v1.3.0-1234", Name: "manifest.json"}, sdk.V2WorkflowRunResultTypeDocker))
+	require.Equal(t, "ovhcom/venom:latest-1234", deriveCandidate(grpcplugins.SearchResult{Path: "ovhcom/venom/latest-1234", Name: "list.manifest.json"}, sdk.V2WorkflowRunResultTypeDocker))
+	// digest folders are not taggable images
+	require.Equal(t, "", deriveCandidate(grpcplugins.SearchResult{Path: "ovhcom/venom/sha256:1899ab", Name: "manifest.json"}, sdk.V2WorkflowRunResultTypeDocker))
+	// a folder without an <image>/<tag> shape has no image reference
+	require.Equal(t, "", deriveCandidate(grpcplugins.SearchResult{Path: "venom", Name: "manifest.json"}, sdk.V2WorkflowRunResultTypeDocker))
 
 	// conan: the candidate is the revision folder, parent of export/
 	require.Equal(t, "_/abseil/20250127.0/_/e0dcc4b8", deriveCandidate(grpcplugins.SearchResult{Path: "_/abseil/20250127.0/_/e0dcc4b8/export", Name: "conanmanifest.txt"}, sdk.V2WorkflowRunResultTypeConan))
@@ -146,6 +192,9 @@ func TestGlobSelection(t *testing.T) {
 		seen := map[string]struct{}{}
 		var out []string
 		for _, r := range results {
+			if resultType == sdk.V2WorkflowRunResultTypeDocker && dockerArchPath(r) != "" {
+				continue // indexed as a per-architecture manifest, never a candidate
+			}
 			candidate := deriveCandidate(r, resultType)
 			if candidate == "" {
 				continue
@@ -188,6 +237,23 @@ func TestGlobSelection(t *testing.T) {
 		filterCandidates(ociResults, sdk.V2WorkflowRunResultTypeOCI, "services/*/*"))
 	require.Equal(t, []string{"mirror/api-exposition/gateway/1.46.0"},
 		filterCandidates(ociResults, sdk.V2WorkflowRunResultTypeOCI, "mirror/** !**/sha256:*"))
+
+	// a "*" spans the ":" between image and tag: "/" is the matcher's only separator
+	dockerResults := []grpcplugins.SearchResult{
+		{Path: "ovhcom/venom/v1.3.0-1234", Name: "manifest.json"},
+		{Path: "ovhcom/venom/latest-1234", Name: "list.manifest.json"},
+		{Path: "ovhcom/venom/v1.3.0-1234", Name: "manifest.json"}, // another maturity: deduplicated
+		{Path: "ovhcom/venom/v1.2.0-999", Name: "manifest.json"},
+		{Path: "ovhcom/utask/v1.0.0-1234", Name: "manifest.json"},
+		{Path: "other/venom/v1.3.0-1234", Name: "manifest.json"},
+		{Path: "ovhcom/venom/sha256:1899ab", Name: "manifest.json"},
+	}
+	require.Equal(t, []string{"ovhcom/utask:v1.0.0-1234", "ovhcom/venom:latest-1234", "ovhcom/venom:v1.3.0-1234"},
+		filterCandidates(dockerResults, sdk.V2WorkflowRunResultTypeDocker, "ovhcom/*:*-1234"))
+	require.Equal(t, []string{"ovhcom/utask:v1.0.0-1234", "ovhcom/venom:latest-1234", "ovhcom/venom:v1.2.0-999", "ovhcom/venom:v1.3.0-1234"},
+		filterCandidates(dockerResults, sdk.V2WorkflowRunResultTypeDocker, "ovhcom/*:*"))
+	require.Equal(t, []string{"ovhcom/venom:v1.2.0-999", "ovhcom/venom:v1.3.0-1234"},
+		filterCandidates(dockerResults, sdk.V2WorkflowRunResultTypeDocker, "ovhcom/venom:* !ovhcom/venom:latest-*"))
 
 	conanResults := []grpcplugins.SearchResult{
 		{Path: "_/abseil/20250127.0/_/e0dcc4b8/export", Name: "conanmanifest.txt"},

@@ -10,8 +10,9 @@ inputs:
       A path inside the artifact manager repository matching the result type. It supports
       wildcard patterns (*, ?, [abc], ** and ! negation, several patterns separated by spaces):
       one run result is created per matching artifact. For file-based types a pattern matches
-      files (e.g. pool/*.deb); for oci and conan it matches package folders (e.g. myimage/*).
-      Wildcards are not supported for the docker and staticFiles types.
+      files (e.g. pool/*.deb); for oci and conan it matches package folders (e.g. myimage/*);
+      for docker it matches image references in the image:tag form (e.g. myns/*:*-123),
+      digest references excluded. Wildcards are not supported for the staticFiles type.
     required: true
   type:
     type: string

@@ -200,6 +200,32 @@ testcases:
               with:
                 path: ${{steps.name.outputs.GRADLENAME}}
                 type: gradle
+            # three docker images pushed with skopeo into <prefix>-docker, registered by a single
+            # glob step. A docker pattern is an image reference: the tag is matched after the ":".
+            # The <ts> in the image name keeps the pattern from matching images of previous runs
+            # in the shared -docker repository, the globns/ folder keeps the AQL search narrow.
+            # The third one is copied with --all: a manifest list, to cover the multi-arch path.
+            - id: dockerpush
+              run: |
+                set -e
+                apt-get update && apt-get install -y --no-install-recommends skopeo
+                RT_HOST=$(echo "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}" | sed -E 's#^https?://##; s#/.*$##')
+                REGISTRY="{{.rt_project}}-{{.rt_component}}-docker.${RT_HOST}"
+                echo "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" | skopeo login "${REGISTRY}" -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}" --password-stdin
+                echo "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" | skopeo login "docker-hub-remote.${RT_HOST}" -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}" --password-stdin
+                for suffix in a b; do
+                  skopeo copy \
+                    docker://docker-hub-remote.${RT_HOST}/busybox:1.36 \
+                    docker://${REGISTRY}/globns/img-${{ steps.name.outputs.GLOBTS }}-${suffix}:1.0
+                done
+                skopeo copy --all \
+                  docker://docker-hub-remote.${RT_HOST}/busybox:1.36 \
+                  docker://${REGISTRY}/globns/img-${{ steps.name.outputs.GLOBTS }}-multiarch:1.0
+            - uses: actions/addRunResult
+              with:
+                type: docker
+                path: globns/img-${{ steps.name.outputs.GLOBTS }}-*:1.0
+                if-no-files-found: error
   - name: Check CDS project analyses
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental project analysis list {{.cds_project}} my_vcs_server {{.git.user}}/{{.git_repo}} --format json"
     assertions:
@@ -275,6 +301,10 @@ testcases:
       - result.systemoutjson ShouldHaveLength 1
   - name: Check that we have 3 run results of type debian (1 single + 2 via glob)
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=debian --format json"
+    assertions:
+      - result.systemoutjson ShouldHaveLength 3
+  - name: Check that we have 3 run results of type docker (all via one glob)
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=docker --format json"
     assertions:
       - result.systemoutjson ShouldHaveLength 3
   - name: Check that we have 1 run result of type terraformProvider
