@@ -15,7 +15,7 @@ import (
 const MigrateEntityInitiatorName = "MigrateEntityInitiator"
 
 // MigrateEntityInitiator gives an owner to the entities written before the initiator column existed,
-// head entities first, and re-signs them.
+// head entities first, and re-signs them without touching their last update date.
 // The overall progress is the number of rows still having a NULL initiator.
 func MigrateEntityInitiator(ctx context.Context, db *gorp.DbMap) error {
 	ids, err := entity.LoadIDsWithoutInitiator(ctx, db)
@@ -75,7 +75,7 @@ func migrateEntityInitiator(ctx context.Context, db *gorp.DbMap, id string, owne
 	if err != nil {
 		return false, err
 	}
-	if err := entity.Update(ctx, tx, e); err != nil {
+	if err := entity.UpdateOwner(ctx, tx, e); err != nil {
 		return false, err
 	}
 	return true, sdk.WithStack(tx.Commit())

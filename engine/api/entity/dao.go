@@ -66,12 +66,16 @@ func sanitizeLoadedOwner(e *sdk.Entity) {
 	normalizeOwner(e)
 }
 
-// normalizeOwner strips the admin MFA flag and mirrors the owner into user_id before the row is signed.
+// normalizeOwner strips the admin MFA flag, mirrors the owner into user_id and guarantees a user snapshot
+// object for a CDS user, possibly empty, so Username() never dereferences nil on an entity owner.
 func normalizeOwner(e *sdk.Entity) {
 	e.Initiator.IsAdminWithMFA = false
 	if e.Initiator.UserID == "" {
 		e.DeprecatedUserID = nil
 		return
+	}
+	if e.Initiator.User == nil {
+		e.Initiator.User = &sdk.V2InitiatorUser{}
 	}
 	userID := e.Initiator.UserID
 	e.DeprecatedUserID = &userID
@@ -107,6 +111,20 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 	}
 	*e = dbData.Entity
 	return nil
+}
+
+// UpdateOwner persists only the owner of an entity, mirrored into user_id, and re-signs the row. Unlike
+// Update it writes neither the data blob nor last_update, so giving an owner to a historical row does not
+// make it look freshly written.
+func UpdateOwner(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
+	if e.Initiator == nil {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "entity %s of type %s has no owner", e.Name, e.Type)
+	}
+	normalizeOwner(e)
+	dbData := &dbEntity{Entity: *e}
+	return gorpmapping.UpdateColumnsAndSign(ctx, db, dbData, func(cm *gorp.ColumnMap) bool {
+		return cm.ColumnName == "initiator" || cm.ColumnName == "user_id"
+	})
 }
 
 func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {

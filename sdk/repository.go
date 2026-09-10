@@ -62,6 +62,15 @@ type ProjectRepositoryDataEntity struct {
 	Status   string `json:"status"`
 }
 
+// InitiatorUsername is the display name of the initiator. It falls back to the deprecated username when the
+// user snapshot is missing, so it never dereferences a nil snapshot.
+func (prd ProjectRepositoryData) InitiatorUsername() string {
+	if prd.Initiator != nil && (prd.Initiator.User != nil || prd.Initiator.UserID == "") {
+		return prd.Initiator.Username()
+	}
+	return prd.DeprecatedCDSUserName
+}
+
 func (prd ProjectRepositoryData) Value() (driver.Value, error) {
 	j, err := json.Marshal(prd)
 	return j, WrapError(err, "cannot marshal ProjectRepositoryData")

@@ -3190,7 +3190,7 @@ func TestPostWorkflowRunFromHookV2Handler_InsecureSkipUsesTheEntityOwner(t *test
 	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
 	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
 
-	insertWorkflow := func(name string, owner *sdk.V2Initiator) {
+	insertWorkflow := func(name string, owner *sdk.V2Initiator, insecureSkip bool) {
 		e := sdk.Entity{
 			Name:                name,
 			Type:                sdk.EntityTypeWorkflow,
@@ -3205,7 +3205,7 @@ func TestPostWorkflowRunFromHookV2Handler_InsecureSkipUsesTheEntityOwner(t *test
 repository:
   vcs: github
   name: ` + repo.Name + `
-  insecure_skip_signature_verify: true
+  insecure_skip_signature_verify: ` + strconv.FormatBool(insecureSkip) + `
 jobs:
   myFirstJob:
     worker_model: buildpack-deps-buster
@@ -3247,7 +3247,7 @@ jobs:
 			RBACVCSUsers:       sdk.RBACVCSUsers{{VCSServer: vcsServer.Name, VCSUsername: "octocat"}},
 		}},
 	}))
-	insertWorkflow("owned", &sdk.V2Initiator{VCS: vcsServer.Name, VCSUsername: "octocat", IsAdminWithMFA: true})
+	insertWorkflow("owned", &sdk.V2Initiator{VCS: vcsServer.Name, VCSUsername: "octocat", IsAdminWithMFA: true}, true)
 
 	w := runFromHook("owned")
 	require.Equal(t, 200, w.Code, w.Body.String())
@@ -3259,8 +3259,14 @@ jobs:
 	require.False(t, wr.Initiator.IsAdminWithMFA)
 
 	// Nobody owns the workflow: refused
-	insertWorkflow("unowned", &sdk.V2Initiator{})
+	insertWorkflow("unowned", &sdk.V2Initiator{}, true)
 	w = runFromHook("unowned")
 	require.Equal(t, 403, w.Code, w.Body.String())
 	require.Contains(t, w.Body.String(), "unknown workflow owner")
+
+	// Without the insecure flag the request must identify its initiator, here it sends none
+	insertWorkflow("strict", &sdk.V2Initiator{VCS: vcsServer.Name, VCSUsername: "octocat"}, false)
+	w = runFromHook("strict")
+	require.Equal(t, 403, w.Code, w.Body.String())
+	require.Contains(t, w.Body.String(), "unknown user")
 }

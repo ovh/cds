@@ -26,8 +26,10 @@ func TestEntityOwner(t *testing.T) {
 	empty := ""
 	require.Nil(t, entityOwner(&sdk.Entity{DeprecatedUserID: &empty}))
 
-	// An API predating the initiator field only sends user_id
-	require.Equal(t, &sdk.V2Initiator{UserID: userID}, entityOwner(&sdk.Entity{DeprecatedUserID: &userID}))
+	// No initiator sent, only user_id: the owner is rebuilt with an empty snapshot, safe for Username()
+	rebuilt := entityOwner(&sdk.Entity{DeprecatedUserID: &userID})
+	require.Equal(t, &sdk.V2Initiator{UserID: userID, User: &sdk.V2InitiatorUser{}}, rebuilt)
+	require.Empty(t, rebuilt.Username())
 }
 
 func TestHandleScheduler_ForwardsTheEntityOwner(t *testing.T) {

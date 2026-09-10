@@ -453,7 +453,7 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 	}()
 
 	defer func() {
-		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis, analysis.Data.Initiator)
+		event_v2.PublishAnalysisDone(ctx, api.Cache, vcsProjectWithSecret.Name, repo.Name, analysis)
 	}()
 
 	entitiesUpdated := make([]sdk.Entity, 0)
@@ -1256,7 +1256,7 @@ func sendAnalysisHookCallback(ctx context.Context, db *gorp.DbMap, analysis sdk.
 
 	if analysis.Data.Initiator != nil {
 		callback.AnalysisCallback.Initiator = analysis.Data.Initiator
-		callback.AnalysisCallback.DeprecatedUsername = analysis.Data.Initiator.Username()
+		callback.AnalysisCallback.DeprecatedUsername = analysis.Data.InitiatorUsername()
 		callback.AnalysisCallback.DeprecatedUserID = analysis.Data.Initiator.UserID
 	}
 

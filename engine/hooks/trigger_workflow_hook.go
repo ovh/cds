@@ -320,7 +320,8 @@ func (s *Service) handleManualHook(ctx context.Context, hre *sdk.HookRepositoryE
 }
 
 // entityOwner returns the owner of an entity as sent by the API, nil when nobody is identified. The
-// user_id field is only read when the API predates the initiator field.
+// user_id field is only read when the API sends no initiator, for an entity not migrated yet or an API
+// predating the field; that owner then carries an empty user snapshot so it can never be dereferenced nil.
 func entityOwner(e *sdk.Entity) *sdk.V2Initiator {
 	switch {
 	case e.Initiator != nil:
@@ -329,7 +330,7 @@ func entityOwner(e *sdk.Entity) *sdk.V2Initiator {
 		}
 		return e.Initiator
 	case e.DeprecatedUserID != nil && *e.DeprecatedUserID != "":
-		return &sdk.V2Initiator{UserID: *e.DeprecatedUserID}
+		return &sdk.V2Initiator{UserID: *e.DeprecatedUserID, User: &sdk.V2InitiatorUser{}}
 	}
 	return nil
 }
