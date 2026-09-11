@@ -1018,6 +1018,10 @@ func performGeneric(runResult *sdk.V2WorkflowRunResult, fileInfo *grpcplugins.Ar
 	return nil
 }
 
+// aqlSearchLimit is the ceiling a glob enumeration may return. It is deliberately not sent
+// to artifactory as a limit(): alongside the property include, limit() applies to the
+// database rows (one per property), not to the items, and silently returns a fraction of
+// the matching artifacts while reporting that fraction as the total.
 const aqlSearchLimit = 10000
 
 func containsGlob(path string) bool {
@@ -1216,6 +1220,13 @@ func deriveCandidate(r grpcplugins.SearchResult, resultType sdk.V2WorkflowRunRes
 	return candidate
 }
 
+// globSearchAQL builds the enumeration query. It is kept apart from enumerateGlobMatches so
+// the query can be asserted in a unit test: adding a limit() here silently trims the result
+// set (see aqlSearchLimit).
+func globSearchAQL(criteria []string) string {
+	return fmt.Sprintf(`items.find({"$and":[%s]}).include("repo","path","name","actual_md5","actual_sha1","sha256","size","created","created_by","property")`, strings.Join(criteria, ","))
+}
+
 // enumerateGlobMatches lists the artifacts matching the glob pattern in the local
 // repositories behind the virtual repository. One AQL search scoped to the static prefix of
 // the pattern enumerates the candidates with the data needed to build the run results
@@ -1228,9 +1239,9 @@ func deriveCandidate(r grpcplugins.SearchResult, resultType sdk.V2WorkflowRunRes
 //     scoped to the low maturity repository, the only one performDocker reads;
 //   - conan: a package revision is the parent of the export folder holding conanmanifest.txt.
 //
-// The search is not paginated (AQL ignores offset/limit alongside the property include):
-// when the results are trimmed, by our limit or a server-side one, the search fails rather
-// than registering an incomplete set.
+// The search carries no limit (see aqlSearchLimit) and is not paginated: when the results
+// are trimmed by a server-side limit, the search fails rather than registering an
+// incomplete set.
 func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfig grpcplugins.ArtifactoryConfig, integ sdk.JobIntegrationsContext, repository, pattern string, resultType sdk.V2WorkflowRunResultType) (*globEnumeration, error) {
 	criteria := []string{repoCriteria(repository)}
 	prefixPattern := pattern
@@ -1249,9 +1260,7 @@ func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfi
 	default:
 		criteria = append(criteria, `{"type":"file"}`)
 	}
-	aql := fmt.Sprintf(`items.find({"$and":[%s]}).include("repo","path","name","actual_md5","actual_sha1","sha256","size","created","created_by","property").limit(%d)`, strings.Join(criteria, ","), aqlSearchLimit)
-
-	res, err := grpcplugins.SearchItem(ctx, &p.Common, artiConfig, aql)
+	res, err := grpcplugins.SearchItem(ctx, &p.Common, artiConfig, globSearchAQL(criteria))
 	if err != nil {
 		return nil, err
 	}
@@ -1259,7 +1268,7 @@ func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfi
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search truncated by artifactory (%s): use a more specific pattern", res.Range.Notification)
 	}
 	if len(res.Results) >= aqlSearchLimit {
-		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search returned %d items or more, results may be truncated: use a more specific pattern", len(res.Results))
+		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search returned %d items, above the %d supported: use a more specific pattern", len(res.Results), aqlSearchLimit)
 	}
 
 	g := glob.New(pattern)

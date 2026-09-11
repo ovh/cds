@@ -184,6 +184,18 @@ func TestSearchResultResponseTruncation(t *testing.T) {
 	require.Equal(t, "", complete.Range.Notification)
 }
 
+// TestGlobSearchAQL locks the absence of a limit() in the enumeration query. Artifactory
+// applies limit() to the database rows returned by the property include, one per property,
+// not to the items: a limit(10000) on a folder holding 4984 debian packages returned 421 of
+// them, reported "total": 421 and set no range notification, so the truncation was
+// undetectable and the artifacts of the current run fell outside the window.
+func TestGlobSearchAQL(t *testing.T) {
+	aql := globSearchAQL([]string{`{"repo":{"$match":"myrepo-*"}}`, `{"type":"file"}`})
+	require.Equal(t, `items.find({"$and":[{"repo":{"$match":"myrepo-*"}},{"type":"file"}]}).include("repo","path","name","actual_md5","actual_sha1","sha256","size","created","created_by","property")`, aql)
+	require.NotContains(t, aql, ".limit(")
+	require.NotContains(t, aql, ".offset(")
+}
+
 // TestGlobSelection covers the candidate filtering as done by enumerateGlobMatches, on
 // synthetic search results mimicking the layouts audited on real repositories.
 func TestGlobSelection(t *testing.T) {
@@ -237,6 +249,32 @@ func TestGlobSelection(t *testing.T) {
 		filterCandidates(ociResults, sdk.V2WorkflowRunResultTypeOCI, "services/*/*"))
 	require.Equal(t, []string{"mirror/api-exposition/gateway/1.46.0"},
 		filterCandidates(ociResults, sdk.V2WorkflowRunResultTypeOCI, "mirror/** !**/sha256:*"))
+
+	// the layout of the oci integration test, taken from the repository it runs against:
+	// three packages of the same run plus a digest folder and packages of earlier runs. The
+	// <ts> suffix is what keeps the pattern off the previous runs, and mychart is excluded
+	// because it is registered by its own single-path step.
+	ociRunResults := []grpcplugins.SearchResult{
+		{Path: "busybox/1789057565", Name: "manifest.json"},
+		{Path: "myapp/0.0.1-1789057565", Name: "manifest.json"},
+		{Path: "mychart/0.1.0-1789057565", Name: "manifest.json"},
+		{Path: "mychart/sha256:638980735131438bbc7ab849872e60f404009afad7cc2ee22ee8d73302e93926", Name: "manifest.json"},
+		{Path: "busybox/1789050000", Name: "manifest.json"},
+		{Path: "myapp/0.0.1-1789050000", Name: "manifest.json"},
+	}
+	require.Equal(t, []string{"busybox/1789057565", "myapp/0.0.1-1789057565"},
+		filterCandidates(ociRunResults, sdk.V2WorkflowRunResultTypeOCI, "*/*1789057565 !mychart/*"))
+
+	// the debian counterpart: a pattern whose wildcard sits between a literal prefix and a
+	// literal suffix, against the packages of the current run only.
+	debianRunResults := []grpcplugins.SearchResult{
+		{Path: "pool", Name: "glob-1789057606-a.deb"},
+		{Path: "pool", Name: "glob-1789057606-b.deb"},
+		{Path: "pool", Name: "glob-1789050000-a.deb"},
+		{Path: "pool", Name: "package-linux-amd64-1789057606.deb"},
+	}
+	require.Equal(t, []string{"pool/glob-1789057606-a.deb", "pool/glob-1789057606-b.deb"},
+		filterCandidates(debianRunResults, sdk.V2WorkflowRunResultTypeDebian, "pool/glob-1789057606-*.deb"))
 
 	// a "*" spans the ":" between image and tag: "/" is the matcher's only separator
 	dockerResults := []grpcplugins.SearchResult{
