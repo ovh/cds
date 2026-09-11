@@ -101,7 +101,7 @@ func ApplyRunRetentionOnProject(ctx context.Context, db *gorp.DbMap, store cache
 	ctx = context.WithValue(ctx, cdslog.PurgeReport, report.ID)
 	for _, w := range wnames {
 		reportWorkflow := ApplyRunRetentionOnWorkflow(ctx, db, store, pkey, w, projectRunRetention, routines, opts)
-		if len(reportWorkflow.Refs) > 0 {
+		if len(reportWorkflow.Refs) > 0 || reportWorkflow.Error != "" {
 			report.Workflows = append(report.Workflows, reportWorkflow)
 		}
 	}
@@ -183,7 +183,7 @@ func ApplyRunRetentionOnWorkflow(ctx context.Context, db *gorp.DbMap, store cach
 		return workflowReport
 	}
 
-	workflowReport.Refs = make([]sdk.WorkflowRefPurgeReport, 0, len(refs))
+	workflowReport.Refs = make([]sdk.WorkflowRefPurgeReport, 0, len(refs)+1)
 	for _, ref := range refs {
 		var ruleRetention *sdk.RetentionRule
 		for _, wrr := range workflowRetention.Rules {
@@ -212,6 +212,17 @@ func ApplyRunRetentionOnWorkflow(ctx context.Context, db *gorp.DbMap, store cach
 			continue
 		}
 
+	}
+
+	// Runs that failed before their git context was built have no ref, so no
+	// ref rule can match them: the workflow default rule applies.
+	refReport, err := ApplyRunRetentionOnWorkflowRef(ctx, db, store, pkey, vcs, repo, workflowName, workflow_v2.NoGitRef, workflowRetention.DefaultRetention, routines, opts)
+	refReport.RefName = sdk.PurgeReportNoGitRef
+	if len(refReport.DeletedDatas) != 0 || refReport.Error != "" {
+		workflowReport.Refs = append(workflowReport.Refs, refReport)
+	}
+	if err != nil {
+		log.ErrorWithStackTrace(ctx, err)
 	}
 	return workflowReport
 }
@@ -248,6 +259,10 @@ func ApplyRunRetentionOnWorkflowRef(ctx context.Context, db *gorp.DbMap, store c
 			}
 			event_v2.PublishRunEvent(ctx, store, sdk.EventRunDeleted, *wr, nil, nil, nil)
 		}
+		gitRefReport.DeletedDatas = append(gitRefReport.DeletedDatas, sdk.WorkflowRefDataPurgeReport{
+			RunID:     wr.ID,
+			RunNumber: wr.RunNumber,
+		})
 	}
 
 	// Select next run to delete runs

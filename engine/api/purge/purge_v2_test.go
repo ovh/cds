@@ -376,3 +376,214 @@ func TestApplyRunRetentionOnProject_KeepsRecentlyEndedRuns(t *testing.T) {
 	require.Equal(t, int64(3), wrDB[0].RunNumber)
 	require.Equal(t, int64(2), wrDB[1].RunNumber, "a run that just ended must not be deleted by the retention count")
 }
+
+// A run that failed before its git context was built has no git ref. It must
+// not prevent the retention from running on the other refs of its workflow.
+func TestApplyRunRetentionOnProject_RunWithoutGitRefDoesNotBlockWorkflow(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/bulk/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
+	wkname := sdk.RandomString(10)
+	lambdauser, _ := assets.InsertLambdaUser(t, db)
+	p := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, "ovh/cds")
+
+	// Only the age rule can apply: the count is larger than the number of runs.
+	require.NoError(t, project.InsertRunRetention(ctx, db, &sdk.ProjectRunRetention{
+		ProjectKey: p.Key,
+		Retentions: sdk.Retentions{
+			DefaultRetention: sdk.RetentionRule{DurationInDays: 30, Count: 10},
+		},
+	}))
+
+	insertRun := func(runNumber int64, started time.Time, gitCtx sdk.GitContext) {
+		wr := sdk.V2WorkflowRun{
+			ProjectKey:   p.Key,
+			VCSServerID:  vcs.ID,
+			VCSServer:    vcs.Name,
+			RepositoryID: repo.ID,
+			Repository:   repo.Name,
+			WorkflowName: wkname,
+			WorkflowSha:  "123456",
+			Status:       sdk.V2WorkflowRunStatusFail,
+			RunAttempt:   0,
+			Started:      started,
+			LastModified: started,
+			Initiator:    &sdk.V2Initiator{UserID: lambdauser.ID},
+			RunNumber:    runNumber,
+			Contexts:     sdk.WorkflowRunContext{Git: gitCtx},
+		}
+		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+		// InsertRun stamps the current time, so the age is set afterwards.
+		_, err := db.Exec("UPDATE v2_workflow_run SET started = $1, last_modified = $1 WHERE id = $2", started, wr.ID)
+		require.NoError(t, err)
+	}
+
+	old := time.Now().Add(-40 * 24 * time.Hour)
+	master := sdk.GitContext{Ref: "refs/heads/master"}
+	insertRun(1, time.Now(), sdk.GitContext{}) // failed while crafting: no git ref, recent: kept
+	insertRun(2, old, master)                  // older than the retention: deleted
+	insertRun(3, time.Now(), master)           // recent: kept
+
+	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, &sdk.GoRoutines{}, PurgeOption{DisabledDryRun: true}))
+
+	wrDB, err := workflow_v2.LoadRuns(ctx, db, p.Key, vcs.ID, repo.ID, wkname)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(wrDB))
+	require.Equal(t, int64(3), wrDB[0].RunNumber)
+	require.Equal(t, int64(1), wrDB[1].RunNumber, "a recent run without git ref is kept by the workflow default rule")
+}
+
+// Runs without git ref belong to no ref, so no ref rule can match them: the
+// workflow default rule applies, and the report lists them under their own name.
+func TestApplyRunRetentionOnProject_PurgesRunsWithoutGitRef(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	ctx := context.Background()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "POST", "/bulk/item/delete", gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
+	wkname := sdk.RandomString(10)
+	lambdauser, _ := assets.InsertLambdaUser(t, db)
+	p := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, "ovh/cds")
+
+	// The ref rule keeps every master run; the workflow default keeps a single
+	// run and drops those older than 30 days.
+	require.NoError(t, project.InsertRunRetention(ctx, db, &sdk.ProjectRunRetention{
+		ProjectKey: p.Key,
+		Retentions: sdk.Retentions{
+			DefaultRetention: sdk.RetentionRule{DurationInDays: 365, Count: 10},
+			WorkflowRetentions: []sdk.WorkflowRetentions{{
+				Workflow: "github/**/*",
+				Rules: []sdk.WorkflowRetentionRule{{
+					GitRef:        "refs/heads/master",
+					RetentionRule: sdk.RetentionRule{DurationInDays: 365, Count: 10},
+				}},
+				DefaultRetention: &sdk.RetentionRule{DurationInDays: 30, Count: 1},
+			}},
+		},
+	}))
+
+	insertRun := func(runNumber int64, started time.Time, gitCtx sdk.GitContext) {
+		wr := sdk.V2WorkflowRun{
+			ProjectKey:   p.Key,
+			VCSServerID:  vcs.ID,
+			VCSServer:    vcs.Name,
+			RepositoryID: repo.ID,
+			Repository:   repo.Name,
+			WorkflowName: wkname,
+			WorkflowSha:  "123456",
+			Status:       sdk.V2WorkflowRunStatusFail,
+			RunAttempt:   0,
+			Started:      started,
+			LastModified: started,
+			Initiator:    &sdk.V2Initiator{UserID: lambdauser.ID},
+			RunNumber:    runNumber,
+			Contexts:     sdk.WorkflowRunContext{Git: gitCtx},
+		}
+		require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+		// InsertRun stamps the current time, so the age is set afterwards.
+		_, err := db.Exec("UPDATE v2_workflow_run SET started = $1, last_modified = $1 WHERE id = $2", started, wr.ID)
+		require.NoError(t, err)
+	}
+
+	old := time.Now().Add(-40 * 24 * time.Hour)
+	master := sdk.GitContext{Ref: "refs/heads/master"}
+	insertRun(1, old, sdk.GitContext{})        // no git ref, too old: deleted by age
+	insertRun(2, time.Now(), sdk.GitContext{}) // no git ref, past the count: deleted
+	insertRun(3, time.Now(), sdk.GitContext{}) // no git ref, newest: kept
+	insertRun(4, old, master)                  // kept by the master rule
+
+	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, &sdk.GoRoutines{}, PurgeOption{DisabledDryRun: true}))
+
+	wrDB, err := workflow_v2.LoadRuns(ctx, db, p.Key, vcs.ID, repo.ID, wkname)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(wrDB))
+	require.Equal(t, int64(4), wrDB[0].RunNumber)
+	require.Equal(t, int64(3), wrDB[1].RunNumber)
+
+	retention, err := project.LoadRunRetentionByProjectKey(ctx, db, p.Key)
+	require.NoError(t, err)
+	require.Len(t, retention.LastReport.Workflows, 1)
+	require.Len(t, retention.LastReport.Workflows[0].Refs, 1)
+	refReport := retention.LastReport.Workflows[0].Refs[0]
+	require.Equal(t, sdk.PurgeReportNoGitRef, refReport.RefName)
+	require.Len(t, refReport.DeletedDatas, 2)
+	require.Equal(t, int64(1), refReport.DeletedDatas[0].RunNumber, "deleted by the age rule")
+	require.Equal(t, int64(2), refReport.DeletedDatas[1].RunNumber, "deleted by the count rule")
+}
+
+// A workflow the retention cannot process must show up in the report with its
+// error, so that the purge status reflects it.
+func TestApplyRunRetentionOnProject_ReportsWorkflowErrors(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	ctx := context.Background()
+
+	lambdauser, _ := assets.InsertLambdaUser(t, db)
+	p := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, "ovh/cds")
+
+	require.NoError(t, project.InsertRunRetention(ctx, db, &sdk.ProjectRunRetention{
+		ProjectKey: p.Key,
+		Retentions: sdk.Retentions{
+			DefaultRetention: sdk.RetentionRule{DurationInDays: 30, Count: 10},
+		},
+	}))
+
+	// A repository without owner gives a workflow name the retention cannot
+	// split into vcs, owner, repository and workflow.
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   p.Key,
+		VCSServerID:  vcs.ID,
+		VCSServer:    vcs.Name,
+		RepositoryID: repo.ID,
+		Repository:   "cds",
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123456",
+		Status:       sdk.V2WorkflowRunStatusFail,
+		RunAttempt:   0,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Initiator:    &sdk.V2Initiator{UserID: lambdauser.ID},
+		RunNumber:    1,
+		Contexts:     sdk.WorkflowRunContext{Git: sdk.GitContext{Ref: "refs/heads/master"}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	require.NoError(t, ApplyRunRetentionOnProject(ctx, db.DbMap, cache, p.Key, &sdk.GoRoutines{}, PurgeOption{DisabledDryRun: true}))
+
+	retention, err := project.LoadRunRetentionByProjectKey(ctx, db, p.Key)
+	require.NoError(t, err)
+	require.Equal(t, sdk.PurgeStatusFail, retention.LastStatus)
+	require.Len(t, retention.LastReport.Workflows, 1)
+	require.Equal(t, "github/cds/"+wr.WorkflowName, retention.LastReport.Workflows[0].WorkflowName)
+	require.Contains(t, retention.LastReport.Workflows[0].Error, "unable to parse workflow")
+	require.Empty(t, retention.LastReport.Workflows[0].Refs)
+}

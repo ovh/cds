@@ -1787,6 +1787,19 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		return nil, sdk.WrapError(sdk.ErrNotImplemented, "event %s not implemented", runEvent.HookType)
 	}
 
+	// The git context is built while crafting; setting its ref and sha now keeps
+	// a run that fails before that attached to its ref, for retention and search.
+	var gitContext sdk.GitContext
+	if runRequest.Ref != "" {
+		gitContext.Ref = runRequest.Ref
+		gitContext.RefName = strings.TrimPrefix(strings.TrimPrefix(runRequest.Ref, sdk.GitRefBranchPrefix), sdk.GitRefTagPrefix)
+		gitContext.RefType = sdk.GitRefTypeBranch
+		if strings.HasPrefix(runRequest.Ref, sdk.GitRefTagPrefix) {
+			gitContext.RefType = sdk.GitRefTypeTag
+		}
+		gitContext.Sha = runRequest.Sha
+	}
+
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:         proj.Key,
 		VCSServerID:        vcsProject.ID,
@@ -1803,7 +1816,7 @@ func (api *API) startWorkflowV2(ctx context.Context, proj sdk.Project, vcsProjec
 		ToDelete:           false,
 		WorkflowData:       sdk.V2WorkflowRunData{Workflow: wk},
 		RunEvent:           runEvent,
-		Contexts:           sdk.WorkflowRunContext{},
+		Contexts:           sdk.WorkflowRunContext{Git: gitContext},
 		Initiator:          &initiator,
 		DeprecatedUserID:   initiator.UserID,         // Deprecated
 		DeprecatedAdminMFA: initiator.IsAdminWithMFA, // Deprecated

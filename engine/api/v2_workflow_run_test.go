@@ -3179,3 +3179,42 @@ func TestPostStartJobWorkflowRunHandler_MultipleJobs(t *testing.T) {
 	require.True(t, findJob1)
 	require.True(t, findjob2)
 }
+
+// The git ref and sha of the triggering event are set on the run context at
+// creation, so that a run failing before crafting still belongs to its ref.
+func TestStartWorkflowV2_SetsGitRefOnCreation(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	wk := sdk.V2Workflow{Name: sdk.RandomString(10)}
+	wkEntity := sdk.Entity{
+		Name:                wk.Name,
+		Type:                sdk.EntityTypeWorkflow,
+		ProjectKey:          proj.Key,
+		Ref:                 "refs/heads/master",
+		Commit:              "HEAD",
+		ProjectRepositoryID: repo.ID,
+	}
+	initiator := sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}
+
+	for _, tc := range []struct{ ref, refName, refType string }{
+		{"refs/heads/master", "master", sdk.GitRefTypeBranch},
+		{"refs/tags/v1.0.0", "v1.0.0", sdk.GitRefTypeTag},
+	} {
+		runRequest := sdk.V2WorkflowRunHookRequest{HookType: sdk.WorkflowHookTypeManual, Ref: tc.ref, Sha: "123456"}
+		wr, err := api.startWorkflowV2(ctx, *proj, *vcsServer, *repo, repo.Name, wkEntity, wk, runRequest, initiator)
+		require.NoError(t, err)
+
+		wrDB, err := workflow_v2.LoadRunByID(ctx, db, wr.ID)
+		require.NoError(t, err)
+		require.Equal(t, tc.ref, wrDB.Contexts.Git.Ref)
+		require.Equal(t, tc.refName, wrDB.Contexts.Git.RefName)
+		require.Equal(t, tc.refType, wrDB.Contexts.Git.RefType)
+		require.Equal(t, "123456", wrDB.Contexts.Git.Sha)
+	}
+}
