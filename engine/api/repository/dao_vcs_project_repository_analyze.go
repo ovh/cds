@@ -117,6 +117,15 @@ func LoadRepositoryIDsAnalysisInProgress(ctx context.Context, db gorp.SqlExecuto
 	return getAnalyses(ctx, db, query)
 }
 
+// LoadAnalysesInProgressIdleSince returns up to limit InProgress analyses not
+// modified since the given time, oldest first.
+func LoadAnalysesInProgressIdleSince(ctx context.Context, db gorp.SqlExecutor, idleSince time.Time, limit int64) ([]sdk.ProjectRepositoryAnalysis, error) {
+	query := gorpmapping.NewQuery(
+		"SELECT * FROM project_repository_analysis WHERE status = $1 AND last_modified < $2 ORDER BY last_modified ASC LIMIT $3",
+	).Args(sdk.RepositoryAnalysisStatusInProgress, idleSince, limit)
+	return getAnalyses(ctx, db, query)
+}
+
 func LoadRepositoryAnalysisById(ctx context.Context, db gorp.SqlExecutor, projectRepoID, analysisID string) (*sdk.ProjectRepositoryAnalysis, error) {
 	ctx, next := telemetry.Span(ctx, "repository.LoadRepositoryAnalysisById")
 	defer next()
