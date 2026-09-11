@@ -37,6 +37,37 @@ func TestContainsGlob(t *testing.T) {
 	require.True(t, containsGlob("pool/[ab]*.deb"))
 }
 
+// A literal path wrongly read as a pattern matches nothing, and with if-no-files-found
+// defaulting to warn the job stays green with no run result, where it used to fail on the
+// missing artifact. Below are the resolved paths the .cds repositories and the venom tests
+// really pass.
+func TestContainsGlobOnProductionPaths(t *testing.T) {
+	for _, path := range []string{
+		"pool/package-linux-amd64-1757548800.deb",
+		"terraform-linux-amd64-1757548800.tar.gz",
+		"mychart/0.1.0-1757548800",
+		"busybox/1757548800",
+		"sbt.pomo",
+		"cds/model/debian7-container:1",
+		"internal/arsenal-regions/ovh/0.1.0-11.sha.b43d3753.zip",
+		"TEST/server.tests-results.xml",
+		"pysgu/0.1/pysgu-0.1.tar.gz",
+		"/cfgmanager-common-interface/1.9.2/cfgmanager_common_interface-1.9.2-py3-none-any.whl",
+		"ovh/thebastion/0.4.0/terraform-provider-thebastion_0.4.0_linux_amd64.zip",
+		"/stash_ovh_net/uservice/paas-sdev/FRAMEWORK/default/master/paas-sdev-snapshot",
+	} {
+		require.False(t, containsGlob(path), "literal path %q must not be read as a pattern", path)
+	}
+}
+
+// staticFiles takes a destination folder, and perform rejects a pattern for that type before
+// it even reaches the type switch. The destination is a free-form action input: a bracket in
+// one turns a plain upload into a hard failure.
+func TestContainsGlobOnStaticFilesDestination(t *testing.T) {
+	require.False(t, containsGlob("my-project/static/docs/"))
+	require.True(t, containsGlob("my-project/static/docs[fr]/"))
+}
+
 func TestGlobSupportedType(t *testing.T) {
 	require.False(t, globSupportedType(sdk.V2WorkflowRunResultTypeStaticFiles))
 	require.True(t, globSupportedType(sdk.V2WorkflowRunResultTypeDocker))

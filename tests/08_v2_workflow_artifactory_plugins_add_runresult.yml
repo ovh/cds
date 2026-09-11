@@ -170,6 +170,13 @@ testcases:
                 path: pool/glob-${{ steps.name.outputs.GLOBTS }}-*.deb
                 type: debian
                 if-no-files-found: error
+            # A pattern matching nothing, if-no-files-found left to its default: the step warns
+            # and the job stays green. A path without a wildcard pointing at a missing artifact
+            # still fails.
+            - uses: actions/addRunResult
+              with:
+                path: pool/nomatch-${{ steps.name.outputs.GLOBTS }}-*.deb
+                type: debian
             - id: uploadTerraform
               run: curl --fail -X PUT -T ${{ steps.name.outputs.TERRANAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-terraformProvider/${{ steps.name.outputs.TERRANAME }};terraform.name=myprovider;terraform.namespace=ovh;terraform.version=0.0.1;terraform.flavor=linux-amd64;terraform.type=provider"    
             - uses: actions/addRunResult
@@ -299,6 +306,7 @@ testcases:
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=python --format json"  
     assertions:
       - result.systemoutjson ShouldHaveLength 1
+  # Still 3: the extra glob step above matched nothing and created no run result.
   - name: Check that we have 3 run results of type debian (1 single + 2 via glob)
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=debian --format json"
     assertions:
