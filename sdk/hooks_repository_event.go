@@ -293,6 +293,9 @@ type HookRepositoryEventWorkflow struct {
 	SemverNext    string   `json:"semver_next"`
 	UpdatedFiles  []string `json:"updated_files"`
 
+	// Parent workflow data
+	ParentUpdatedFiles []string `json:"parent_updated_files"`
+
 	// Operation data to get gitInfo
 	OperationUUID   string          `json:"operation_uuid"`
 	OperationStatus OperationStatus `json:"operation_status"`

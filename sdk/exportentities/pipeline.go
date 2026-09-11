@@ -241,6 +241,10 @@ func computeJobRequirements(req []Requirement) []sdk.Requirement {
 			name = "secret"
 			val = r.SecretRequirement
 			tpe = sdk.SecretRequirement
+		} else if r.FlavorRequirement != "" {
+			name = "flavor"
+			val = r.FlavorRequirement
+			tpe = sdk.FlavorRequirement
 		}
 		res[i] = sdk.Requirement{
 			Name:  name,

@@ -114,6 +114,7 @@ type WorkflowOnRun struct {
 	Status   []string `json:"status,omitempty" jsonschema_description:"List of workflow run status to watch"`
 	Branches []string `json:"branches,omitempty" jsonschema_description:"Git branches that will trigger the workflow"`
 	Tags     []string `json:"tags,omitempty" jsonschema_description:"Git tags that will trigger the workflow"`
+	Paths    []string `json:"paths,omitempty" jsonschema_description:"File paths that will trigger the workflow when modified"`
 }
 
 type WorkflowOnSchedule struct {

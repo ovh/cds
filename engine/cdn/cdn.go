@@ -26,16 +26,19 @@ import (
 )
 
 const (
-	defaultLruSize            = 128 * 1024 * 1024 // 128Mb
-	defaultStepMaxSize        = 15 * 1024 * 1024  // 15Mb
-	defaultStepLinesRateLimit = 1800
-	defaultGlobalTCPRateLimit = 2 * 1024 * 1024 // 2Mb
+	defaultLruSize             = 128 * 1024 * 1024 // 128Mb
+	defaultStepMaxSize         = 15 * 1024 * 1024  // 15Mb
+	defaultStepLinesRateLimit  = 1800
+	defaultGlobalTCPRateLimit  = 2 * 1024 * 1024 // 2Mb
+	defaultNbJobLogsGoroutines = 10
+	defaultDequeueBatchSize    = 100
 )
 
 // New returns a new service
 func New() *Service {
 	s := new(Service)
 	s.GoRoutines = sdk.NewGoRoutines(context.Background())
+	s.dequeueOwnerID = sdk.UUID()
 	return s
 }
 
@@ -80,6 +83,12 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	}
 	if s.Cfg.Log.StepLinesRateLimit == 0 {
 		s.Cfg.Log.StepLinesRateLimit = defaultStepLinesRateLimit
+	}
+	if s.Cfg.Log.NbJobLogsGoroutines <= 0 {
+		s.Cfg.Log.NbJobLogsGoroutines = defaultNbJobLogsGoroutines
+	}
+	if s.Cfg.Log.DequeueBatchSize <= 0 {
+		s.Cfg.Log.DequeueBatchSize = defaultDequeueBatchSize
 	}
 	if s.Cfg.TCP.GlobalTCPRateLimit == 0 {
 		s.Cfg.TCP.GlobalTCPRateLimit = defaultGlobalTCPRateLimit
