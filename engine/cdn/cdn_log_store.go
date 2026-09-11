@@ -14,10 +14,28 @@ import (
 	"github.com/ovh/cds/sdk/cdn"
 )
 
+// storeLogsCache memoizes item and item unit lookups for the lifetime of a dequeued batch:
+// without it, every single log line costs ~4 SELECTs (incl. 2 decryptions) against the
+// database. Entries are keyed by apiRefHash / itemID because one job queue carries several
+// steps and service logs, each being a distinct item.
+type storeLogsCache struct {
+	items     map[string]*sdk.CDNItem     // by apiRefHash
+	itemUnits map[string]*sdk.CDNItemUnit // by itemID
+}
+
+func newStoreLogsCache() *storeLogsCache {
+	return &storeLogsCache{
+		items:     make(map[string]*sdk.CDNItem),
+		itemUnits: make(map[string]*sdk.CDNItemUnit),
+	}
+}
+
 func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessage) error {
 	if len(hms) == 0 {
 		return nil
 	}
+
+	batchCache := newStoreLogsCache()
 
 	// Browse all messages
 	for _, hm := range hms {
@@ -38,7 +56,7 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 		currentLog := buildMessage(hm)
 		cpt := 0
 		for {
-			if err := s.storeLogs(ctx, itemType, hm.Signature, hm.IsTerminated, currentLog); err != nil {
+			if err := s.storeLogsWithCache(ctx, batchCache, itemType, hm.Signature, hm.IsTerminated, currentLog); err != nil {
 				if sdk.ErrorIs(err, sdk.ErrLocked) && cpt < 10 {
 					cpt++
 					time.Sleep(250 * time.Millisecond)
@@ -53,9 +71,26 @@ func (s *Service) sendToBufferWithRetry(ctx context.Context, hms []handledMessag
 }
 
 func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signature cdn.Signature, terminated bool, content string) error {
-	it, err := s.loadOrCreateItem(ctx, itemType, signature)
+	return s.storeLogsWithCache(ctx, newStoreLogsCache(), itemType, signature, terminated, content)
+}
+
+func (s *Service) storeLogsWithCache(ctx context.Context, c *storeLogsCache, itemType sdk.CDNItemType, signature cdn.Signature, terminated bool, content string) error {
+	apiRef, err := sdk.NewCDNApiRef(itemType, signature)
 	if err != nil {
 		return err
+	}
+	hashRef, err := apiRef.ToHash()
+	if err != nil {
+		return err
+	}
+
+	it, ok := c.items[hashRef]
+	if !ok {
+		it, err = s.loadOrCreateItem(ctx, itemType, signature)
+		if err != nil {
+			return err
+		}
+		c.items[hashRef] = it
 	}
 
 	var t0 = it.Created.UnixNano() / 1000000 // convert to ms
@@ -63,9 +98,13 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 
 	ctx = context.WithValue(ctx, storage.FieldAPIRef, it.APIRefHash)
 
-	iu, err := s.loadOrCreateItemUnitBuffer(ctx, it.ID, itemType)
-	if err != nil {
-		return err
+	iu, ok := c.itemUnits[it.ID]
+	if !ok {
+		iu, err = s.loadOrCreateItemUnitBuffer(ctx, it.ID, itemType)
+		if err != nil {
+			return err
+		}
+		c.itemUnits[it.ID] = iu
 	}
 
 	// In case where the item was marked as complete we don't allow append of other logs
@@ -98,9 +137,7 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 	}
 
 	// Send an event in WS broker to refresh streams on current item
-	s.GoRoutines.Exec(ctx, "storeLogsPublishWSEvent", func(ctx context.Context) {
-		s.publishWSEvent(*iu)
-	})
+	s.publishWSEvent(*iu)
 
 	// If we have all lines or buffer is full and we received the last line
 	if terminated {
@@ -116,6 +153,11 @@ func (s *Service) storeLogs(ctx context.Context, itemType sdk.CDNItemType, signa
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		// completeItem changed the item status in database: evict the cached entries so a
+		// late line for this item reloads a fresh state and gets skipped as completed.
+		delete(c.items, hashRef)
+		delete(c.itemUnits, it.ID)
 
 		s.Units.PushInSyncQueue(ctx, it.ID, it.Created)
 	}

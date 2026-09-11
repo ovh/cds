@@ -338,6 +338,8 @@ func (x *RunningStorageUnits) IsBuffer(id string) bool {
 
 type LogConfig struct {
 	// Step logs
-	StepMaxSize        int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
-	StepLinesRateLimit int64 `toml:"stepLinesRateLimit" default:"1800" comment:"Number of lines that a worker can send by seconds" json:"stepLinesRateLimit"`
+	StepMaxSize         int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
+	StepLinesRateLimit  int64 `toml:"stepLinesRateLimit" default:"1800" comment:"Number of lines that a worker can send by seconds" json:"stepLinesRateLimit"`
+	NbJobLogsGoroutines int64 `toml:"nbJobLogsGoroutines" default:"10" comment:"Maximum number of job logs queues dequeued concurrently by a CDN instance" json:"nbJobLogsGoroutines"`
+	DequeueBatchSize    int   `toml:"dequeueBatchSize" default:"100" comment:"Maximum number of log messages read from a job logs queue in a single batch" json:"dequeueBatchSize"`
 }
