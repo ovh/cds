@@ -117,15 +117,72 @@ func getDockerMultiArchManifests(ctx context.Context, c *actionplugin.Common, rt
 	return &manifests, nil
 }
 
+// DockerManifestFiles is what the docker detail needs from artifactory about a tag folder.
+// FinalizeRunResultDockerDetail discovers it with folder and file lookups, the glob flow of
+// addRunResult already holds it in its AQL enumeration.
+type DockerManifestFiles struct {
+	FolderPath string              // /<image>/<tag>, as stored in the "dir" metadata
+	FileInfo   ArtifactoryFileInfo // <image>/<tag>/[list.]manifest.json
+	MultiArch  bool
+	// ArchFileInfo reaches <image>/<digest>/manifest.json. Only called for a manifest list.
+	ArchFileInfo func(digest string) (*ArtifactoryFileInfo, error)
+}
+
 // FinalizeRunResultDockerDetail is computing the runResult Object for a docker image (imageDestinationName) push from local reference (imageStruct)
 // As result, the parameter result is updated
 // This function is used by addRunResult and dockerPush actions
-func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, rtConfig ArtifactoryConfig, result *sdk.V2WorkflowRunResult, imageDestinationName string, imageStruct *Img) (err error) {
+func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, rtConfig ArtifactoryConfig, result *sdk.V2WorkflowRunResult, imageDestinationName string, imageStruct *Img) error {
 	jobCtx, err := GetJobContext(ctx, c)
 	if err != nil {
 		return err
 	}
 
+	// Computing the destination path (repository, maturity, etc...) from the image
+	integration := jobCtx.Integrations.ArtifactManager
+	maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
+	dockerRepo := integration.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-docker"
+	localRepo := dockerRepo + "-" + maturity
+
+	rtFolderPath := imageStruct.Repository + "/" + imageStruct.Tag
+	// Each docker tags are different folder
+	rtFolderPathInfo, err := GetArtifactoryFolderInfo(ctx, c, rtConfig, localRepo, rtFolderPath)
+	if err != nil {
+		return sdk.WrapError(err, "unable to get folder %s/%s info", localRepo, rtFolderPath)
+	}
+
+	files := DockerManifestFiles{
+		FolderPath: rtFolderPathInfo.Path,
+		ArchFileInfo: func(digest string) (*ArtifactoryFileInfo, error) {
+			return GetArtifactoryFileInfo(ctx, c, rtConfig, localRepo, imageStruct.Repository+"/"+digest+"/manifest.json")
+		},
+	}
+
+	// It the tag folder, we have to found the docker image manifest
+	var manifestFound bool
+	for _, child := range rtFolderPathInfo.Children {
+		if strings.HasSuffix(child.URI, "manifest.json") { // Can be manifest.json of list.manifest.json for multi-arch docker image
+			files.MultiArch = strings.HasSuffix(child.URI, "list.manifest.json")
+
+			manifestFileInfo, err := GetArtifactoryFileInfo(ctx, c, rtConfig, localRepo, rtFolderPath+child.URI)
+			if err != nil {
+				return sdk.WrapError(err, "unable to get manifest %s/%s info", localRepo, rtFolderPath+child.URI)
+			}
+			files.FileInfo = *manifestFileInfo
+			manifestFound = true
+			break
+		}
+	}
+	if !manifestFound {
+		return errors.New("unable to get uploaded image manifest")
+	}
+
+	return FinalizeRunResultDockerDetailFromFiles(ctx, c, rtConfig, result, imageDestinationName, imageStruct, localRepo, dockerRepo, maturity, files)
+}
+
+// FinalizeRunResultDockerDetailFromFiles fills the docker detail from a manifest the caller
+// already located. It downloads that manifest, nothing else: everything artifactory knows
+// about the files comes from the caller.
+func FinalizeRunResultDockerDetailFromFiles(ctx context.Context, c *actionplugin.Common, rtConfig ArtifactoryConfig, result *sdk.V2WorkflowRunResult, imageDestinationName string, imageStruct *Img, localRepo, virtualRepo, maturity string, files DockerManifestFiles) error {
 	// Reset run result details because dockerPush action is not doing it properly on creation
 	result.Detail = ComputeRunResultDockerDetail(imageDestinationName, *imageStruct)
 
@@ -134,44 +191,17 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 		return errors.Errorf("invalid imageDestinationName: %s", imageDestinationName)
 	}
 
-	// Computing the destination path (repository, maturity, etc...) from the image
-	integration := jobCtx.Integrations.ArtifactManager
-	maturity := integration.Get(sdk.ArtifactoryConfigPromotionLowMaturity)
-	dockerRepo := integration.Get(sdk.ArtifactoryConfigRepositoryPrefix) + "-docker"
+	// Extract details to put in the details of the run result
+	ExtractFileInfoIntoRunResult(result, files.FileInfo, imageDestinationName, "docker", localRepo, virtualRepo, maturity)
+
 	rtFolderPath := imageStruct.Repository + "/" + imageStruct.Tag
-	// Each docker tags are different folder
-	rtFolderPathInfo, err := GetArtifactoryFolderInfo(ctx, c, rtConfig, dockerRepo+"-"+maturity, rtFolderPath)
-	if err != nil {
-		return sdk.WrapError(err, "unable to get folder %s/%s info", dockerRepo+"-"+maturity, rtFolderPath)
-	}
-	// It the tag folder, we have to found the docker image manifest
-	var manifestFound bool
-	var manifestDownloadURI string
-	var manifestFileInfo *ArtifactoryFileInfo
-	multiArch := false
-	for _, child := range rtFolderPathInfo.Children {
-		if strings.HasSuffix(child.URI, "manifest.json") { // Can be manifest.json of list.manifest.json for multi-arch docker image
-			if strings.HasSuffix(child.URI, "list.manifest.json") {
-				multiArch = true
-			}
+	manifestDownloadURI := files.FileInfo.DownloadURI // We have the download URI for the manifest, we download it later
 
-			manifestFileInfo, err = GetArtifactoryFileInfo(ctx, c, rtConfig, dockerRepo+"-"+maturity, rtFolderPath+child.URI)
-			if err != nil {
-				return sdk.WrapError(err, "unable to get manifest %s/%s info", dockerRepo+"-"+maturity, rtFolderPath+child.URI)
-			}
-			manifestFound = true
-			manifestDownloadURI = manifestFileInfo.DownloadURI // We have the download URI for the manifest, we download it later
-			// Extract details to put in the details of the run result
-			ExtractFileInfoIntoRunResult(result, *manifestFileInfo, imageDestinationName, "docker", dockerRepo+"-"+maturity, dockerRepo, maturity)
-			result.ArtifactManagerMetadata.Set("id", imageStruct.ImageID)
-			break
+	if files.MultiArch {
+		// addRunResult has no local image to read the id from, unlike dockerPush
+		if imageStruct.ImageID == "" && len(files.FileInfo.Checksums.Sha256) >= 12 {
+			imageStruct.ImageID = files.FileInfo.Checksums.Sha256[:12]
 		}
-	}
-	if !manifestFound {
-		return errors.New("unable to get uploaded image manifest")
-	}
-
-	if multiArch {
 		manifestList, err := getDockerMultiArchManifests(ctx, c, rtConfig, manifestDownloadURI)
 		if err != nil {
 			return sdk.WrapError(err, "unable to download manifest from %s", manifestDownloadURI)
@@ -184,9 +214,9 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 				Architecture: m.Platform.Architecture,
 			}
 			manifestPath := imageStruct.Repository + "/" + m.Digest + "/manifest.json"
-			manifestFileInfo, err = GetArtifactoryFileInfo(ctx, c, rtConfig, dockerRepo+"-"+maturity, manifestPath)
+			manifestFileInfo, err := files.ArchFileInfo(m.Digest)
 			if err != nil {
-				return sdk.WrapError(err, "unable to get manifest %s/%s info", dockerRepo+"-"+maturity, manifestPath)
+				return sdk.WrapError(err, "unable to get manifest %s/%s info", localRepo, manifestPath)
 			}
 			img.Path = manifestFileInfo.Path
 			img.MD5 = manifestFileInfo.Checksums.Md5
@@ -212,14 +242,14 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 			return sdk.WrapError(err, "unable to download manifest from %s", manifestDownloadURI)
 		}
 		imageStruct.ImageID = strings.TrimPrefix(manifest.Config.Digest, "sha256:")[0:12]
-		imageStruct.Created = manifestFileInfo.Created.Format(time.RFC3339)
+		imageStruct.Created = files.FileInfo.Created.Format(time.RFC3339)
 
 		imgDetail := sdk.V2WorkflowRunResultDockerDetailImage{
 			ID:     imageStruct.ImageID,
 			Path:   rtFolderPath + "/manifest.json",
-			MD5:    manifestFileInfo.Checksums.Md5,
-			SHA1:   manifestFileInfo.Checksums.Sha1,
-			SHA256: manifestFileInfo.Checksums.Sha256,
+			MD5:    files.FileInfo.Checksums.Md5,
+			SHA1:   files.FileInfo.Checksums.Sha1,
+			SHA256: files.FileInfo.Checksums.Sha256,
 		}
 		result.Detail.Data = sdk.V2WorkflowRunResultDockerDetail{
 			Name:         imageDestinationName,
@@ -229,7 +259,8 @@ func FinalizeRunResultDockerDetail(ctx context.Context, c *actionplugin.Common, 
 		}
 	}
 
-	result.ArtifactManagerMetadata.Set("dir", rtFolderPathInfo.Path)
+	result.ArtifactManagerMetadata.Set("id", imageStruct.ImageID)
+	result.ArtifactManagerMetadata.Set("dir", files.FolderPath)
 
 	details, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultDockerDetail](result)
 	if err != nil {

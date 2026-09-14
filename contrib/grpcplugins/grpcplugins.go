@@ -466,6 +466,10 @@ type ArtifactoryFileInfo struct {
 
 type SearchResultResponse struct {
 	Results []SearchResult `json:"results"`
+	Range   struct {
+		// set by artifactory when the result set was trimmed by the server-side hard limit
+		Notification string `json:"notification"`
+	} `json:"range"`
 }
 
 type SearchResult struct {
@@ -474,10 +478,12 @@ type SearchResult struct {
 	Name         string   `json:"name"`
 	VirtualRepos []string `json:"virtual_repos"`
 
-	ActualMd5  string `json:"actual_md5"`
-	ActualSha1 string `json:"actual_sha1"`
-	Sha256     string `json:"sha256"`
-	Size       int64  `json:"size"`
+	ActualMd5  string    `json:"actual_md5"`
+	ActualSha1 string    `json:"actual_sha1"`
+	Sha256     string    `json:"sha256"`
+	Size       int64     `json:"size"`
+	Created    time.Time `json:"created"`
+	CreatedBy  string    `json:"created_by"`
 	Properties []SearchResultProperty
 }
 

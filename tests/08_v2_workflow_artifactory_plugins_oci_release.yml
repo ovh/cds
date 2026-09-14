@@ -200,6 +200,9 @@ testcases:
                   --dest-creds "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" \
                   docker://docker-hub-remote.${{ steps.login.outputs.RTHOST }}/busybox:1.36 \
                   docker://${{ steps.login.outputs.REGISTRY }}/busybox:${{ steps.login.outputs.TS }}
+            # Registered by a single path. A docker image in an -oci repository has a different
+            # layout from a helm chart, and the no-wildcard flow needs coverage on more than one
+            # of them.
             - uses: actions/addRunResult
               with:
                 type: oci
@@ -210,10 +213,15 @@ testcases:
                 set -e
                 mkdir -p artifact && echo "hello oci" > artifact/data.txt
                 flux push artifact oci://${{ steps.login.outputs.REGISTRY }}/myapp:0.0.1-${{ steps.login.outputs.TS }} --path=./artifact --source=cds --revision=0.0.1 --creds "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}"
+            # 3) is registered by a glob step. The <ts> version suffix keeps the pattern from
+            # matching packages of previous runs in the shared -oci repository, and the negations
+            # skip mychart and busybox, both registered as a single path above. Only myapp is
+            # left, for a total of 3.
             - uses: actions/addRunResult
               with:
                 type: oci
-                path: myapp/0.0.1-${{ steps.login.outputs.TS }}
+                path: "*/*${{ steps.login.outputs.TS }} !mychart/* !busybox/*"
+                if-no-files-found: error
           Release:
             needs: [Push]
             runs-on: "{{.worker_model}}"
