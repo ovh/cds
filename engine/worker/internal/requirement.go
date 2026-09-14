@@ -88,7 +88,13 @@ func checkBinaryRequirement(_ *CurrentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkModelRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
-	if len(strings.Split(r.Value, "/")) == 5 {
+	modelName := strings.Split(r.Value, " ")[0]
+
+	// A worker model v2 is required through its full path
+	// <projKey>/<vcs>/<repo>/<model>[@<ref>]. The ref can hold slashes, so it is cut
+	// before the path is counted, and a repository can hold more than one.
+	modelFullPath, _, _ := strings.Cut(modelName, "@")
+	if len(strings.Split(modelFullPath, "/")) >= 5 {
 		return true, nil
 	}
 
@@ -97,7 +103,6 @@ func checkModelRequirement(w *CurrentWorker, r sdk.Requirement) (bool, error) {
 		return false, nil
 	}
 
-	modelName := strings.Split(r.Value, " ")[0]
 	modelPath := strings.SplitN(modelName, "/", 2)
 	if len(modelPath) == 2 {
 		// if the requirement contains group info (myGroup/myModel) check that it match current worker model
