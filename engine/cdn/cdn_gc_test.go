@@ -125,29 +125,44 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6Redis))
 	iu6FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFS.ID, Type: item6RedisFS.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6FS))
+
+	// Add incoming Item in redis / fs - have to stay in redis until it is completed
+	item7Incoming := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemIncoming,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item7Incoming))
+	iu7Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item7Incoming.ID, Type: item7Incoming.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu7Redis))
+	iu7FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item7Incoming.ID, Type: item7Incoming.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu7FS))
+
 	oneHundred := 100
 	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(iusRedis))
+	require.Equal(t, 4, len(iusRedis))
 
 	iusFS, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(iusFS))
+	require.Equal(t, 4, len(iusFS))
 
 	// RUN TEST
-	iusRedisBefore, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
-	require.NoError(t, err)
-	require.Equal(t, 3, len(iusRedisBefore))
-
 	require.NoError(t, s.cleanBuffer(context.TODO()))
 
 	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(iusRedisAfter))
+	require.Equal(t, 2, len(iusRedisAfter))
+	var redisItemIDs []string
+	for _, iu := range iusRedisAfter {
+		redisItemIDs = append(redisItemIDs, iu.ItemID)
+	}
+	require.ElementsMatch(t, []string{item4Redis.ID, item7Incoming.ID}, redisItemIDs)
 
 	iusFS2After, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(iusFS2After))
+	require.Equal(t, 4, len(iusFS2After))
 }
 
 func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
