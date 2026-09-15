@@ -3,7 +3,6 @@ package cdn
 import (
 	"context"
 	"math/rand"
-	"sort"
 	"time"
 
 	"github.com/rockbears/log"
@@ -206,17 +205,21 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			continue
 		}
 
-		// Buffer copies hold the content as received, complete from them first
-		sort.SliceStable(itemUnits, func(i, j int) bool {
-			return s.Units.IsBuffer(itemUnits[i].UnitID) && !s.Units.IsBuffer(itemUnits[j].UnitID)
-		})
+		// Only a buffer copy can complete an item: storage copies are encrypted and their content unverified
+		bufferUnits := make([]sdk.CDNItemUnit, 0, len(itemUnits))
+		for _, iu := range itemUnits {
+			if s.Units.IsBuffer(iu.UnitID) {
+				bufferUnits = append(bufferUnits, iu)
+			}
+		}
+		itemUnits = bufferUnits
 
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")
 		}
 
-		// If there is no item unit, mark item as delete
+		// Without a buffer copy the item can never be completed, let the purge drop it
 		if len(itemUnits) == 0 {
 			it.Status = sdk.CDNStatusItemCompleted
 			it.ToDelete = true
@@ -225,6 +228,7 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 				log.Error(ctx, "cleanWaitingItem> unable to mark item %s to delete: %v", it.ID, err)
 				continue
 			}
+			log.Info(ctx, "cleanWaitingItem> item %s has no buffer copy, marked to delete", it.ID)
 		} else {
 			// Else complete item; a failing item must not block the others, it is retried on the next pass
 			if err := s.completeItem(ctx, tx, itemUnits[0]); err != nil {

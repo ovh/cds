@@ -591,3 +591,59 @@ func TestCleanWaitingItemSkipsLockedItem(t *testing.T) {
 	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
 	require.False(t, itemDB.ToDelete)
 }
+
+func TestCleanWaitingItemWithStorageCopyOnly(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.Factory = log.NewTestingWrapper(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
+
+	it := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemServiceLogV2,
+		Status:     sdk.CDNStatusItemIncoming,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &it))
+
+	// The only copy left is on the storage unit: nothing can complete the item anymore
+	iu := sdk.CDNItemUnit{
+		ItemID:  it.ID,
+		UnitID:  s.Units.Storages[0].ID(),
+		Type:    it.Type,
+		Locator: sdk.RandomString(64),
+		Item:    &it,
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu))
+
+	time.Sleep(2 * time.Second)
+
+	require.NoError(t, s.cleanWaitingItem(context.TODO(), 1))
+
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
+	require.True(t, itemDB.ToDelete)
+
+	// The storage copy itself is left to the purge
+	storageUnits, err := storage.LoadAllItemUnitsByItemIDs(context.TODO(), s.Mapper, db, it.ID)
+	require.NoError(t, err)
+	require.Len(t, storageUnits, 1)
+}
