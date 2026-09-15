@@ -51,7 +51,7 @@ func (s *Service) itemsGC(ctx context.Context) {
 				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:CompleteWaitingItems: cleanBuffer err: %v", err)
 			}
 			if err := s.cleanWaitingItem(ctx, ItemLogGC); err != nil {
-				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:CompleteWaitingItems: ContextWithStacktrace err: %v", err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:CompleteWaitingItems: cleanWaitingItem err: %v", err)
 			}
 		}
 	}
