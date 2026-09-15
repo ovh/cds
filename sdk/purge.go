@@ -23,6 +23,10 @@ type PurgeReport struct {
 	Workflows []WorkflowPurgeReport `json:"workflows,omitempty"`
 }
 
+// PurgeReportNoGitRef names, in purge reports, the runs that have no git ref in
+// their context, such as those failed while crafting.
+const PurgeReportNoGitRef = "no-git-ref"
+
 type WorkflowPurgeReport struct {
 	WorkflowName string                   `json:"workflow_name"`
 	Refs         []WorkflowRefPurgeReport `json:"ref_report"`

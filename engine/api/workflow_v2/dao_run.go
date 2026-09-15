@@ -239,6 +239,7 @@ func LoadRunsWorkflowRefsByWorkflow(ctx context.Context, db gorp.SqlExecutor, pr
 		SELECT DISTINCT contexts -> 'git' ->> 'ref'::TEXT
 		FROM v2_workflow_run
 		WHERE project_key = $1 AND vcs_server = $2 AND repository = $3 AND workflow_name = $4
+		AND contexts -> 'git' ->> 'ref' IS NOT NULL
 	`, projKey, vcs, repository, workflow); err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -705,6 +706,11 @@ func LoadRunsUnsafeWithPagination(ctx context.Context, db gorp.SqlExecutor, offs
 	return runs, nil
 }
 
+// NoGitRef, given as ref to LoadRunsDescAtOffset and LoadOlderRuns, selects the
+// runs without git ref in their context, such as those failed while crafting:
+// their queries turn an empty ref into NULL and match it with IS NOT DISTINCT FROM.
+const NoGitRef = ""
+
 // LoadRunsDescAtOffset returns the runs beyond the given offset, newest first.
 // The offset selects the candidates, the outer conditions then protect those
 // that must not be deleted: a run still going, and a run whose last update is
@@ -719,7 +725,7 @@ func LoadRunsDescAtOffset(ctx context.Context, db gorp.SqlExecutor, projKey, vcs
 		vcs_server = $2 AND
 		repository = $3 AND
 		workflow_name = $4 AND
-		contexts -> 'git' ->> 'ref'::TEXT = $5
+		contexts -> 'git' ->> 'ref' IS NOT DISTINCT FROM NULLIF($5, '')
 		ORDER BY run_number DESC
 		OFFSET $6
 	) candidates
@@ -740,7 +746,7 @@ func LoadOlderRuns(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo,
 	vcs_server = $2 AND
 	repository = $3 AND
 	workflow_name = $4 AND
-	contexts -> 'git' ->> 'ref'::TEXT = $5 AND
+	contexts -> 'git' ->> 'ref' IS NOT DISTINCT FROM NULLIF($5, '') AND
 	now() - started > $6 * INTERVAL '1' DAY AND
 	status != ALL($7)`
 
