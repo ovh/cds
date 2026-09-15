@@ -3,6 +3,7 @@ package cdn
 import (
 	"context"
 	"math/rand"
+	"sort"
 	"time"
 
 	"github.com/rockbears/log"
@@ -205,6 +206,11 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			continue
 		}
 
+		// Buffer copies hold the content as received, complete from them first
+		sort.SliceStable(itemUnits, func(i, j int) bool {
+			return s.Units.IsBuffer(itemUnits[i].UnitID) && !s.Units.IsBuffer(itemUnits[j].UnitID)
+		})
+
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")
@@ -216,19 +222,22 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			it.ToDelete = true
 			if err := item.Update(ctx, s.Mapper, tx, &it); err != nil {
 				_ = tx.Rollback()
-				return err
+				log.Error(ctx, "cleanWaitingItem> unable to mark item %s to delete: %v", it.ID, err)
+				continue
 			}
 		} else {
-			// Else complete item
+			// Else complete item; a failing item must not block the others, it is retried on the next pass
 			if err := s.completeItem(ctx, tx, itemUnits[0]); err != nil {
 				_ = tx.Rollback()
-				return err
+				log.Error(ctx, "cleanWaitingItem> unable to complete item %s: %v", it.ID, err)
+				continue
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
 			_ = tx.Rollback()
-			return err
+			log.Error(ctx, "cleanWaitingItem> unable to commit item %s: %v", it.ID, err)
+			continue
 		}
 
 		// Push item ID to run backend sync
