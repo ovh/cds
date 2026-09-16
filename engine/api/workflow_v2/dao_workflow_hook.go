@@ -244,6 +244,21 @@ func LoadDistinctSchedulerWorkflowKeysByProjectKey(ctx context.Context, db gorp.
 	return results, nil
 }
 
+// LoadDistantHooksByProjectKey returns the hooks of the project listening to a repository other than
+// the one hosting their workflow definition
+func LoadDistantHooksByProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.V2WorkflowHook, error) {
+	query := gorpmapping.NewQuery(`
+		SELECT *
+		FROM v2_workflow_hook
+		WHERE project_key = $1
+			AND head = true
+			AND data->>'vcs_server' IS NOT NULL
+			AND data->>'repository_name' IS NOT NULL
+			AND (data->>'vcs_server', lower(data->>'repository_name')) IS DISTINCT FROM (vcs_name, lower(repository_name))
+	`).Args(projectKey)
+	return getAllHooks(ctx, db, query)
+}
+
 // Deprecated
 func LoadHeadHookToMigrate(ctx context.Context, db gorp.SqlExecutor) ([]sdk.V2WorkflowHook, error) {
 	query := gorpmapping.NewQuery(`SELECT * FROM v2_workflow_hook WHERE type != 'RepositoryWebHook'`)

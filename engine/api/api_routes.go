@@ -486,6 +486,8 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/concurrency", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectConcurrenciesHandler), r.POSTv2(api.postProjectConcurrencyHandler))
 	r.Handle("/v2/project/{projectKey}/concurrency/{concurrencyName}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectConcurrencyHandler), r.PUTv2(api.putProjectConcurrencyHandler), r.DELETEv2(api.deleteProjectConcurrencyHandler))
 	r.Handle("/v2/project/{projectKey}/concurrency/{concurrencyName}/runs", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectConcurrencyRunsHandler))
+	r.Handle("/v2/project/{projectKey}/distantrepository", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectDistantRepositoryAllHandler))
+
 	r.Handle("/v2/project/{projectKey}/hook", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectHooksHandler), r.POSTv2(api.postProjectHookHandler))
 	r.Handle("/v2/project/{projectKey}/hook/{uuid}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectHookHandler), r.DELETEv2(api.deleteProjectHookHandler))
 
