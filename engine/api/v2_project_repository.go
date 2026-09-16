@@ -162,8 +162,24 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 				return err
 			}
 
+			var repoName string
 			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
+			switch {
+			case err == nil:
+				repoName = repo.Name
+			case sdk.ErrorIs(err, sdk.ErrNotFound):
+				// Repository only listened by a distant workflow: its events are readable as soon as the
+				// vcs server credentials of the project can read it. The hooks service keys events by
+				// lowercased repository name.
+				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
+				if err != nil {
+					return err
+				}
+				if _, err := vcsClient.RepoByFullname(ctx, repositoryIdentifier); err != nil {
+					return err
+				}
+				repoName = strings.ToLower(repositoryIdentifier)
+			default:
 				return err
 			}
 
@@ -175,7 +191,7 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 			if len(srvs) < 1 {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
 			}
-			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProject.Name, url.PathEscape(repo.Name))
+			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProject.Name, url.PathEscape(repoName))
 			var repositoryEvents []sdk.HookRepositoryEvent
 			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
 			if (errHooks != nil || code >= 400) && code != 404 {

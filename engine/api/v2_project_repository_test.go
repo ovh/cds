@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/stretchr/testify/require"
 )
 
@@ -278,4 +279,81 @@ func Test_getProjectDistantRepositoryAllHandler(t *testing.T) {
 		{VCSName: vcsProj.Name, Repository: "ovh/another"},
 		{VCSName: vcsProj.Name, Repository: "ovh/distant"},
 	}, callHandler())
+}
+
+func Test_getProjectRepositoryEventsHandler_DistantRepository(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	user1, pass := assets.InsertLambdaUser(t, db)
+	assets.InsertRBAcProject(t, db, "read", proj.Key, *user1)
+	vcsProj := assets.InsertTestVCSProject(t, db, proj.ID, "vcs-github", "github")
+	assets.InsertTestProjectRepository(t, db, proj.Key, vcsProj.ID, "ovh/declared")
+
+	sVCS, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, sVCS)
+		_ = services.Delete(db, sHooks)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	listEvents := func(repoName string) *httptest.ResponseRecorder {
+		uri := api.Router.GetRouteV2("GET", api.getProjectRepositoryEventsHandler, map[string]string{
+			"projectKey":           proj.Key,
+			"vcsIdentifier":        vcsProj.Name,
+			"repositoryIdentifier": url.PathEscape(repoName),
+		})
+		test.NotEmpty(t, uri)
+		req := assets.NewAuthentifiedRequest(t, user1, pass, "GET", uri, nil)
+		w := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(w, req)
+		return w
+	}
+
+	// Not declared but readable by the vcs server credentials: the events are served, keyed by the
+	// lowercased repository name
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/OVH/Distant", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...cdsclient.RequestModifier) (http.Header, int, error) {
+			*(out.(*sdk.VCSRepo)) = sdk.VCSRepo{Fullname: "OVH/Distant"}
+			return nil, 200, nil
+		})
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/v2/repository/event/vcs-github/ovh%2Fdistant", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...cdsclient.RequestModifier) (http.Header, int, error) {
+			*(out.(*[]sdk.HookRepositoryEvent)) = []sdk.HookRepositoryEvent{{UUID: "distant-event"}}
+			return nil, 200, nil
+		})
+	w := listEvents("OVH/Distant")
+	require.Equal(t, 200, w.Code)
+	var events []sdk.HookRepositoryEvent
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &events))
+	require.Len(t, events, 1)
+	require.Equal(t, "distant-event", events[0].UUID)
+
+	// Not declared and not readable: the vcs server answer is returned, hooks are never asked
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/ovh/unreadable", gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, 404, sdk.WithStack(sdk.ErrNotFound))
+	require.Equal(t, 404, listEvents("ovh/unreadable").Code)
+
+	// Declared: unchanged, the vcs server is never asked
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/v2/repository/event/vcs-github/ovh%2Fdeclared", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...cdsclient.RequestModifier) (http.Header, int, error) {
+			*(out.(*[]sdk.HookRepositoryEvent)) = []sdk.HookRepositoryEvent{{UUID: "declared-event"}}
+			return nil, 200, nil
+		})
+	w = listEvents("ovh/declared")
+	require.Equal(t, 200, w.Code)
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &events))
+	require.Len(t, events, 1)
+	require.Equal(t, "declared-event", events[0].UUID)
 }
