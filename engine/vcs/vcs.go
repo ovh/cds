@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/vcs/gitea"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/engine/vcs/gitlab"
+	"github.com/ovh/cds/engine/vcs/transport"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -61,6 +62,9 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.ServiceType = sdk.TypeVCS
 	s.HTTPURL = s.Cfg.URL
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+
+	// Sized before any handler can build a provider client.
+	transport.Configure(int(s.Cfg.Forge.ConnectionPoolSize), int(s.Cfg.Forge.MaxIdleConnsPerHost))
 
 	return nil
 }
