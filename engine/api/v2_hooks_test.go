@@ -330,6 +330,112 @@ func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequestFilte
 	require.Equal(t, 0, len(hs))
 }
 
+// On a pull-request event, the head hooks of a repository hold one row per ref.
+// Resolving the default branch gives the same answer for every one of them, so it
+// must be asked to the vcs service only once, whatever the number of refs.
+func TestPostRetrieveWorkflowToTriggerHandler_RepositoryWebHooksPullRequestDefaultBranchAskedOnce(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM v2_workflow_hook")
+	require.NoError(t, err)
+
+	_, pwd := assets.InsertAdminUser(t, db)
+
+	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcs := assets.InsertTestVCSProject(t, db, p.ID, "github", sdk.VCSTypeGithub)
+	repo := assets.InsertTestProjectRepository(t, db, p.Key, vcs.ID, sdk.RandomString(10))
+	e := sdk.Entity{
+		Name:                "MyWorkflow",
+		Type:                sdk.EntityTypeWorkflow,
+		ProjectKey:          p.Key,
+		ProjectRepositoryID: repo.ID,
+		Commit:              "123456",
+		Ref:                 "refs/heads/master",
+		Head:                true,
+	}
+	require.NoError(t, entity.Insert(context.TODO(), db, &e))
+
+	newHook := func(workflowName, ref string) sdk.V2WorkflowHook {
+		return sdk.V2WorkflowHook{
+			ProjectKey:     p.Key,
+			VCSName:        vcs.Name,
+			RepositoryName: repo.Name,
+			EntityID:       e.ID,
+			WorkflowName:   workflowName,
+			Commit:         "123456",
+			Ref:            ref,
+			Type:           sdk.WorkflowHookTypeRepository,
+			Data: sdk.V2WorkflowHookData{
+				RepositoryName:  repo.Name,
+				VCSServer:       vcs.Name,
+				RepositoryEvent: sdk.WorkflowHookEventNamePullRequest,
+			},
+			Head: true,
+		}
+	}
+
+	// One row per ref for the same workflow, none of them on the default branch
+	for i := 0; i < 5; i++ {
+		h := newHook("WorkflowOnEveryRef", fmt.Sprintf("refs/heads/feat-%d", i))
+		require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &h))
+	}
+	// A workflow declared on the default branch: it must still be triggered
+	whDefault := newHook("WorkflowOnDefaultBranch", "refs/heads/master")
+	require.NoError(t, workflow_v2.InsertWorkflowHook(context.TODO(), db, &whDefault))
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	var defaultBranchCalls int
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/"+repo.Name+"/branches/?branch=&default=true", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			defaultBranchCalls++
+			b := &sdk.VCSBranch{
+				ID:           "refs/heads/master",
+				DisplayID:    "master",
+				LatestCommit: "123456",
+			}
+			*(out.(*sdk.VCSBranch)) = *b
+			return nil, 200, nil
+		}).AnyTimes()
+
+	r := sdk.HookListWorkflowRequest{
+		RepositoryName:      repo.Name,
+		VCSName:             vcs.Name,
+		RepositoryEventName: sdk.WorkflowHookEventNamePullRequest,
+		RepositoryEventType: sdk.WorkflowHookEventTypePullRequestOpened,
+		AnalyzedProjectKeys: []string{p.Key},
+		Ref:                 "refs/heads/my-pull-request",
+		PullRequestRefTo:    "refs/heads/master",
+		Sha:                 "654321",
+	}
+
+	uri := api.Router.GetRouteV2("POST", api.postRetrieveWorkflowToTriggerHandler, nil)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, nil, pwd, "POST", uri, &r)
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	var hs []sdk.V2WorkflowHook
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &hs))
+
+	// Same outcome as without the cache: only the hook on the default branch is kept
+	require.Equal(t, 1, len(hs))
+	require.Equal(t, whDefault.ID, hs[0].ID)
+
+	require.Equal(t, 1, defaultBranchCalls, "the default branch must be resolved once for the whole request, got %d calls for 6 hooks", defaultBranchCalls)
+}
+
 func TestPostRetrieveWorkflowToTriggerHandler_WorkerModels(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 
