@@ -51,7 +51,7 @@ func (s *Service) itemsGC(ctx context.Context) {
 				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:CompleteWaitingItems: cleanBuffer err: %v", err)
 			}
 			if err := s.cleanWaitingItem(ctx, ItemLogGC); err != nil {
-				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:CompleteWaitingItems: ContextWithStacktrace err: %v", err)
+				log.Error(sdk.ContextWithStacktrace(ctx, err), "cdn:CompleteWaitingItems: cleanWaitingItem err: %v", err)
 			}
 		}
 	}
@@ -205,30 +205,43 @@ func (s *Service) cleanWaitingItem(ctx context.Context, duration int) error {
 			continue
 		}
 
+		// Only a buffer copy can complete an item: storage copies are encrypted and their content unverified
+		bufferUnits := make([]sdk.CDNItemUnit, 0, len(itemUnits))
+		for _, iu := range itemUnits {
+			if s.Units.IsBuffer(iu.UnitID) {
+				bufferUnits = append(bufferUnits, iu)
+			}
+		}
+		itemUnits = bufferUnits
+
 		tx, err := s.mustDBWithCtx(ctx).Begin()
 		if err != nil {
 			return sdk.WrapError(err, "unable to start transaction")
 		}
 
-		// If there is no item unit, mark item as delete
+		// Without a buffer copy the item can never be completed, let the purge drop it
 		if len(itemUnits) == 0 {
 			it.Status = sdk.CDNStatusItemCompleted
 			it.ToDelete = true
 			if err := item.Update(ctx, s.Mapper, tx, &it); err != nil {
 				_ = tx.Rollback()
-				return err
+				log.Error(ctx, "cleanWaitingItem> unable to mark item %s to delete: %v", it.ID, err)
+				continue
 			}
+			log.Info(ctx, "cleanWaitingItem> item %s has no buffer copy, marked to delete", it.ID)
 		} else {
-			// Else complete item
+			// Else complete item; a failing item must not block the others, it is retried on the next pass
 			if err := s.completeItem(ctx, tx, itemUnits[0]); err != nil {
 				_ = tx.Rollback()
-				return err
+				log.Error(ctx, "cleanWaitingItem> unable to complete item %s: %v", it.ID, err)
+				continue
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
 			_ = tx.Rollback()
-			return err
+			log.Error(ctx, "cleanWaitingItem> unable to commit item %s: %v", it.ID, err)
+			continue
 		}
 
 		// Push item ID to run backend sync

@@ -200,7 +200,11 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 		return sdk.WithStack(err)
 	}
 
-	_ = writer.Close()
+	// The destination reports the upload outcome on Close (swift PUT status, checksum);
+	// recording the item unit after a failed close would reference an object that does not exist
+	if err := writer.Close(); err != nil {
+		return sdk.WrapError(err, "unable to close writer on %s for item %s", dest.Name(), item.ID)
+	}
 
 	t2 := time.Now()
 

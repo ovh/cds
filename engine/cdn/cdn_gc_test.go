@@ -125,29 +125,44 @@ func TestCleanSynchronizedItem(t *testing.T) {
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6Redis))
 	iu6FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item6RedisFS.ID, Type: item6RedisFS.Type}
 	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu6FS))
+
+	// Add incoming Item in redis / fs - have to stay in redis until it is completed
+	item7Incoming := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemIncoming,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &item7Incoming))
+	iu7Redis := sdk.CDNItemUnit{UnitID: s.Units.LogsBuffer().ID(), ItemID: item7Incoming.ID, Type: item7Incoming.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu7Redis))
+	iu7FS := sdk.CDNItemUnit{UnitID: s.Units.Storages[0].ID(), ItemID: item7Incoming.ID, Type: item7Incoming.Type}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu7FS))
+
 	oneHundred := 100
 	iusRedis, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(iusRedis))
+	require.Equal(t, 4, len(iusRedis))
 
 	iusFS, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(iusFS))
+	require.Equal(t, 4, len(iusFS))
 
 	// RUN TEST
-	iusRedisBefore, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
-	require.NoError(t, err)
-	require.Equal(t, 3, len(iusRedisBefore))
-
 	require.NoError(t, s.cleanBuffer(context.TODO()))
 
 	iusRedisAfter, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.LogsBuffer().ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(iusRedisAfter))
+	require.Equal(t, 2, len(iusRedisAfter))
+	var redisItemIDs []string
+	for _, iu := range iusRedisAfter {
+		redisItemIDs = append(redisItemIDs, iu.ItemID)
+	}
+	require.ElementsMatch(t, []string{item4Redis.ID, item7Incoming.ID}, redisItemIDs)
 
 	iusFS2After, err := storage.LoadItemUnitsByUnit(context.TODO(), s.Mapper, db, s.Units.Storages[0].ID(), &oneHundred)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(iusFS2After))
+	require.Equal(t, 4, len(iusFS2After))
 }
 
 func TestCleanSynchronizedItemWithDisabledStorage(t *testing.T) {
@@ -435,4 +450,200 @@ func TestPurgeItem(t *testing.T) {
 	items, err = item.LoadAll(context.TODO(), s.Mapper, db, 10)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(items))
+}
+
+func TestCleanWaitingItemCompletesFromBufferFirst(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.Factory = log.NewTestingWrapper(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
+
+	it := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemIncoming,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &it))
+
+	// A storage copy with nothing behind its locator: completing from it would fail
+	storageIU := sdk.CDNItemUnit{
+		ItemID:  it.ID,
+		UnitID:  s.Units.Storages[0].ID(),
+		Type:    it.Type,
+		Locator: sdk.RandomString(64),
+		Item:    &it,
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &storageIU))
+
+	bufferIU := sdk.CDNItemUnit{
+		ItemID: it.ID,
+		UnitID: s.Units.LogsBuffer().ID(),
+		Type:   it.Type,
+		Item:   &it,
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &bufferIU))
+	t.Cleanup(func() { _ = s.Units.LogsBuffer().Remove(context.TODO(), bufferIU) })
+
+	firstLine, secondLine := "this is the first log\n", "this is the second log\n"
+	require.NoError(t, s.Units.LogsBuffer().Add(bufferIU, 0, 0, firstLine))
+	require.NoError(t, s.Units.LogsBuffer().Add(bufferIU, 1, 0, secondLine))
+
+	time.Sleep(2 * time.Second)
+
+	require.NoError(t, s.cleanWaitingItem(context.TODO(), 1))
+
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
+	require.NoError(t, err)
+
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
+	require.False(t, itemDB.ToDelete)
+	require.Equal(t, int64(len(firstLine)+len(secondLine)), itemDB.Size)
+}
+
+func TestCleanWaitingItemSkipsLockedItem(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.Factory = log.NewTestingWrapper(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
+
+	// The oldest item is held by another transaction, as another CDN instance completing it would do
+	lockedItem := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemIncoming,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &lockedItem))
+	lockedIU := sdk.CDNItemUnit{
+		ItemID: lockedItem.ID,
+		UnitID: s.Units.LogsBuffer().ID(),
+		Type:   lockedItem.Type,
+		Item:   &lockedItem,
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &lockedIU))
+
+	it := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemStepLog,
+		Status:     sdk.CDNStatusItemIncoming,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &it))
+	iu := sdk.CDNItemUnit{
+		ItemID: it.ID,
+		UnitID: s.Units.LogsBuffer().ID(),
+		Type:   it.Type,
+		Item:   &it,
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu))
+
+	time.Sleep(2 * time.Second)
+
+	lockTx, err := db.DbMap.Begin()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = lockTx.Rollback() })
+	_, err = item.LoadAndLockByID(context.TODO(), s.Mapper, lockTx, lockedItem.ID)
+	require.NoError(t, err)
+
+	require.NoError(t, s.cleanWaitingItem(context.TODO(), 1))
+
+	lockedItemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, lockedItem.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.CDNStatusItemIncoming, lockedItemDB.Status)
+
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
+	require.False(t, itemDB.ToDelete)
+}
+
+func TestCleanWaitingItemWithStorageCopyOnly(t *testing.T) {
+	m := gorpmapper.New()
+	item.InitDBMapping(m)
+	storage.InitDBMapping(m)
+
+	log.Factory = log.NewTestingWrapper(t)
+	db, factory, cache, cancel := test.SetupPGToCancel(t, m, sdk.TypeCDN)
+	t.Cleanup(cancel)
+
+	cdntest.ClearItem(t, context.TODO(), m, db)
+
+	// Create cdn service
+	s := Service{
+		DBConnectionFactory: factory,
+		Cache:               cache,
+		Mapper:              m,
+	}
+	s.GoRoutines = sdk.NewGoRoutines(context.TODO())
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	s.Units = newRunningStorageUnits(t, m, s.DBConnectionFactory.GetDBMap(m)(), ctx, cache)
+
+	it := sdk.CDNItem{
+		ID:         sdk.UUID(),
+		Type:       sdk.CDNTypeItemServiceLogV2,
+		Status:     sdk.CDNStatusItemIncoming,
+		APIRefHash: sdk.RandomString(10),
+	}
+	require.NoError(t, item.Insert(context.TODO(), s.Mapper, db, &it))
+
+	// The only copy left is on the storage unit: nothing can complete the item anymore
+	iu := sdk.CDNItemUnit{
+		ItemID:  it.ID,
+		UnitID:  s.Units.Storages[0].ID(),
+		Type:    it.Type,
+		Locator: sdk.RandomString(64),
+		Item:    &it,
+	}
+	require.NoError(t, storage.InsertItemUnit(context.TODO(), s.Mapper, db, &iu))
+
+	time.Sleep(2 * time.Second)
+
+	require.NoError(t, s.cleanWaitingItem(context.TODO(), 1))
+
+	itemDB, err := item.LoadByID(context.TODO(), s.Mapper, db, it.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.CDNStatusItemCompleted, itemDB.Status)
+	require.True(t, itemDB.ToDelete)
+
+	// The storage copy itself is left to the purge
+	storageUnits, err := storage.LoadAllItemUnitsByItemIDs(context.TODO(), s.Mapper, db, it.ID)
+	require.NoError(t, err)
+	require.Len(t, storageUnits, 1)
 }

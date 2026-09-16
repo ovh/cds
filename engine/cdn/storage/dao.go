@@ -137,21 +137,29 @@ func DeleteItemUnit(m *gorpmapper.Mapper, db gorpmapper.SqlExecutorWithTx, iu *s
 	return nil
 }
 
+// LoadAllSynchronizedItemIDs returns the completed items whose buffer copy is older than 15 minutes and
+// which are stored on at least maxStorageCount units; an incoming item keeps its buffer copy until it
+// is completed, and rows already marked to delete do not count as a copy.
 func LoadAllSynchronizedItemIDs(db gorp.SqlExecutor, bufferUnitID string, maxStorageCount int64) ([]string, error) {
 	var itemIDs []string
 	query := `
-	WITH inBuffer as (
-		SELECT item_id
-		FROM storage_unit_item
-		WHERE unit_id = $2 AND last_modified < NOW() - INTERVAL '15 minutes'
+	WITH inBuffer AS (
+		SELECT sui.item_id
+		FROM storage_unit_item sui
+		JOIN item ON item.id = sui.item_id
+		WHERE sui.unit_id = $2
+		  AND sui.to_delete = false
+		  AND sui.last_modified < NOW() - INTERVAL '15 minutes'
+		  AND item.status = $3
 	)
 	SELECT item_id
 	FROM storage_unit_item
-	WHERE item_id = ANY (select item_id from inBuffer)
+	WHERE item_id = ANY (SELECT item_id FROM inBuffer)
+	  AND to_delete = false
 	GROUP BY item_id
 	HAVING COUNT(unit_id) >= $1
 	`
-	if _, err := db.Select(&itemIDs, query, maxStorageCount, bufferUnitID); err != nil {
+	if _, err := db.Select(&itemIDs, query, maxStorageCount, bufferUnitID, sdk.CDNStatusItemCompleted); err != nil {
 		return nil, sdk.WrapError(err, "unable to get item ids")
 	}
 	return itemIDs, nil

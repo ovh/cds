@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/rockbears/log"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/cdn/item"
 	"github.com/ovh/cds/engine/cdn/storage"
@@ -29,8 +31,38 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 		defer tx.Rollback() // nolint
+
+		var completedCopies []sdk.CDNItem
 		for _, i := range items {
-			newItem := i
+
+			// Reload the item with fresh data
+			src, err := item.LoadByID(ctx, s.Mapper, tx, i.ID, gorpmapping.GetOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+			storageUnitItems, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, tx, src.ID, gorpmapping.GetAllOptions.WithDecryption)
+			if err != nil {
+				return err
+			}
+
+			// Only the log buffer holds the content of an item still being received
+			incoming := src.Status == sdk.CDNStatusItemIncoming
+			if incoming {
+				bufferUnitItems := make([]sdk.CDNItemUnit, 0, 1)
+				for _, sui := range storageUnitItems {
+					if sui.UnitID == s.Units.LogsBuffer().ID() {
+						bufferUnitItems = append(bufferUnitItems, sui)
+					}
+				}
+				if len(bufferUnitItems) == 0 {
+					log.Warn(ctx, "postDuplicateItemForJobHandler> incoming item %s has no buffer copy, it is not duplicated", src.ID)
+					continue
+				}
+				storageUnitItems = bufferUnitItems
+			}
+
+			// Copy the item
+			newItem := *src
 			newItem.ID = ""
 			switch newItem.Type {
 			case sdk.CDNTypeItemJobStepLog, sdk.CDNTypeItemServiceLogV2:
@@ -61,11 +93,7 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 				return err
 			}
 
-			// Load storage unit item
-			storageUnitItems, err := storage.LoadAllItemUnitsByItemIDs(ctx, s.Mapper, tx, i.ID, gorpmapping.GetAllOptions.WithDecryption)
-			if err != nil {
-				return err
-			}
+			var bufferCopy sdk.CDNItemUnit
 			for _, sui := range storageUnitItems {
 				newSUI := sui
 				newSUI.ID = ""
@@ -77,12 +105,30 @@ func (s *Service) postDuplicateItemForJobHandler() service.Handler {
 
 				if sui.UnitID == s.Units.LogsBuffer().ID() {
 					// Copy logs in buffer
-					if err := s.Units.LogsBuffer().Copy(ctx, i.ID, newItem.ID); err != nil {
+					if err := s.Units.LogsBuffer().Copy(ctx, src.ID, newItem.ID); err != nil {
 						return err
 					}
+					bufferCopy = newSUI
 				}
 			}
+
+			// Force completion for the copy of an incoming item
+			if incoming {
+				if err := s.completeItem(ctx, tx, bufferCopy); err != nil {
+					return err
+				}
+				completedCopies = append(completedCopies, newItem)
+			}
 		}
-		return sdk.WithStack(tx.Commit())
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		// Trigger backend sync for new completed items
+		for _, it := range completedCopies {
+			s.Units.PushInSyncQueue(ctx, it.ID, it.Created)
+		}
+		return nil
 	}
 }
