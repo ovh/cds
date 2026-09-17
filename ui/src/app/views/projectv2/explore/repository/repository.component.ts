@@ -1,19 +1,22 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { combineLatest, Subscription } from 'rxjs';
+import { combineLatest, filter, Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProjectRepository } from 'app/model/project.model';
-import { RepositoryContextService } from './repository-context.service';
+import { EntityType, EntityTypeUtil } from 'app/model/entity.model';
+import { RepositoryContextService, shortRef } from './repository-context.service';
+import { ENTITY_TYPE_LABELS, ENTITY_TYPE_ORDER } from './entities';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../../run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from '../trigger-analysis/trigger-analysis.component';
 
-/** A tab of the repository page: a child route and its label. */
+/** A tab of the repository page: a child route, its label and, for an entity type, how many it holds. */
 export interface RepositoryTab {
     path: string;
     label: string;
+    count?: number;
 }
 
 /**
@@ -32,11 +35,15 @@ export interface RepositoryTab {
 export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
     ctx = inject(RepositoryContextService);
     tabs: Array<RepositoryTab> = [];
+    /** True once everything the header shows is known, so that it appears in one go. */
+    ready: boolean = false;
     childActive: boolean = false;
     error: any;
 
     routeSub: Subscription;
-    repositorySub: Subscription;
+    readySub: Subscription;
+    tabsSub: Subscription;
+    navigationSub: Subscription;
 
     private _route = inject(ActivatedRoute);
     private _router = inject(Router);
@@ -52,10 +59,17 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         });
 
         // Subscribe in case of repository change (from sidebar)
-        this.repositorySub = this.ctx.repository$.subscribe(repository => {
-            this.tabs = this.tabsFor(repository);
+        this.readySub = combineLatest([this.ctx.repository$, this.ctx.ref$, this.ctx.listenedBy$]).subscribe(([repository, ref, listenedBy]) => {
+            this.ready = !!repository && (repository.distant ? listenedBy !== null : ref !== null);
             this._cd.markForCheck();
         });
+        this.tabsSub = combineLatest([this.ctx.repository$, this.ctx.entities$]).subscribe(([repository]) => {
+            this.tabs = this.tabsFor(repository);
+            this.openDefaultTab();
+            this._cd.markForCheck();
+        });
+        // Reaching the bare repository url while the page is already shown changes no param
+        this.navigationSub = this._router.events.pipe(filter(e => e instanceof NavigationEnd)).subscribe(() => this.openDefaultTab());
     }
 
     async load(vcsName: string, repoName: string, ref: string) {
@@ -77,12 +91,23 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         return String(e);
     }
 
-    /** The tabs a repository offers; each one exists once its child route does. */
+    /** The tabs a repository offers; a listened one has no entities. */
     private tabsFor(repository: ProjectRepository): Array<RepositoryTab> {
-        if (!repository) {
+        if (!repository || repository.distant) {
             return [];
         }
-        return [];
+        return ENTITY_TYPE_ORDER
+            .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: ENTITY_TYPE_LABELS[type], count: this.ctx.entityCount(type) }))
+            // Jobs are seldom defined: their tab only shows up when the ref has some
+            .filter(tab => tab.count > 0 || tab.path !== EntityTypeUtil.toURLParam(EntityType.Job));
+    }
+
+    /** Without a tab in the url, the first one opens, the url being replaced rather than stacked. */
+    private openDefaultTab(): void {
+        if (this._route.firstChild || this.tabs.length === 0) {
+            return;
+        }
+        this._router.navigate([this.tabs[0].path], { relativeTo: this._route, replaceUrl: true, queryParamsHandling: 'preserve' });
     }
 
     /** The ref lives in the url; the page reacts to it like to any navigation. */
@@ -121,6 +146,6 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
     }
 
     shortRef(ref: string): string {
-        return (ref ?? '').replace(/^refs\/(heads|tags)\//, '');
+        return shortRef(ref);
     }
 }

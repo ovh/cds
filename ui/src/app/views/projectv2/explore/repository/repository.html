@@ -1,11 +1,11 @@
-@if ((ctx.repository$ | async) === null && !error) {
+@if (!ready && !error) {
   <nz-spin nzTip="Loading repository"></nz-spin>
 }
 @if (error) {
   <nz-alert class="error" nzType="error" nzShowIcon nzMessage="Unable to load repository" [nzDescription]="errorMessage(error)"></nz-alert>
 }
 
-@if (ctx.repository$ | async; as repository) {
+@if (ready && (ctx.repository$ | async); as repository) {
   <div class="header">
     <nz-breadcrumb>
       <nz-breadcrumb-item>{{ctx.vcsName}}</nz-breadcrumb-item>
@@ -15,12 +15,12 @@
       <h1 [title]="repository.name">{{repository.name}}</h1>
       @if (repository.distant) {
         <nz-tag nzColor="blue" nz-tooltip nzTooltipTitle="Listened by a workflow of this project, not declared in it">listened only</nz-tag>
-      } @else if (ctx.ref$ | async) {
+      } @else {
         <app-repository-ref-select size="small" [branches]="ctx.branches$ | async" [tags]="ctx.tags$ | async"
           [ngModel]="ctx.ref$ | async" (ngModelChange)="changeRef($event)"></app-repository-ref-select>
       }
       <span class="spacer"></span>
-      @if (!repository.distant && (ctx.ref$ | async)) {
+      @if (!repository.distant) {
         <button nz-button nzType="primary" (click)="openRunStartDrawer()">
           <span nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>Start a workflow
         </button>
@@ -60,7 +60,7 @@
     <nz-tabs nzLinkRouter [nzLinkExact]="false" nzSize="small">
       @for (tab of tabs; track tab.path) {
         <nz-tab>
-          <a *nzTabLink nz-tab-link [routerLink]="[tab.path]" queryParamsHandling="preserve">{{tab.label}}</a>
+          <a *nzTabLink nz-tab-link [routerLink]="[tab.path]" queryParamsHandling="preserve">{{tab.label}}@if (tab.count !== null && tab.count !== undefined) { <span class="count">{{tab.count}}</span> }</a>
         </nz-tab>
       }
     </nz-tabs>
@@ -78,7 +78,7 @@
       </ng-template>
     }
     <router-outlet (activate)="childActive = true" (deactivate)="childActive = false"></router-outlet>
-    @if (!childActive) {
+    @if (!childActive && tabs.length) {
       <nz-empty class="placeholder" nzNotFoundContent="Pick a tab to browse this repository"></nz-empty>
     }
   </div>

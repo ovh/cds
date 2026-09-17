@@ -1,0 +1,156 @@
+:host {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-height: 0;
+  padding: 14px 20px 16px;
+  gap: 12px;
+  overflow: hidden;
+}
+
+nz-spin {
+  margin: 40px auto;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .hint {
+    max-width: 52ch;
+    margin: 0 auto 12px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  button + button {
+    margin-left: 8px;
+  }
+}
+
+.list {
+  width: 320px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+
+  .items {
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+
+    :host-context(.night) & {
+      border-color: #303030;
+    }
+  }
+
+  .item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 6px 12px;
+    color: inherit;
+    border-bottom: 1px solid #f0f0f0;
+
+    :host-context(.night) & {
+      border-bottom-color: #303030;
+    }
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &:hover {
+      background-color: #f5f5f5;
+
+      :host-context(.night) & {
+        background-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    &.active {
+      background-color: #e6f7ff;
+      box-shadow: inset 3px 0 0 #1890ff;
+
+      :host-context(.night) & {
+        background-color: #111b26;
+        box-shadow: inset 3px 0 0 #177ddc;
+      }
+    }
+
+    .name {
+      font-weight: 500;
+    }
+  }
+
+  .none {
+    margin: 12px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+}
+
+// A name or a path longer than its column is cut with an ellipsis; the row's tooltip carries both.
+.name,
+.path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.path {
+  font-size: 11.5px;
+  color: rgba(0, 0, 0, 0.45);
+
+  :host-context(.night) & {
+    color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+.detail {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+
+  :host-context(.night) & {
+    border-color: #303030;
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+
+    :host-context(.night) & {
+      border-bottom-color: #303030;
+    }
+
+    .name {
+      flex: none;
+      max-width: 50%;
+      font-weight: 600;
+    }
+
+    .path {
+      flex: 1;
+    }
+  }
+}

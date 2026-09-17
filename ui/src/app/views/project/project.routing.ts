@@ -8,10 +8,10 @@ import { ProjectV2ExploreComponent } from '../projectv2/explore/explore.componen
 import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.component';
 import { ProjectV2RunComponent } from '../projectv2/run/run.component';
 import { ProjectSettingsComponent } from './settings/settings.component';
-import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-entity.component';
 import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from 'app/views/project/project.guard';
 import { ProjectV2ExploreOverviewComponent } from '../projectv2/explore/explore-overview.component';
 import { ProjectV2RepositoryComponent } from '../projectv2/explore/repository/repository.component';
+import { ProjectV2RepositoryEntitiesComponent } from '../projectv2/explore/repository/repository-entities.component';
 import { EntityTypeUtil } from 'app/model/entity.model';
 
 /** Only a known entity type takes the ':entityType' segment, so that the repository tabs keep theirs. */
@@ -81,9 +81,15 @@ const projectRoutes: Routes = [
                                 data: { title: '{repoName} • Repository' },
                                 children: [
                                     {
+                                        path: ':entityType',
+                                        canMatch: [entityTypeCanMatch],
+                                        component: ProjectV2RepositoryEntitiesComponent,
+                                        data: { title: '{repoName} • Repository' }
+                                    },
+                                    {
                                         path: ':entityType/:entityName',
                                         canMatch: [entityTypeCanMatch],
-                                        component: ProjectV2ExploreEntityComponent,
+                                        component: ProjectV2RepositoryEntitiesComponent,
                                         data: { title: '{entityName} • Entity' }
                                     }
                                 ]

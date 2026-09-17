@@ -1,0 +1,57 @@
+@if (entities === null) {
+  <nz-spin nzSimple></nz-spin>
+}
+
+@if (entities?.length === 0) {
+  <div class="empty">
+    <nz-empty [nzNotFoundContent]="'No ' + typeLabel.toLowerCase() + ' on ' + shortRef(ctx.ref)" [nzNotFoundFooter]="emptyFooter"></nz-empty>
+    <ng-template #emptyFooter>
+      <p class="hint">
+        @if (ctx.lastAnalysis(ctx.ref); as analysis) {
+          @if (analysis.status === 'Error') {
+            The last analysis of this ref failed{{analysis.data?.error ? ': ' + analysis.data.error : ''}}.
+          } @else {
+            The last analysis of this ref found no {{typeLabel.toLowerCase()}}.
+          }
+        } @else {
+          This ref has not been analyzed yet.
+        }
+      </p>
+      <button nz-button nzType="primary" (click)="analyzeRef()">
+        <span nz-icon nzType="sync" nzTheme="outline" aria-hidden="true"></span>Analyze {{shortRef(ctx.ref)}}
+      </button>
+      @if (ctx.defaultRef() !== ctx.ref) {
+        <button nz-button (click)="switchToDefaultRef()">Switch to {{shortRef(ctx.defaultRef())}}</button>
+      }
+    </ng-template>
+  </div>
+}
+
+@if (entities?.length) {
+  <div class="list">
+    <nz-input-wrapper nzAllowClear>
+      <span nzInputPrefix nz-icon nzType="search" nzTheme="outline" aria-hidden="true"></span>
+      <input nz-input nzSize="small" [placeholder]="'Filter ' + typeLabel.toLowerCase() + '…'" [ngModel]="filter" (ngModelChange)="changeFilter($event)"
+        [attr.aria-label]="'Filter ' + typeLabel.toLowerCase()" />
+    </nz-input-wrapper>
+    <div class="items">
+      @for (entity of filtered; track entity.name) {
+        <a class="item" [routerLink]="linkTo(entity)" queryParamsHandling="preserve" routerLinkActive="active" [title]="entity.name + '\n' + (entity.file_path ?? '')">
+          <span class="name">{{entity.name}}</span>
+          <span class="path">{{entity.file_path}}</span>
+        </a>
+      }
+      @if (filtered.length === 0) {
+        <p class="none">No {{typeLabel.toLowerCase()}} matches "{{filter}}"</p>
+      }
+    </div>
+  </div>
+  <div class="detail">
+    @if (selected) {
+      <div class="detail-header" [title]="selected.name + '\n' + (selected.file_path ?? '')">
+        <span class="name">{{selected.name}}</span>
+        <span class="path">{{selected.file_path}}</span>
+      </div>
+    }
+  </div>
+}

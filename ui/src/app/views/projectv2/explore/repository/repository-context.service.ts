@@ -5,10 +5,17 @@ import { Project, ProjectDistantRepositoryWorkflow, ProjectRepository, Repositor
 import { VCSProject } from 'app/model/vcs.model';
 import { Branch, Tag } from 'app/model/repositories.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
+import { Entity, EntityType } from 'app/model/entity.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
 import { ProjectV2State } from 'app/store/project-v2.state';
+import { groupEntities } from './entities';
+
+/** `master` for `refs/heads/master`, `v1.0` for `refs/tags/v1.0`. */
+export function shortRef(ref: string): string {
+    return (ref ?? '').replace(/^refs\/(heads|tags)\//, '');
+}
 
 /**
  * State of the repository page, shared by its header and its tabs. The tabs live behind a
@@ -25,6 +32,8 @@ export class RepositoryContextService {
     // Lists are null until read, so that a consumer can tell "not yet" from "none"
     readonly analyses$ = new BehaviorSubject<Array<RepositoryAnalysis>>(null);
     readonly events$ = new BehaviorSubject<Array<RepositoryHookEvent>>(null);
+    /** The entities of the current ref, by type. */
+    readonly entities$ = new BehaviorSubject<Map<EntityType, Array<Entity>>>(null);
     /** Why the events could not be read, when they could not; the page shows it instead of failing. */
     readonly eventsError$ = new BehaviorSubject<any>(null);
     /** For a listened repository, the workflows of the project that listen to it; null until read. */
@@ -52,7 +61,7 @@ export class RepositoryContextService {
      */
     async load(vcsName: string, repoName: string, refFromUrl: string): Promise<void> {
         if (this._vcsName === vcsName && this._repoName === repoName) {
-            this.selectRef(refFromUrl);
+            await this.selectRef(refFromUrl);
             return;
         }
         const loadId = ++this._loadId;
@@ -64,6 +73,7 @@ export class RepositoryContextService {
         this.branches$.next([]);
         this.tags$.next([]);
         this.ref$.next(null);
+        this.entities$.next(null);
         this.analyses$.next(null);
         this.events$.next(null);
         this.eventsError$.next(null);
@@ -114,16 +124,39 @@ export class RepositoryContextService {
         this.tags$.next(tags ?? []);
         this.analyses$.next(analyses ?? []);
         this.ref$.next(this.resolveRef(refFromUrl));
+        await this.readEntities(loadId);
     }
 
     /** Applies the ref the url carries, falling back to the remembered one, then to the default branch. */
-    selectRef(refFromUrl: string): void {
+    async selectRef(refFromUrl: string): Promise<void> {
         if (!this.repository$.value || this.repository$.value.distant) {
             return;
         }
         const ref = this.resolveRef(refFromUrl);
-        if (ref !== this.ref$.value) {
-            this.ref$.next(ref);
+        if (ref === this.ref$.value) {
+            return;
+        }
+        this.ref$.next(ref);
+        this.entities$.next(null);
+        await this.readEntities(this._loadId);
+    }
+
+    /** How many entities of a type the current ref has; null until they are read. */
+    entityCount(type: EntityType): number {
+        const entities = this.entities$.value;
+        return entities ? entities.get(type)?.length ?? 0 : null;
+    }
+
+    reloadEntities(): Promise<void> {
+        return this.readEntities(this._loadId);
+    }
+
+    /** The entities of the current ref; a ref without any leaves an empty map, not null. */
+    private async readEntities(loadId: number): Promise<void> {
+        const ref = this.ref$.value;
+        const entities = await lastValueFrom(this._projectService.getRepoEntities(this._project.key, this._vcsName, this._repoName, ref));
+        if (loadId === this._loadId && ref === this.ref$.value) {
+            this.entities$.next(groupEntities(entities));
         }
     }
 

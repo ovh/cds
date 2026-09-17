@@ -67,6 +67,16 @@ nz-alert.events-error {
     }
   }
 
+  .count {
+    margin-left: 6px;
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
   ::ng-deep {
     nz-tabs-nav {
       margin: 0;
