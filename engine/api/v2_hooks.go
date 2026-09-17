@@ -543,16 +543,21 @@ func LoadWorkflowHooksWithRepositoryWebHooks(ctx context.Context, db gorp.SqlExe
 				_, has := headhooks[hookKey]
 				if !has {
 					// Check default branch
-					vcsAuth, err := repositoriesmanager.AuthorizedClient(ctx, db, store, h.ProjectKey, h.VCSName)
-					if err != nil {
-						return nil, err
-					}
-					b, err := vcsAuth.Branch(ctx, h.RepositoryName, sdk.VCSBranchFilters{Default: true})
-					if err != nil {
-						return nil, err
+					defaultBranch, hasCache := repoCache[h.VCSName+"/"+h.RepositoryName]
+					if !hasCache {
+						vcsAuth, err := repositoriesmanager.AuthorizedClient(ctx, db, store, h.ProjectKey, h.VCSName)
+						if err != nil {
+							return nil, err
+						}
+						b, err := vcsAuth.Branch(ctx, h.RepositoryName, sdk.VCSBranchFilters{Default: true})
+						if err != nil {
+							return nil, err
+						}
+						defaultBranch = b.ID
+						repoCache[h.VCSName+"/"+h.RepositoryName] = b.ID
 					}
 					// If default branch, keep it
-					if h.Ref == b.ID {
+					if h.Ref == defaultBranch {
 						headhooks[hookKey] = h
 					}
 				}
