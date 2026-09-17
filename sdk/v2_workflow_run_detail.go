@@ -227,6 +227,7 @@ const (
 	V2WorkflowRunResultTypePuppet            V2WorkflowRunResultType = "puppet"
 	V2WorkflowRunResultTypeConan             V2WorkflowRunResultType = "conan"
 	V2WorkflowRunResultTypeOCI               V2WorkflowRunResultType = "oci"
+	V2WorkflowRunResultTypeFreeBSD           V2WorkflowRunResultType = "freebsd"
 	// Other values may be instantiated from Artifactory Manager repository type
 )
 

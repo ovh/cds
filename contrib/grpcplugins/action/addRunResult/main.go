@@ -95,7 +95,6 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		return true, sdk.NewErrorFrom(sdk.ErrInvalidData, "wildcard path %q is not supported for result type %s", artifactPath, resultType)
 	}
 
-	repository := jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix)
 	switch resultType {
 	case sdk.V2WorkflowRunResultTypeDocker:
 		// Docker needs a very specific behavior due to the layout. All the common steps bellow are skipped and handled by performDocker.
@@ -103,38 +102,11 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 		if !isGlob {
 			return p.performDocker(ctx, artifactPath)
 		}
-		repository += "-docker"
-	case sdk.V2WorkflowRunResultTypeDebian:
-		repository += "-debian"
-	case sdk.V2WorkflowRunResultTypeTest, sdk.V2WorkflowRunResultTypeCoverage, sdk.V2WorkflowRunResultTypeGeneric:
-		repository += "-cds"
-	case sdk.V2WorkflowRunResultTypeHelm:
-		repository += "-helm"
-	case sdk.V2WorkflowRunResultTypePython:
-		repository += "-pypi"
-	case sdk.V2WorkflowRunResultTypeTerraformProvider:
-		repository += "-terraformProvider"
-	case sdk.V2WorkflowRunResultTypeTerraformModule:
-		repository += "-terraformModule"
-	case sdk.V2WorkflowRunResultTypeNpm:
-		repository += "-npm"
 	case sdk.V2WorkflowRunResultTypeStaticFiles:
 		return false, performStaticFiles(ctx, &p.Common, artifactPath, detail)
-	case sdk.V2WorkflowRunResultTypeMaven:
-		repository += "-maven"
-	case sdk.V2WorkflowRunResultTypeGradle:
-		repository += "-gradle"
-	case sdk.V2WorkflowRunResultTypeSbt:
-		repository += "-sbt"
-	case sdk.V2WorkflowRunResultTypeNuget:
-		repository += "-nuget"
-	case sdk.V2WorkflowRunResultTypePuppet:
-		repository += "-puppet"
-	case sdk.V2WorkflowRunResultTypeConan:
-		repository += "-conan"
-	case sdk.V2WorkflowRunResultTypeOCI:
-		repository += "-oci"
 	}
+
+	repository := repositoryForType(jobCtx.Integrations.ArtifactManager.Get(sdk.ArtifactoryConfigRepositoryPrefix), resultType)
 
 	if !isGlob {
 		return p.performOne(ctx, resultType, artiConfig, jobCtx.Integrations.ArtifactManager, repository, artifactPath)
@@ -186,6 +158,51 @@ func (p *addRunResultPlugin) perform(ctx context.Context, resultType sdk.V2Workf
 	}
 	grpcplugins.Logf(&p.Common, "%d run result(s) created, %d failed (pattern %q)", len(enum.candidates)-nbKO, nbKO, artifactPath)
 	return nbKO > 0, nil
+}
+
+// repositoryForType returns the artifactory virtual repository holding the artifacts of a
+// result type, built from the repo.prefix of the artifact manager integration. The suffix is
+// the artifactory repository type, as named by the repositories autoconf creates for a
+// project, which is not always the result type: python lives in -pypi, and what CDS stores
+// itself in -cds. A type without a repository of its own keeps the bare prefix, which is
+// what the caller then queries.
+func repositoryForType(prefix string, resultType sdk.V2WorkflowRunResultType) string {
+	switch resultType {
+	case sdk.V2WorkflowRunResultTypeDocker:
+		return prefix + "-docker"
+	case sdk.V2WorkflowRunResultTypeDebian:
+		return prefix + "-debian"
+	case sdk.V2WorkflowRunResultTypeTest, sdk.V2WorkflowRunResultTypeCoverage, sdk.V2WorkflowRunResultTypeGeneric:
+		return prefix + "-cds"
+	case sdk.V2WorkflowRunResultTypeHelm:
+		return prefix + "-helm"
+	case sdk.V2WorkflowRunResultTypePython:
+		return prefix + "-pypi"
+	case sdk.V2WorkflowRunResultTypeTerraformProvider:
+		return prefix + "-terraformProvider"
+	case sdk.V2WorkflowRunResultTypeTerraformModule:
+		return prefix + "-terraformModule"
+	case sdk.V2WorkflowRunResultTypeNpm:
+		return prefix + "-npm"
+	case sdk.V2WorkflowRunResultTypeMaven:
+		return prefix + "-maven"
+	case sdk.V2WorkflowRunResultTypeGradle:
+		return prefix + "-gradle"
+	case sdk.V2WorkflowRunResultTypeSbt:
+		return prefix + "-sbt"
+	case sdk.V2WorkflowRunResultTypeNuget:
+		return prefix + "-nuget"
+	case sdk.V2WorkflowRunResultTypePuppet:
+		return prefix + "-puppet"
+	case sdk.V2WorkflowRunResultTypeConan:
+		return prefix + "-conan"
+	case sdk.V2WorkflowRunResultTypeOCI:
+		return prefix + "-oci"
+	case sdk.V2WorkflowRunResultTypeFreeBSD:
+		return prefix + "-freebsd"
+	default:
+		return prefix
+	}
 }
 
 // performOne creates a single run result for a concrete artifact path: a file for most types,
@@ -351,6 +368,10 @@ func (p *addRunResultPlugin) createRunResult(ctx context.Context, resultType sdk
 		}
 	case sdk.V2WorkflowRunResultTypeOCI:
 		if err := performOCI(&runResult, itemSearch, path); err != nil {
+			return true, err
+		}
+	case sdk.V2WorkflowRunResultTypeFreeBSD:
+		if err := performGeneric(&runResult, fileInfo, sdk.V2WorkflowRunResultTypeFreeBSD, fileName); err != nil {
 			return true, err
 		}
 	default:
