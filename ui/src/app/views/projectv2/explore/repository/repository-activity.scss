@@ -119,6 +119,12 @@ nz-alert.events-error {
     nz-spin {
       margin: 4px 0;
     }
+
+    // The row shows a verdict cut short; the steps carry the messages in full
+    ::ng-deep .ant-steps-item-description {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
   }
 
   .analysis {

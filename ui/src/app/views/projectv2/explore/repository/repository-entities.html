@@ -20,6 +20,7 @@
       <button nz-button nzType="primary" (click)="analyzeRef()">
         <span nz-icon nzType="sync" nzTheme="outline" aria-hidden="true"></span>Analyze {{shortRef(ctx.ref)}}
       </button>
+      <button nz-button (click)="seeAnalyses()">See analyses</button>
       @if (ctx.defaultRef() !== ctx.ref) {
         <button nz-button (click)="switchToDefaultRef()">Switch to {{shortRef(ctx.defaultRef())}}</button>
       }

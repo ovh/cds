@@ -102,7 +102,7 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
             .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: ENTITY_TYPE_LABELS[type], count: this.ctx.entityCount(type) }))
             // Jobs are seldom defined: their tab only shows up when the ref has some
             .filter(tab => tab.count > 0 || tab.path !== EntityTypeUtil.toURLParam(EntityType.Job));
-        return [...entityTabs, activity];
+        return [...entityTabs, { path: 'analyses', label: 'Analyses' }, activity];
     }
 
     /** Only the most recent event counts: an old failure since resolved is no longer worth a look. */

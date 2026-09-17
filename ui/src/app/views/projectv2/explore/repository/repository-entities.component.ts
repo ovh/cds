@@ -117,6 +117,10 @@ export class ProjectV2RepositoryEntitiesComponent implements OnInit, OnDestroy {
         this.detail?.layout();
     }
 
+    seeAnalyses(): void {
+        this._router.navigate(['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, 'analyses'], { queryParamsHandling: 'preserve' });
+    }
+
     /** The ref lives in the url; the page reacts to it like to any navigation. */
     switchToDefaultRef(): void {
         const ref = this.ctx.defaultRef();

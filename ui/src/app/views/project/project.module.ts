@@ -38,6 +38,7 @@ import { ProjectV2RepositoryComponent } from '../projectv2/explore/repository/re
 import { ProjectV2RepositoryEntitiesComponent } from '../projectv2/explore/repository/repository-entities.component';
 import { ProjectV2RepositoryEntityDetailComponent } from '../projectv2/explore/repository/repository-entity-detail.component';
 import { ProjectV2RepositoryActivityComponent } from '../projectv2/explore/repository/repository-activity.component';
+import { ProjectV2RepositoryAnalysesComponent } from '../projectv2/explore/repository/repository-analyses.component';
 import { ProjectV2RepositoryAddComponent } from '../projectv2/explore/repository-add/repository-add.component';
 import { ProjectV2RunComponent } from '../projectv2/run/run.component';
 import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.component';
@@ -88,6 +89,7 @@ import { TimelineModule } from '../../../../libs/timeline/src/public-api';
         ProjectV2RepositoryEntitiesComponent,
         ProjectV2RepositoryEntityDetailComponent,
         ProjectV2RepositoryActivityComponent,
+        ProjectV2RepositoryAnalysesComponent,
         ProjectV2RepositoryAddComponent,
         ProjectV2RunComponent,
         ProjectV2RunListComponent,

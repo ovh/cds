@@ -20,6 +20,8 @@ export class RepositoryAnalysis {
 }
 
 export class AnalysisData {
+    /** Set when the analysis was started by a repository event; a manual analysis has none. */
+    hook_event_uuid: string;
     operation_uuid: string;
     commit_check: boolean;
     sign_key_id: string;

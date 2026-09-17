@@ -1,0 +1,93 @@
+@if (rows === null) {
+  <nz-spin nzSimple></nz-spin>
+} @else {
+  <div class="toolbar">
+    <nz-select nzSize="small" nzAllowClear nzPlaceHolder="Ref: all" [ngModel]="refFilter" (ngModelChange)="changeRefFilter($event)"
+      [nzDropdownMatchSelectWidth]="false" aria-label="Filter by ref">
+      @for (ref of refs; track ref) {
+        <nz-option [nzValue]="ref" [nzLabel]="shortRef(ref)"></nz-option>
+      }
+    </nz-select>
+    <nz-select nzSize="small" nzAllowClear nzPlaceHolder="Status: all" [ngModel]="statusFilter" (ngModelChange)="changeStatusFilter($event)"
+      [nzDropdownMatchSelectWidth]="false" aria-label="Filter by status">
+      <nz-option nzValue="Success" nzLabel="Success"></nz-option>
+      <nz-option nzValue="Error" nzLabel="Error"></nz-option>
+      <nz-option nzValue="Skipped" nzLabel="Skipped"></nz-option>
+      <nz-option nzValue="InProgress" nzLabel="In progress"></nz-option>
+    </nz-select>
+    <span class="spacer"></span>
+    <button nz-button nzType="text" nzSize="small" nz-tooltip nzTooltipTitle="Refresh" aria-label="Refresh analyses" (click)="refresh()">
+      <span nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="table">
+    <nz-table #table [nzData]="filtered" nzSize="small" [nzFrontPagination]="false" [nzShowPagination]="false" [nzLoading]="loading"
+      [nzNoResult]="noResult">
+      <thead>
+        <tr>
+          <th nzWidth="110px">Status</th>
+          <th nzWidth="190px">Ref</th>
+          <th nzWidth="90px">Commit</th>
+          <th>Result</th>
+          <th nzWidth="170px">Requested by</th>
+          <th nzWidth="110px" nzAlign="right">When</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of table.data; track row.analysis.id) {
+          <tr class="row" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
+            <td><nz-badge [nzStatus]="badge(row.analysis.status)" [nzText]="row.analysis.status"></nz-badge></td>
+            <td class="ref"><code>{{shortRef(row.analysis.ref)}}</code>@if (isTag(row.analysis.ref)) { <small>tag</small> }</td>
+            <td class="commit">{{row.analysis.commit | slice:0:7}}</td>
+            <td class="result">
+              @if (row.analysis.data?.error) {
+                <span class="error" [title]="row.analysis.data.error">{{row.analysis.data.error}}</span>
+              } @else if (row.analysis.status === 'Skipped') {
+                Nothing to register
+              } @else {
+                {{row.registered}} registered@if (row.rejected.length) {, <span class="error">{{row.rejected.length}} rejected</span>}
+              }
+            </td>
+            <td class="who">{{row.origin}}@if (row.requestedBy) { · {{row.requestedBy}} }</td>
+            <td class="when"><app-date-from-now [value]="row.analysis.created"></app-date-from-now></td>
+          </tr>
+          <tr [nzExpand]="isExpanded(row)">
+            <div class="expanded">
+              <div class="main">
+              @if (row.analysis.data?.error) {
+                <p class="full-error">{{row.analysis.data.error}}</p>
+              }
+              <nz-descriptions nzSize="small" [nzColumn]="1" [nzColon]="false">
+                <nz-descriptions-item nzTitle="Analysis"><span nz-typography nzCopyable [nzContent]="row.analysis.id"></span></nz-descriptions-item>
+                <nz-descriptions-item nzTitle="Commit"><span nz-typography nzCopyable [nzContent]="row.analysis.commit"></span></nz-descriptions-item>
+                @if (row.analysis.data?.hook_event_uuid) {
+                  <nz-descriptions-item nzTitle="Event"><span nz-typography nzCopyable [nzContent]="row.analysis.data.hook_event_uuid"></span></nz-descriptions-item>
+                }
+              </nz-descriptions>
+              </div>
+              @if (row.rejected.length) {
+                <div class="files">
+                  <div class="files-title">Rejected files</div>
+                  @for (file of row.rejected; track file.file_name) {
+                    <div class="file">
+                      @if (fileLink(file); as link) {
+                        <a [routerLink]="link" [queryParams]="{ ref: row.analysis.ref }">{{file.path}}{{file.file_name}}</a>
+                      } @else {
+                        {{file.path}}{{file.file_name}}
+                      }
+                      @if (file.status) { <small>{{file.status}}</small> }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+    <ng-template #noResult>
+      <nz-empty nzNotFoundImage="simple" [nzNotFoundContent]="rows.length ? 'No analysis matches these filters' : 'No analysis of this repository yet'"></nz-empty>
+    </ng-template>
+  </div>
+}

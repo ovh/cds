@@ -1,0 +1,134 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 14px 20px 16px;
+  gap: 12px;
+  overflow: hidden;
+}
+
+nz-spin {
+  margin: 40px auto;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+
+  nz-select {
+    min-width: 140px;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+}
+
+.table {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.row {
+  cursor: pointer;
+
+  td {
+    vertical-align: top;
+  }
+
+  .ref {
+    code {
+      font-size: 12px;
+    }
+
+    small {
+      margin-left: 6px;
+      color: rgba(0, 0, 0, 0.45);
+
+      :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+    }
+  }
+
+  .commit {
+    font-family: monospace;
+    font-size: 12px;
+  }
+
+  .result {
+    .error {
+      color: #ff4d4f;
+    }
+
+    span.error {
+      display: inline-block;
+      max-width: 520px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: bottom;
+    }
+  }
+
+  .who,
+  .when {
+    color: rgba(0, 0, 0, 0.65);
+    white-space: nowrap;
+
+    :host-context(.night) & { color: rgba(255, 255, 255, 0.65); }
+  }
+}
+
+.expanded {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  padding: 4px 8px 4px 24px;
+
+  .main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // The row shows the error cut short; here it is read in full
+  .full-error {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #ff4d4f;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  ::ng-deep .ant-descriptions-item-content {
+    font-family: monospace;
+    font-size: 11.5px;
+    word-break: break-all;
+  }
+
+  .files {
+    font-size: 12px;
+
+    .files-title {
+      margin-bottom: 4px;
+      color: rgba(0, 0, 0, 0.45);
+
+      :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+    }
+
+    .file {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+
+      small {
+        color: rgba(0, 0, 0, 0.45);
+
+        :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+      }
+    }
+  }
+}
