@@ -275,9 +275,11 @@ func Test_getProjectDistantRepositoryAllHandler(t *testing.T) {
 		return repositories
 	}
 
+	// The two hooks on ovh/distant belong to the same workflow: listed once
+	listener := sdk.ProjectDistantRepositoryWorkflow{VCSName: vcsProj.Name, RepositoryName: repo.Name, WorkflowName: "my-workflow"}
 	require.Equal(t, []sdk.ProjectDistantRepository{
-		{VCSName: vcsProj.Name, Repository: "ovh/another"},
-		{VCSName: vcsProj.Name, Repository: "ovh/distant"},
+		{VCSName: vcsProj.Name, Repository: "ovh/another", Workflows: []sdk.ProjectDistantRepositoryWorkflow{listener}},
+		{VCSName: vcsProj.Name, Repository: "ovh/distant", Workflows: []sdk.ProjectDistantRepositoryWorkflow{listener}},
 	}, callHandler())
 }
 

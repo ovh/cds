@@ -82,6 +82,14 @@ export class ProjectRepository {
 export class ProjectDistantRepository {
   vcs_name: string;
   repository: string;
+  // The workflows of the project that listen to it
+  workflows: Array<ProjectDistantRepositoryWorkflow>;
+}
+
+export class ProjectDistantRepositoryWorkflow {
+  vcs_name: string;
+  repository_name: string;
+  workflow_name: string;
 }
 
 export enum WorkflowHookEventName {

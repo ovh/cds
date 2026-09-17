@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Store } from '@ngxs/store';
 import { BehaviorSubject, lastValueFrom } from 'rxjs';
-import { Project, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
+import { Project, ProjectDistantRepositoryWorkflow, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
 import { VCSProject } from 'app/model/vcs.model';
 import { Branch, Tag } from 'app/model/repositories.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
@@ -22,10 +22,13 @@ export class RepositoryContextService {
     readonly branches$ = new BehaviorSubject<Array<Branch>>([]);
     readonly tags$ = new BehaviorSubject<Array<Tag>>([]);
     readonly ref$ = new BehaviorSubject<string>(null);
-    readonly analyses$ = new BehaviorSubject<Array<RepositoryAnalysis>>([]);
-    readonly events$ = new BehaviorSubject<Array<RepositoryHookEvent>>([]);
+    // Lists are null until read, so that a consumer can tell "not yet" from "none"
+    readonly analyses$ = new BehaviorSubject<Array<RepositoryAnalysis>>(null);
+    readonly events$ = new BehaviorSubject<Array<RepositoryHookEvent>>(null);
     /** Why the events could not be read, when they could not; the page shows it instead of failing. */
     readonly eventsError$ = new BehaviorSubject<any>(null);
+    /** For a listened repository, the workflows of the project that listen to it; null until read. */
+    readonly listenedBy$ = new BehaviorSubject<Array<ProjectDistantRepositoryWorkflow>>(null);
 
     private _project: Project;
     private _vcsName: string;
@@ -61,9 +64,10 @@ export class RepositoryContextService {
         this.branches$.next([]);
         this.tags$.next([]);
         this.ref$.next(null);
-        this.analyses$.next([]);
-        this.events$.next([]);
+        this.analyses$.next(null);
+        this.events$.next(null);
         this.eventsError$.next(null);
+        this.listenedBy$.next(null);
 
         const key = this._project.key;
         const [vcs, repository] = await Promise.all([
@@ -85,7 +89,16 @@ export class RepositoryContextService {
         // Events are keyed by names, so a listened repository has them too; the rest needs a declared one
         const events = this.readEvents(loadId);
         if (repository.distant) {
-            await events;
+            const [distant] = await Promise.all([
+                lastValueFrom(this._projectService.getDistantRepositories(key)),
+                events
+            ]);
+            if (loadId !== this._loadId) {
+                return;
+            }
+            // The API keys listened repositories by lowercased name
+            const listened = distant.find(d => d.vcs_name === vcsName && d.repository === repoName.toLowerCase());
+            this.listenedBy$.next(listened?.workflows ?? []);
             return;
         }
         const [branches, tags, analyses] = await Promise.all([
@@ -158,7 +171,7 @@ export class RepositoryContextService {
 
     /** The most recent analysis of a ref, whatever its status. */
     lastAnalysis(ref: string): RepositoryAnalysis {
-        return this.analyses$.value
+        return (this.analyses$.value ?? [])
             .filter(a => a.ref === ref)
             .sort((a, b) => Date.parse(b.created) - Date.parse(a.created))[0] ?? null;
     }

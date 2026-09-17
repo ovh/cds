@@ -15,12 +15,12 @@
       <h1 [title]="repository.name">{{repository.name}}</h1>
       @if (repository.distant) {
         <nz-tag nzColor="blue" nz-tooltip nzTooltipTitle="Listened by a workflow of this project, not declared in it">listened only</nz-tag>
-      } @else {
+      } @else if (ctx.ref$ | async) {
         <app-repository-ref-select size="small" [branches]="ctx.branches$ | async" [tags]="ctx.tags$ | async"
           [ngModel]="ctx.ref$ | async" (ngModelChange)="changeRef($event)"></app-repository-ref-select>
       }
       <span class="spacer"></span>
-      @if (!repository.distant) {
+      @if (!repository.distant && (ctx.ref$ | async)) {
         <button nz-button nzType="primary" (click)="openRunStartDrawer()">
           <span nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>Start a workflow
         </button>
@@ -30,7 +30,19 @@
       }
     </div>
     <div class="subtitle">
-      @if (!repository.distant) {
+      @if (repository.distant) {
+        @if (ctx.listenedBy$ | async; as listenedBy) {
+          @if (listenedBy.length) {
+            Listened by
+            @for (w of listenedBy; track w.vcs_name + '/' + w.repository_name + '/' + w.workflow_name; let last = $last) {
+              <a [routerLink]="['/project', ctx.project.key, 'explore', 'vcs', w.vcs_name, 'repository', w.repository_name, 'workflow', w.workflow_name]"
+                [title]="'Open workflow ' + w.workflow_name">{{w.repository_name}} / {{w.workflow_name}}</a>@if (!last) { · }
+            }
+          } @else {
+            No workflow of this project listens to this repository
+          }
+        }
+      } @else {
         @if (ctx.ref$ | async; as ref) {
           @if (ctx.lastAnalysis(ref); as analysis) {
             <app-status-icon [status]="analysis.status" role="img" [attr.aria-label]="'Status: ' + analysis.status"></app-status-icon>

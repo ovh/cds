@@ -71,23 +71,47 @@ func (api *API) getProjectDistantRepositoryAllHandler() ([]service.RbacChecker, 
 				}
 			}
 
-			// Filter repositories
-			distant := make(map[string]sdk.ProjectDistantRepository)
+			// Filter repositories, keeping the workflows that listen to each one; a workflow with
+			// several hooks on the same repository counts once
+			distant := make(map[string]*sdk.ProjectDistantRepository)
+			listeners := make(map[string]struct{})
 			for _, h := range hooks {
-				target := sdk.ProjectDistantRepository{
-					VCSName:    h.Data.VCSServer,
-					Repository: strings.ToLower(h.Data.RepositoryName),
-				}
-				key := target.VCSName + "/" + target.Repository
+				vcsName, repoName := h.Data.VCSServer, strings.ToLower(h.Data.RepositoryName)
+				key := vcsName + "/" + repoName
 				if _, has := declared[key]; has {
 					continue
 				}
-				distant[key] = target
+				target, has := distant[key]
+				if !has {
+					target = &sdk.ProjectDistantRepository{VCSName: vcsName, Repository: repoName}
+					distant[key] = target
+				}
+				listener := sdk.ProjectDistantRepositoryWorkflow{
+					VCSName:        h.VCSName,
+					RepositoryName: h.RepositoryName,
+					WorkflowName:   h.WorkflowName,
+				}
+				listenerKey := key + "|" + listener.VCSName + "/" + listener.RepositoryName + "/" + listener.WorkflowName
+				if _, has := listeners[listenerKey]; has {
+					continue
+				}
+				listeners[listenerKey] = struct{}{}
+				target.Workflows = append(target.Workflows, listener)
 			}
 
 			results := make([]sdk.ProjectDistantRepository, 0, len(distant))
 			for _, r := range distant {
-				results = append(results, r)
+				sort.Slice(r.Workflows, func(i, j int) bool {
+					a, b := r.Workflows[i], r.Workflows[j]
+					if a.VCSName != b.VCSName {
+						return a.VCSName < b.VCSName
+					}
+					if a.RepositoryName != b.RepositoryName {
+						return a.RepositoryName < b.RepositoryName
+					}
+					return a.WorkflowName < b.WorkflowName
+				})
+				results = append(results, *r)
 			}
 			sort.Slice(results, func(i, j int) bool {
 				if results[i].VCSName != results[j].VCSName {
