@@ -96,6 +96,31 @@ func TestStaticPrefix(t *testing.T) {
 	require.Equal(t, "ovhcom", staticPrefix("ovhcom/venom:*"))
 }
 
+// TestRepositoryForType locks the mapping between a run result type and the artifactory
+// repository holding its artifacts. The suffix is the repository type autoconf creates for a
+// project, not the result type: getting it wrong makes addRunResult query a repository the
+// project does not have, and the artifact is reported as missing although it was uploaded.
+func TestRepositoryForType(t *testing.T) {
+	// freebsd is created as <prefix>-freebsd-{snapshot,release}, behind the
+	// <prefix>-freebsd virtual repository
+	require.Equal(t, "proj-freebsd", repositoryForType("proj", sdk.V2WorkflowRunResultTypeFreeBSD))
+
+	// what CDS stores in its own repository shares it
+	require.Equal(t, "proj-cds", repositoryForType("proj", sdk.V2WorkflowRunResultTypeGeneric))
+	require.Equal(t, "proj-cds", repositoryForType("proj", sdk.V2WorkflowRunResultTypeTest))
+	require.Equal(t, "proj-cds", repositoryForType("proj", sdk.V2WorkflowRunResultTypeCoverage))
+
+	// the suffix is the repository type, which is not always the result type: python is pypi
+	require.Equal(t, "proj-pypi", repositoryForType("proj", sdk.V2WorkflowRunResultTypePython))
+	require.Equal(t, "proj-debian", repositoryForType("proj", sdk.V2WorkflowRunResultTypeDebian))
+	require.Equal(t, "proj-oci", repositoryForType("proj", sdk.V2WorkflowRunResultTypeOCI))
+
+	// a type with no repository of its own falls back to the bare prefix: this is why an
+	// absent or misspelled "type" input queries <prefix> and reports a puzzling 404
+	require.Equal(t, "proj", repositoryForType("proj", sdk.V2WorkflowRunResultTypeVariable))
+	require.Equal(t, "proj", repositoryForType("proj", ""))
+}
+
 func TestRepoCriteria(t *testing.T) {
 	require.Equal(t, `{"repo":{"$match":"proj-debian-*"}}`, repoCriteria("proj-debian"))
 	require.Equal(t, `{"$or":[{"repo":{"$match":"proj-cds-*"}},{"repo":{"$match":"proj-generic-*"}}]}`, repoCriteria("proj-cds"))
