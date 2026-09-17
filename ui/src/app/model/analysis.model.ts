@@ -7,8 +7,8 @@ export const StatusAnalyzeSkipped = "Skipped"
 
 export class RepositoryAnalysis {
     id: string;
-    created: Date;
-    last_modified: Date;
+    created: string;
+    last_modified: string;
     project_repository_id: string;
     vcs_project_id: string;
     project_key: string;

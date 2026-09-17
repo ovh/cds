@@ -39,7 +39,7 @@
               nzTheme="fill" aria-hidden="true"></span>
             }
             <a class="name" [class.distant]="repo.distant"
-              [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']"
+              [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name]"
               routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)"
             [title]="repo.name">{{repo.name}}</a>
             @if (treeExpandState[vcs.name+'/'+repo.name] && !repo.distant) {

@@ -1,5 +1,5 @@
 import { ModuleWithProviders } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { CanMatchFn, RouterModule, Routes, UrlSegment } from '@angular/router';
 import { ProjectModule } from 'app/views/project/project.module';
 import { ProjectAddComponent } from './add/project.add.component';
 import { ProjectShowComponent } from './show/project.component';
@@ -9,9 +9,20 @@ import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.compon
 import { ProjectV2RunComponent } from '../projectv2/run/run.component';
 import { ProjectSettingsComponent } from './settings/settings.component';
 import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-entity.component';
-import { ProjectV2ExploreRepositoryComponent } from '../projectv2/explore/explore-repository.component';
 import { ProjectExistsGuard, ProjectGuard, ProjectV2Guard } from 'app/views/project/project.guard';
 import { ProjectV2ExploreOverviewComponent } from '../projectv2/explore/explore-overview.component';
+import { ProjectV2RepositoryComponent } from '../projectv2/explore/repository/repository.component';
+import { EntityTypeUtil } from 'app/model/entity.model';
+
+/** Only a known entity type takes the ':entityType' segment, so that the repository tabs keep theirs. */
+export const entityTypeCanMatch: CanMatchFn = (_, segments: UrlSegment[]): boolean => {
+    try {
+        EntityTypeUtil.fromURLParam(segments[0]?.path);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
 
 const projectRoutes: Routes = [
     {
@@ -66,21 +77,16 @@ const projectRoutes: Routes = [
                             },
                             {
                                 path: 'vcs/:vcsName/repository/:repoName',
+                                component: ProjectV2RepositoryComponent,
+                                data: { title: '{repoName} • Repository' },
                                 children: [
                                     {
-                                        path: '', redirectTo: 'settings', pathMatch: 'full'
-                                    },
-                                    {
-                                        path: 'settings',
-                                        component: ProjectV2ExploreRepositoryComponent,
-                                        data: { title: '{repoName} • Repository' }
+                                        path: ':entityType/:entityName',
+                                        canMatch: [entityTypeCanMatch],
+                                        component: ProjectV2ExploreEntityComponent,
+                                        data: { title: '{entityName} • Entity' }
                                     }
                                 ]
-                            },
-                            {
-                                path: 'vcs/:vcsName/repository/:repoName/:entityType/:entityName',
-                                component: ProjectV2ExploreEntityComponent,
-                                data: { title: '{entityName} • Entity' }
                             }
                         ]
                     },

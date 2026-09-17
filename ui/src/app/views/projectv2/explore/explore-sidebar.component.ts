@@ -228,7 +228,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     async clickRepository(vcs: VCSProject, repo: ProjectRepository) {
         // Nothing to expand on a distant repository: the row opens it like its name does
         if (repo.distant) {
-            this._router.navigate(['/project', this.project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']);
+            this._router.navigate(['/project', this.project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name]);
             return;
         }
         this.treeExpandState[vcs.name + '/' + repo.name] = !this.treeExpandState[vcs.name + '/' + repo.name];

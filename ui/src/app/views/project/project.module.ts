@@ -35,6 +35,7 @@ import { ProjectV2ExploreEntityComponent } from '../projectv2/explore/explore-en
 import { ProjectV2ExploreOverviewComponent } from '../projectv2/explore/explore-overview.component';
 import { ProjectV2ExploreRepositoryComponent } from '../projectv2/explore/explore-repository.component';
 import { ProjectV2ExploreSidebarComponent } from '../projectv2/explore/explore-sidebar.component';
+import { ProjectV2RepositoryComponent } from '../projectv2/explore/repository/repository.component';
 import { ProjectV2RepositoryAddComponent } from '../projectv2/explore/repository-add/repository-add.component';
 import { ProjectV2RunComponent } from '../projectv2/run/run.component';
 import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.component';
@@ -82,6 +83,7 @@ import { TimelineModule } from '../../../../libs/timeline/src/public-api';
         ProjectV2ExploreOverviewComponent,
         ProjectV2ExploreRepositoryComponent,
         ProjectV2ExploreSidebarComponent,
+        ProjectV2RepositoryComponent,
         ProjectV2RepositoryAddComponent,
         ProjectV2RunComponent,
         ProjectV2RunListComponent,
