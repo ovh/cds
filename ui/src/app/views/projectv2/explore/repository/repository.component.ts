@@ -8,6 +8,7 @@ import { ProjectRepository } from 'app/model/project.model';
 import { EntityType, EntityTypeUtil } from 'app/model/entity.model';
 import { apiErrorMessage, RepositoryContextService, shortRef } from './repository-context.service';
 import { ENTITY_TYPE_LABELS, ENTITY_TYPE_ORDER } from './entities';
+import { hookEventVerdict } from './hook-event-verdict';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../../run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from '../trigger-analysis/trigger-analysis.component';
 
@@ -16,6 +17,8 @@ export interface RepositoryTab {
     path: string;
     label: string;
     count?: number;
+    /** Something in the tab deserves a look: the last event in error, for Activity. */
+    alert?: boolean;
 }
 
 /**
@@ -62,7 +65,7 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
             this.ready = !!repository && (repository.distant ? listenedBy !== null : ref !== null);
             this._cd.markForCheck();
         });
-        this.tabsSub = combineLatest([this.ctx.repository$, this.ctx.entities$]).subscribe(([repository]) => {
+        this.tabsSub = combineLatest([this.ctx.repository$, this.ctx.entities$, this.ctx.events$]).subscribe(([repository]) => {
             this.tabs = this.tabsFor(repository);
             this.openDefaultTab();
             this._cd.markForCheck();
@@ -91,7 +94,7 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         if (!repository) {
             return [];
         }
-        const activity: RepositoryTab = { path: 'activity', label: 'Activity' };
+        const activity: RepositoryTab = { path: 'activity', label: 'Activity', alert: this.lastEventInError(repository) };
         if (repository.distant) {
             return [activity];
         }
@@ -100,6 +103,16 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
             // Jobs are seldom defined: their tab only shows up when the ref has some
             .filter(tab => tab.count > 0 || tab.path !== EntityTypeUtil.toURLParam(EntityType.Job));
         return [...entityTabs, activity];
+    }
+
+    /** Only the most recent event counts: an old failure since resolved is no longer worth a look. */
+    private lastEventInError(repository: ProjectRepository): boolean {
+        const events = this.ctx.events$.value ?? [];
+        if (events.length === 0) {
+            return false;
+        }
+        const last = events.reduce((a, b) => b.created > a.created ? b : a);
+        return hookEventVerdict(last, this.ctx.project?.key, repository.distant).level === 'error';
     }
 
     /** Without a tab in the url, the first one opens, the url being replaced rather than stacked. */

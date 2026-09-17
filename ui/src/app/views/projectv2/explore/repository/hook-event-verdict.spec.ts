@@ -1,5 +1,5 @@
 import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow, WorkflowHookEventName } from 'app/model/project.model';
-import { eventAuthor, eventAuthorKnown, hintFor, hookEventVerdict } from './hook-event-verdict';
+import { cleanErrorMessage, eventAuthor, eventAuthorKnown, hintFor, hookEventVerdict } from './hook-event-verdict';
 
 const PROJECT = 'PROJ';
 
@@ -38,6 +38,39 @@ describe('hookEventVerdict', () => {
         expect(v.hint).toContain('signing key');
     });
 
+    it('reads a skipped event with a reason as the error it is, listing the workflows it skipped', () => {
+        const v = hookEventVerdict(event({ status: 'Skipped', username: null, initiator: null, sign_key: '4603FA40B0D5B3F7', last_error: 'User with key 4603FA40B0D5B3F7 not found',
+            workflows: [workflow('distant1', HookEventWorkflowStatus.Skipped, { error: 'User with key 4603FA40B0D5B3F7 not found' })] }), PROJECT, true);
+        expect(v.level).toBe('error');
+        expect(v.label).toBe('Signer unknown');
+        expect(v.steps[1].status).toBe('error');
+        expect(v.steps[3].description).toContain('did not start: distant1');
+    });
+
+    it('names an unsigned commit for what it is', () => {
+        const v = hookEventVerdict(event({ status: 'Skipped', username: null, last_error: 'Commit not signed' }), PROJECT, false);
+        expect(v.label).toBe('Commit not signed');
+        expect(v.hint).toContain('signed');
+    });
+
+    it('reports a workflow skipped with a reason as not started', () => {
+        const v = hookEventVerdict(event({ workflows: [workflow('deploy', HookEventWorkflowStatus.Skipped, { error: 'unknown user' })] }), PROJECT, false);
+        expect(v.level).toBe('error');
+        expect(v.label).toBe('1 workflow did not start');
+        expect(v.detail).toBe('unknown user');
+    });
+
+    it('blames the workflows when the git information of the ref could not be read', () => {
+        const v = hookEventVerdict(event({ status: 'Error', event_name: WorkflowHookEventName.WorkflowHookEventNamePullWorkflowRun,
+            last_error: 'internal server error (caused by: unable to get git info: API Error: resource not found (request_id: f8af8612-0c99-4a84-be1b-5166d5f717cd))' }), PROJECT, false);
+        expect(v.level).toBe('error');
+        expect(v.label).toBe('Git information unavailable');
+        expect(v.detail).toBe('unable to get git info: resource not found');
+        expect(v.steps[0].status).toBe('finish');
+        expect(v.steps[3].status).toBe('error');
+        expect(v.hint).toContain('vcs credentials');
+    });
+
     it('blames the reception for any other error', () => {
         const v = hookEventVerdict(event({ status: 'Error', last_error: 'unable to read hook payload\nsecond line' }), PROJECT, false);
         expect(v.level).toBe('error');
@@ -51,14 +84,14 @@ describe('hookEventVerdict', () => {
             workflow('deploy', HookEventWorkflowStatus.Error, { error: 'no worker model "debian13"' })
         ] }), PROJECT, false);
         expect(v.level).toBe('warning');
-        expect(v.label).toBe('1 of 2 failed to start');
+        expect(v.label).toBe('1 of 2 did not start');
         expect(v.hint).toContain('worker model');
     });
 
     it('is an error when every workflow failed to start', () => {
         const v = hookEventVerdict(event({ workflows: [workflow('deploy', HookEventWorkflowStatus.Error, { error: 'boom' })] }), PROJECT, false);
         expect(v.level).toBe('error');
-        expect(v.label).toBe('1 workflow failed to start');
+        expect(v.label).toBe('1 workflow did not start');
     });
 
     it('is processing while workflows are scheduled', () => {
@@ -124,6 +157,14 @@ describe('eventAuthor', () => {
         const v = hookEventVerdict(event({ username: null, initiator: <any>{ user_id: 'u1', user: { username: 'sguiheux' } }, sign_key: 'B3F1' }), PROJECT, false);
         expect(v.steps[1].status).toBe('finish');
         expect(v.steps[1].description).toBe('sguiheux · key B3F1');
+    });
+});
+
+describe('cleanErrorMessage', () => {
+    it('unwraps the API envelope and drops the request id', () => {
+        expect(cleanErrorMessage('internal server error (caused by: unable to get git info: API Error: resource not found (request_id: abc))')).toBe('unable to get git info: resource not found');
+        expect(cleanErrorMessage('User with key 4603 not found')).toBe('User with key 4603 not found');
+        expect(cleanErrorMessage(null)).toBe('');
     });
 });
 

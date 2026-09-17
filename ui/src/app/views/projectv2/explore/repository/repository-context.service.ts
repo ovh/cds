@@ -1,7 +1,7 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, OnDestroy } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Store } from '@ngxs/store';
-import { BehaviorSubject, lastValueFrom } from 'rxjs';
+import { BehaviorSubject, lastValueFrom, Subscription } from 'rxjs';
 import { Project, ProjectDistantRepositoryWorkflow, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
 import { VCSProject } from 'app/model/vcs.model';
 import { Branch, Tag } from 'app/model/repositories.model';
@@ -11,6 +11,8 @@ import { ProjectService } from 'app/service/project/project.service';
 import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
 import { ProjectV2State } from 'app/store/project-v2.state';
+import { EventV2State } from 'app/store/event-v2.state';
+import { EventV2Type, FullEventV2 } from 'app/model/event-v2.model';
 import { groupEntities } from './entities';
 
 /** What the API says went wrong, without the technical cause it appends. */
@@ -32,7 +34,7 @@ export function shortRef(ref: string): string {
  * of this service, which lives as long as the page does.
  */
 @Injectable()
-export class RepositoryContextService {
+export class RepositoryContextService implements OnDestroy {
     readonly vcs$ = new BehaviorSubject<VCSProject>(null);
     readonly repository$ = new BehaviorSubject<ProjectRepository>(null);
     readonly branches$ = new BehaviorSubject<Array<Branch>>([]);
@@ -56,6 +58,17 @@ export class RepositoryContextService {
 
     private _projectService = inject(ProjectService);
     private _store = inject(Store);
+    private _eventSub: Subscription;
+    private _eventsReloadTimer: ReturnType<typeof setTimeout>;
+
+    constructor() {
+        this._eventSub = this._store.select(EventV2State.last).subscribe(event => this.handleEvent(event));
+    }
+
+    ngOnDestroy(): void {
+        this._eventSub?.unsubscribe();
+        clearTimeout(this._eventsReloadTimer);
+    }
 
     get project(): Project { return this._project; }
     get vcsName(): string { return this._vcsName; }
@@ -209,6 +222,38 @@ export class RepositoryContextService {
         if (loadId === this._loadId) {
             this.analyses$.next(analyses ?? []);
         }
+    }
+
+    /**
+     * What happens on this repository is read again in place, so that the page follows without a
+     * reload. An analysis that ends changes the events, the analyses and, most often, the entities.
+     * A run created from a hook means the hooks service is closing its event with the final verdict.
+     */
+    private handleEvent(event: FullEventV2): void {
+        if (!event || !this.repository$.value) {
+            return;
+        }
+        if (event.vcs_name !== this._vcsName || (event.repository ?? '').toLowerCase() !== this._repoName.toLowerCase()) {
+            return;
+        }
+        switch (event.type) {
+            case EventV2Type.EventAnalysisDone:
+                this.reloadEvents();
+                if (!this.repository$.value.distant) {
+                    this.reloadAnalyses();
+                    this.reloadEntities();
+                }
+                break;
+            case EventV2Type.EventRunCrafted:
+                this.reloadEventsSoon();
+                break;
+        }
+    }
+
+    /** One read a second after the last run created: the event is closed by then, and a burst of runs reads once. */
+    private reloadEventsSoon(): void {
+        clearTimeout(this._eventsReloadTimer);
+        this._eventsReloadTimer = setTimeout(() => this.reloadEvents(), 1000);
     }
 
     /** The most recent analysis of a ref, whatever its status. */

@@ -72,6 +72,16 @@ nz-alert.error {
     }
   }
 
+  .alert-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    border-radius: 50%;
+    background-color: #ff4d4f;
+  }
+
   ::ng-deep {
     nz-tabs-nav {
       margin: 0;

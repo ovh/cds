@@ -35,6 +35,10 @@ func (api *API) getRepositoryByIdentifier(ctx context.Context, vcsID string, rep
 		repo, err = repository.LoadRepositoryByName(ctx, api.mustDB(), vcsID, repositoryIdentifier, opts...)
 	}
 	if err != nil {
+		// A bare not found leaves the caller guessing which resource is missing
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, sdk.NewErrorFrom(err, "repository %s not found on vcs %s", repositoryIdentifier, vcsID)
+		}
 		return nil, err
 	}
 	return repo, nil

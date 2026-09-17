@@ -177,7 +177,8 @@ func (s *Service) getOperationsHandler() service.Handler {
 		uuid := muxVar(r, "uuid")
 		op := s.dao.loadOperation(ctx, uuid)
 		if op == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "operation %s not found", uuid)
+			// NewErrorFrom carries the message to the caller, where WrapError only logs it
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "operation %s not found", uuid)
 		}
 		op.RepositoryStrategy.SSHKeyContent = sdk.PasswordPlaceholder
 		op.RepositoryStrategy.Password = sdk.PasswordPlaceholder

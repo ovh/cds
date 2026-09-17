@@ -28,8 +28,17 @@ const TRIGGERING = ['WorkflowHooks', 'GitInfo', 'Workflow'];
 
 const HINTS: Array<{ pattern: RegExp, hint: string }> = [
     { pattern: /User with key/i, hint: 'The commit signing key is not linked to any CDS user: the author must add it to their CDS profile, then push again.' },
+    { pattern: /Commit not signed/i, hint: 'Commits must be signed with a key linked to a CDS user for CDS to run anything from them.' },
+    { pattern: /unable to get git info/i, hint: 'The ref or commit the event points at could not be read on the repository: check that it still exists and that the vcs credentials of the project can reach it.' },
     { pattern: /worker model/i, hint: 'The workflow references a worker model that does not exist on this ref: add it under .cds/worker-models or fix its runs-on value.' },
     { pattern: /yaml|unmarshal|unknown field|cannot parse/i, hint: 'A definition file is invalid: fix it on this ref and push again, or trigger an analysis after amending.' }
+];
+
+/** The failures of an event the hooks service reports in `last_error`: which step they belong to, and how to name them. */
+const EVENT_FAILURES: Array<{ pattern: RegExp, step: number, label: string }> = [
+    { pattern: /^User with key/i, step: 1, label: 'Signer unknown' },
+    { pattern: /^Commit not signed/i, step: 1, label: 'Commit not signed' },
+    { pattern: /unable to get git info/i, step: 3, label: 'Git information unavailable' }
 ];
 
 /**
@@ -65,12 +74,13 @@ export function eventAuthorKnown(event: RepositoryHookEvent, projectKey: string)
 export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string, distant: boolean): HookEventVerdict {
     const workflows = (event.workflows ?? []).filter(w => w.project_key === projectKey);
     const done = workflows.filter(w => w.status === HookEventWorkflowStatus.Done);
-    const failed = workflows.filter(w => w.status === HookEventWorkflowStatus.Error);
     const scheduled = workflows.filter(w => w.status === HookEventWorkflowStatus.Scheduled);
-    const skipped = workflows.filter(w => w.status === HookEventWorkflowStatus.Skipped);
+    // A workflow skipped with a reason did not start because of a problem; skipped without one, a filter ruled it out
+    const notStarted = workflows.filter(w => w.status === HookEventWorkflowStatus.Error || (w.status === HookEventWorkflowStatus.Skipped && !!w.error));
+    const skipped = workflows.filter(w => w.status === HookEventWorkflowStatus.Skipped && !w.error);
     const analysis = (event.analyses ?? []).find(a => a.project_key === projectKey);
     const inProgress = IN_PROGRESS.indexOf(event.status) !== -1;
-    const lastError = (event.last_error ?? '').trim();
+    const lastError = cleanErrorMessage(event.last_error);
 
     const authorName = eventAuthor(event, projectKey);
     const authorKnown = eventAuthorKnown(event, projectKey);
@@ -87,7 +97,7 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
         : analysis
             ? { title: 'Analysis', status: analysisStatus(analysis.status), description: analysis.status }
             : { title: 'Analysis', status: inProgress && ANALYZING.indexOf(event.status) !== -1 ? 'process' : 'wait', description: inProgress ? 'Pending' : 'Not run for this event' };
-    const workflowsStep: VerdictStep = { title: 'Workflows', status: 'wait', description: describeWorkflows(done, failed, scheduled, skipped) };
+    const workflowsStep: VerdictStep = { title: 'Workflows', status: 'wait', description: describeWorkflows(done, notStarted, scheduled, skipped) };
     const steps = [received, author, analysisStep, workflowsStep];
 
     if (inProgress) {
@@ -103,24 +113,24 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
         return { level: 'error', label: 'Analysis failed', detail: 'Workflows of this ref were not evaluated', steps, hint: hintFor(lastError) };
     }
 
-    if (event.status === 'Error' && !analysis) {
-        if (/^User with key/i.test(lastError)) {
-            author.status = 'error';
-            author.description = lastError;
+    // The hooks service gives up on an event with a reason, whether it marks it Error or Skipped
+    if (lastError && !analysis) {
+        const failure = EVENT_FAILURES.find(f => f.pattern.test(lastError));
+        const failed = steps[failure?.step ?? 0];
+        failed.status = 'error';
+        failed.description = failed === received ? `${received.description} · ${lastError}` : lastError;
+        if (failed === author && workflows.length === 0) {
             workflowsStep.description = 'Not evaluated: the author must be identified first.';
-            return { level: 'error', label: 'Signer unknown', detail: lastError, steps, hint: hintFor(lastError) };
         }
-        received.status = 'error';
-        received.description = `${received.description} · ${lastError}`;
-        return { level: 'error', label: firstLine(lastError) || 'Error', detail: lastError, steps, hint: hintFor(lastError) };
+        return { level: 'error', label: failure?.label ?? firstLine(lastError) ?? 'Error', detail: lastError, steps, hint: hintFor(lastError) };
     }
 
-    if (failed.length > 0) {
+    if (notStarted.length > 0) {
         workflowsStep.status = 'error';
-        const errors = failed.map(w => w.error).filter(e => !!e).join(' · ');
+        const errors = [...new Set(notStarted.map(w => cleanErrorMessage(w.error)).filter(e => !!e))].join(' · ');
         const label = done.length > 0
-            ? `${failed.length} of ${failed.length + done.length} failed to start`
-            : `${failed.length} ${plural(failed.length, 'workflow')} failed to start`;
+            ? `${notStarted.length} of ${notStarted.length + done.length} did not start`
+            : `${notStarted.length} ${plural(notStarted.length, 'workflow')} did not start`;
         return { level: done.length > 0 ? 'warning' : 'error', label, detail: errors, steps, hint: hintFor(errors) };
     }
 
@@ -142,6 +152,22 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     };
 }
 
+/**
+ * The message of an error as the API wraps it, without the wrapping: `internal server error (caused
+ * by: X (request_id: …))` reads `X`. Nothing to show gives an empty string.
+ */
+export function cleanErrorMessage(raw: string): string {
+    let message = (raw ?? '').trim();
+    const wrapped = message.match(/^internal server error \(caused by: (.*)\)$/is);
+    if (wrapped) {
+        message = wrapped[1];
+    }
+    return message
+        .replace(/\s*\(request_id: [^)]*\)/gi, '')
+        .replace(/API Error: /gi, '')
+        .trim();
+}
+
 /** The first hint whose pattern the message matches, if any. */
 export function hintFor(message: string): string {
     if (!message) {
@@ -157,10 +183,10 @@ function describeEvent(event: RepositoryHookEvent): string {
     return [kind, ref ? `on ${ref}` : null, commit ? `· ${commit.substring(0, 7)}` : null].filter(p => !!p).join(' ');
 }
 
-function describeWorkflows(done: Array<RepositoryHookWorkflow>, failed: Array<RepositoryHookWorkflow>, scheduled: Array<RepositoryHookWorkflow>, skipped: Array<RepositoryHookWorkflow>): string {
+function describeWorkflows(done: Array<RepositoryHookWorkflow>, notStarted: Array<RepositoryHookWorkflow>, scheduled: Array<RepositoryHookWorkflow>, skipped: Array<RepositoryHookWorkflow>): string {
     const parts: Array<string> = [];
     if (done.length) { parts.push(`triggered: ${names(done)}`); }
-    if (failed.length) { parts.push(`failed: ${failed.map(w => w.error ? `${w.workflow_name} (${w.error})` : w.workflow_name).join(', ')}`); }
+    if (notStarted.length) { parts.push(`did not start: ${notStarted.map(w => w.error ? `${w.workflow_name} (${cleanErrorMessage(w.error)})` : w.workflow_name).join(', ')}`); }
     if (scheduled.length) { parts.push(`scheduled: ${names(scheduled)}`); }
     if (skipped.length) { parts.push(`skipped: ${names(skipped)}`); }
     return parts.length ? parts.join(' · ') : 'None evaluated';
@@ -180,7 +206,7 @@ function analysisStatus(status: string): StepStatus {
 }
 
 function firstLine(message: string): string {
-    return (message ?? '').split('\n')[0].trim();
+    return (message ?? '').split('\n')[0].trim() || null;
 }
 
 function plural(n: number, word: string): string {

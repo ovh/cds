@@ -149,7 +149,7 @@ func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, uuid strin
 	}
 	var ope sdk.Operation
 	if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, "/operations/"+uuid, nil, &ope); err != nil {
-		return nil, sdk.WrapError(err, "unable to get operation")
+		return nil, sdk.NewErrorFrom(err, "unable to get operation %s", uuid)
 	}
 	return &ope, nil
 }
