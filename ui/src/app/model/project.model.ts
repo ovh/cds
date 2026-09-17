@@ -75,6 +75,13 @@ export class ProjectRepository {
   clone_url: string;
   created: Date;
   created_by: string;
+  // Listened by a workflow of the project without being declared in it: only its name is known
+  distant?: boolean;
+}
+
+export class ProjectDistantRepository {
+  vcs_name: string;
+  repository: string;
 }
 
 export enum WorkflowHookEventName {

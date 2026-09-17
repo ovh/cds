@@ -29,21 +29,27 @@
           nzMessage="No repository found"></nz-alert>
         }
         @for (repo of repositories[vcs.name]; track repo.name) {
-          <div class="tree-node-header large" appClickable [attr.aria-expanded]="!!treeExpandState[vcs.name+'/'+repo.name]" (click)="clickRepository(vcs, repo)">
-            <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
-            nzTheme="fill" aria-hidden="true"></span>
-            <a class="name"
+          <div class="tree-node-header large" appClickable [attr.aria-expanded]="repo.distant ? null : !!treeExpandState[vcs.name+'/'+repo.name]" (click)="clickRepository(vcs, repo)">
+            @if (repo.distant) {
+              <span nz-icon nzType="link" nzTheme="outline" nz-tooltip
+                nzTooltipTitle="Distant repository: listened by a workflow of this project, not declared in it"
+                role="img" aria-label="Distant repository"></span>
+            } @else {
+              <span nz-icon [nzType]="!treeExpandState[vcs.name+'/'+repo.name] ? 'caret-right' : 'caret-down'"
+              nzTheme="fill" aria-hidden="true"></span>
+            }
+            <a class="name" [class.distant]="repo.distant"
               [routerLink]="['/project', project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']"
               routerLinkActive="active" (click)="clickRepositoryLink(vcs, repo, $event)"
             [title]="repo.name">{{repo.name}}</a>
-            @if (treeExpandState[vcs.name+'/'+repo.name]) {
+            @if (treeExpandState[vcs.name+'/'+repo.name] && !repo.distant) {
               <app-repository-ref-select [size]="'small'"
                 [branches]="branches[vcs.name+'/'+repo.name]" [tags]="tags[vcs.name+'/'+repo.name]"
                 [ngModel]="refSelectState[vcs.name+'/'+repo.name]"
               (ngModelChange)="selectRepositoryRef(vcs, repo, $event)"></app-repository-ref-select>
             }
           </div>
-          @if (treeExpandState[vcs.name+'/'+repo.name]) {
+          @if (treeExpandState[vcs.name+'/'+repo.name] && !repo.distant) {
             <div class="tree-node-content large">
               @if (!entities[vcs.name+'/'+repo.name] && !loadingEntities[vcs.name+'/'+repo.name]) {
                 <nz-alert

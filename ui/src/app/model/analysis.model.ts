@@ -13,7 +13,7 @@ export class RepositoryAnalysis {
     vcs_project_id: string;
     project_key: string;
     status: string;
-    branch: string;
+    ref: string;
     commit: string;
     data: AnalysisData;
 

@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy } from
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { HookEventWorkflowStatus, Project, ProjectRepository, RepositoryHookEvent, WorkflowHookEventName } from 'app/model/project.model';
 import { Store } from '@ngxs/store';
-import { forkJoin, lastValueFrom, Subscription } from 'rxjs';
+import { forkJoin, lastValueFrom, of, Subscription, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProjectService } from 'app/service/project/project.service';
 import { VCSProject } from 'app/model/vcs.model';
@@ -62,7 +63,10 @@ export class ProjectV2ExploreRepositoryComponent implements OnDestroy {
             // same time as the repository and the vcs rather than after them.
             this.loadingHooks = true;
             forkJoin([
-                this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']),
+                // A repository the project only listens to is not declared: nothing but its name is known
+                this._projectService.getVCSRepository(this.project.key, p['vcsName'], p['repoName']).pipe(
+                    catchError(e => e?.status === 404 ? of(<ProjectRepository>{ name: p['repoName'], distant: true }) : throwError(() => e))
+                ),
                 this._projectService.getVCSProject(this.project.key, p['vcsName']),
                 this._projectService.listRepositoryEvents(this.project.key, p['vcsName'], p['repoName'])
             ]).subscribe(result => {

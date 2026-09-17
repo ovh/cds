@@ -82,6 +82,11 @@
         [nz-icon] {
             margin-right: 5px;
         }
+
+        &.distant {
+            font-style: italic;
+            opacity: 0.7;
+        }
     }
 
     a {

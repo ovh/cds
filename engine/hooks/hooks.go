@@ -183,7 +183,7 @@ func (s *Service) Serve(c context.Context) error {
 		}()
 
 		// Run an initial resync of scheduler definitions from DB to Redis
-		s.GoRoutines.Run(ctx, "scheduler-resync-init", func(ctx context.Context) {
+		s.GoRoutines.Exec(ctx, "scheduler-resync-init", func(ctx context.Context) {
 			if err := s.resyncSchedulers(ctx); err != nil {
 				log.Error(ctx, "initial scheduler resync failed: %v", err)
 			}

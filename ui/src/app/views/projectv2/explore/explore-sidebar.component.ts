@@ -147,10 +147,16 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     }
 
     async loadRepositories() {
-        const resp = await Promise.all(this.vcss.map(vcs => lastValueFrom(this._projectService.getVCSRepositories(this.project.key, vcs.name))));
+        const [resp, distant] = await Promise.all([
+            Promise.all(this.vcss.map(vcs => lastValueFrom(this._projectService.getVCSRepositories(this.project.key, vcs.name)))),
+            lastValueFrom(this._projectService.getDistantRepositories(this.project.key))
+        ]);
         this.repositories = {};
         this.vcss.forEach((vcs, i) => {
-            this.repositories[vcs.name] = resp[i];
+            // Repositories the project only listens to take place among the declared ones, as leaves.
+            this.repositories[vcs.name] = resp[i]
+                .concat(distant.filter(d => d.vcs_name === vcs.name).map(d => <ProjectRepository>{ name: d.repository, distant: true }))
+                .sort((a, b) => a.name < b.name ? -1 : 1);
         });
         // The repositories are shown as soon as they are known, without waiting for their content.
         this._cd.markForCheck();
@@ -160,7 +166,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         this.expandToRoute(this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root));
 
         await Promise.all(this.vcss.flatMap(vcs => (this.repositories[vcs.name] ?? [])
-            .filter(repo => this.treeExpandState[vcs.name + '/' + repo.name])
+            .filter(repo => !repo.distant && this.treeExpandState[vcs.name + '/' + repo.name])
             .map(repo => this.loadRepository(vcs, repo))));
     }
 
@@ -220,6 +226,11 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     }
 
     async clickRepository(vcs: VCSProject, repo: ProjectRepository) {
+        // Nothing to expand on a distant repository: the row opens it like its name does
+        if (repo.distant) {
+            this._router.navigate(['/project', this.project.key, 'explore', 'vcs', vcs.name, 'repository', repo.name, 'settings']);
+            return;
+        }
         this.treeExpandState[vcs.name + '/' + repo.name] = !this.treeExpandState[vcs.name + '/' + repo.name];
         this.saveTreeExpandState();
 
@@ -236,7 +247,7 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
     async clickRepositoryLink(vcs: VCSProject, repo: ProjectRepository, e: Event) {
         e.stopPropagation();
 
-        if (!this.treeExpandState[vcs.name + '/' + repo.name]) {
+        if (!repo.distant && !this.treeExpandState[vcs.name + '/' + repo.name]) {
             this.treeExpandState[vcs.name + '/' + repo.name] = true;
             this.saveTreeExpandState();
 
@@ -392,6 +403,9 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         if (!repo) {
             return null;
         }
+        if (repo.distant) {
+            return { vcs, repo, read: false };
+        }
         const key = vcs.name + '/' + repo.name;
 
         let read = false;
@@ -495,8 +509,10 @@ export class ProjectV2ExploreSidebarComponent implements OnInit, OnDestroy, Afte
         }
 
         let repository = this.repositories[event.vcs_name].find(r => r.name === event.repository);
-        if (!repository) {
+        // A repository the project only listened to becomes a regular one once declared
+        if (!repository || repository.distant) {
             repository = await lastValueFrom(this._projectService.getVCSRepository(this.project.key, event.vcs_name, event.repository));
+            this.repositories[event.vcs_name] = this.repositories[event.vcs_name].filter(r => r.name !== event.repository);
             this.repositories[event.vcs_name].push(repository);
             this.repositories[event.vcs_name].sort((a, b) => a.name < b.name ? -1 : 1);
         }

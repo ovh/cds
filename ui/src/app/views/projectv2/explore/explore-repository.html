@@ -10,11 +10,17 @@
       </ng-template>
     </nz-alert>
     <nz-descriptions nzTitle="Repository info" [nzColumn]="2">
-      <nz-descriptions-item nzTitle="ID">{{repository.id}}</nz-descriptions-item>
+      @if (!repository.distant) {
+        <nz-descriptions-item nzTitle="ID">{{repository.id}}</nz-descriptions-item>
+      }
       <nz-descriptions-item nzTitle="Name">{{repository.name}}</nz-descriptions-item>
-      <nz-descriptions-item nzTitle="Clone URL">{{repository.clone_url}}</nz-descriptions-item>
-      <nz-descriptions-item nzTitle="Added">{{repository.created}} by
-      {{repository.created_by}}</nz-descriptions-item>
+      @if (repository.distant) {
+        <nz-descriptions-item nzTitle="Declared">No, only listened by a workflow of this project</nz-descriptions-item>
+      } @else {
+        <nz-descriptions-item nzTitle="Clone URL">{{repository.clone_url}}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Added">{{repository.created}} by
+        {{repository.created_by}}</nz-descriptions-item>
+      }
     </nz-descriptions>
     <div class="events">
       <h3>Repository events <i (click)="loadHookEvents()" appClickable aria-label="Refresh repository events" nz-icon nzType="sync" [nzSpin]="loadingHooks"
@@ -79,18 +85,20 @@
       </nz-table>
     </div>
   </div>
-  <div class="footer">
-    <div class="buttons">
-      <button nz-button nzType="default" [nzLoading]="loading" (click)="openTriggerAnalysisDrawer()">
-        Trigger analysis
-      </button>
-      <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm
-        nzPopconfirmTitle="Are you sure you want to remove this repository ?"
-        (nzOnConfirm)="removeRepositoryFromProject()" nzPopconfirmPlacement="topRight">
-        Remove
-      </button>
+  @if (!repository.distant) {
+    <div class="footer">
+      <div class="buttons">
+        <button nz-button nzType="default" [nzLoading]="loading" (click)="openTriggerAnalysisDrawer()">
+          Trigger analysis
+        </button>
+        <button nz-button nzDanger nzType="primary" [nzLoading]="loading" nz-popconfirm
+          nzPopconfirmTitle="Are you sure you want to remove this repository ?"
+          (nzOnConfirm)="removeRepositoryFromProject()" nzPopconfirmPlacement="topRight">
+          Remove
+        </button>
+      </div>
     </div>
-  </div>
+  }
 }
 
 @if (selectedHookEvent) {
