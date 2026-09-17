@@ -1,0 +1,86 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+
+  :host-context(.night) & {
+    border-color: #303030;
+  }
+}
+
+.detail-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 4px 12px;
+  border-bottom: 1px solid #f0f0f0;
+
+  :host-context(.night) & {
+    border-bottom-color: #303030;
+  }
+
+  .name {
+    flex: none;
+    max-width: 50%;
+    font-weight: 600;
+  }
+
+  .path {
+    flex: 1;
+    font-size: 11.5px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  .name,
+  .path {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .spacer {
+    flex: none;
+    width: 4px;
+  }
+}
+
+nz-spin {
+  margin: 40px auto;
+}
+
+nz-alert.error {
+  margin: 12px;
+}
+
+.editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+
+  // The entity being left stays visible while the next one is read. It only dims if that read takes
+  // a moment, and comes back at once.
+  &.loading {
+    opacity: 0.55;
+    transition: opacity 150ms ease-out 250ms;
+  }
+
+  nz-code-editor {
+    flex: 1;
+    height: 100%;
+
+    :host-context(.night) & {
+      background-color: #1e1e1e;
+    }
+  }
+}

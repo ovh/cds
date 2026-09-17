@@ -13,13 +13,13 @@ nz-select {
   display: flex;
   flex-direction: column;
 
-  nz-input-group {
+  nz-input-wrapper {
     margin: 5px 10px 10px 10px;
     width: calc(100% - 20px);
   }
 }
 
-nz-tabset {
+nz-tabs {
   min-width: 250px;
 
   ::ng-deep {

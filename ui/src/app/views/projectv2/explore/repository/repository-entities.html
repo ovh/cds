@@ -28,7 +28,9 @@
 }
 
 @if (entities?.length) {
-  <div class="list">
+  <nz-splitter (nzResizeEnd)="onResizeEnd($event)">
+  <nz-splitter-panel [nzDefaultSize]="listSize" nzMin="220" nzMax="50%">
+  <div class="list" [class.loading]="loading">
     <nz-input-wrapper nzAllowClear>
       <span nzInputPrefix nz-icon nzType="search" nzTheme="outline" aria-hidden="true"></span>
       <input nz-input nzSize="small" [placeholder]="'Filter ' + typeLabel.toLowerCase() + '…'" [ngModel]="filter" (ngModelChange)="changeFilter($event)"
@@ -46,12 +48,11 @@
       }
     </div>
   </div>
-  <div class="detail">
+  </nz-splitter-panel>
+  <nz-splitter-panel>
     @if (selected) {
-      <div class="detail-header" [title]="selected.name + '\n' + (selected.file_path ?? '')">
-        <span class="name">{{selected.name}}</span>
-        <span class="path">{{selected.file_path}}</span>
-      </div>
+      <app-projectv2-repository-entity-detail [entity]="selected" [ref]="ctx.ref$ | async"></app-projectv2-repository-entity-detail>
     }
-  </div>
+  </nz-splitter-panel>
+  </nz-splitter>
 }

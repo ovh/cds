@@ -1,11 +1,15 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NzDrawerService } from 'ng-zorro-antd/drawer';
+import { Store } from '@ngxs/store';
 import { Subscription } from 'rxjs';
+import { PreferencesState } from 'app/store/preferences.state';
+import * as actionPreferences from 'app/store/preferences.action';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Entity, EntityType, EntityTypeUtil } from 'app/model/entity.model';
 import { RepositoryContextService, shortRef } from './repository-context.service';
 import { ENTITY_TYPE_LABELS } from './entities';
+import { ProjectV2RepositoryEntityDetailComponent } from './repository-entity-detail.component';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from '../trigger-analysis/trigger-analysis.component';
 
 /**
@@ -21,16 +25,24 @@ import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentPar
 })
 @AutoUnsubscribe()
 export class ProjectV2RepositoryEntitiesComponent implements OnInit, OnDestroy {
+    static PANEL_KEY = 'project-v2-repository-entities';
+
+    @ViewChild(ProjectV2RepositoryEntityDetailComponent) detail: ProjectV2RepositoryEntityDetailComponent;
+
     ctx = inject(RepositoryContextService);
     type: EntityType;
     typeLabel: string;
     typeParam: string;
-    /** The entities of the type on the current ref; null until read. */
+    /** The entities of the type on the current ref; null until read for the first time. */
     entities: Array<Entity> = null;
+    /** True while the entities of another ref are being read: the list stays, dimmed. */
+    loading: boolean = false;
     filtered: Array<Entity> = [];
     filter: string = '';
     selectedName: string;
     selected: Entity;
+    /** Width of the list in pixels, as the user last left it. */
+    listSize: number;
 
     routeSub: Subscription;
     entitiesSub: Subscription;
@@ -39,10 +51,12 @@ export class ProjectV2RepositoryEntitiesComponent implements OnInit, OnDestroy {
     private _router = inject(Router);
     private _cd = inject(ChangeDetectorRef);
     private _drawerService = inject(NzDrawerService);
+    private _store = inject(Store);
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
+        this.listSize = Number(this._store.selectSnapshot(PreferencesState.panelSize(ProjectV2RepositoryEntitiesComponent.PANEL_KEY))) || 320;
         this.routeSub = this._route.paramMap.subscribe(params => {
             this.type = EntityTypeUtil.fromURLParam(params.get('entityType'));
             this.typeParam = EntityTypeUtil.toURLParam(this.type);
@@ -55,7 +69,13 @@ export class ProjectV2RepositoryEntitiesComponent implements OnInit, OnDestroy {
 
     private apply(): void {
         const groups = this.ctx.entities$.value;
-        this.entities = groups ? groups.get(this.type) ?? [] : null;
+        this.loading = groups === null;
+        // The entities of the previous ref stay in place while those of the new one are read
+        if (groups === null) {
+            this._cd.markForCheck();
+            return;
+        }
+        this.entities = groups.get(this.type) ?? [];
         this.applyFilter();
         this.selected = this.entities?.find(e => e.name === this.selectedName) ?? null;
         // Without a valid entity in the url, the first one opens. Replacing the url means every
@@ -89,6 +109,12 @@ export class ProjectV2RepositoryEntitiesComponent implements OnInit, OnDestroy {
 
     shortRef(ref: string): string {
         return shortRef(ref);
+    }
+
+    /** The list keeps the width it was given; the editor is told its box changed. */
+    onResizeEnd(sizes: Array<number>): void {
+        this._store.dispatch(new actionPreferences.SavePanelSize({ panelKey: ProjectV2RepositoryEntitiesComponent.PANEL_KEY, size: String(sizes[0]) }));
+        this.detail?.layout();
     }
 
     /** The ref lives in the url; the page reacts to it like to any navigation. */

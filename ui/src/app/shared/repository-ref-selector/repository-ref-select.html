@@ -13,12 +13,10 @@
   <ng-template #selectTemplate>
     @if (branches?.length > 0 || tags?.length > 0) {
       <div class="container" [class.night]="darkActive">
-        <nz-input-group [nzSuffix]="suffixIconSearch">
+        <nz-input-wrapper>
           <input type="text" nz-input placeholder="Search for ref" aria-label="Search for ref" (input)="onFilterRefChange($event)" />
-        </nz-input-group>
-        <ng-template #suffixIconSearch>
-          <span nz-icon nzType="search"></span>
-        </ng-template>
+          <span nzInputSuffix nz-icon nzType="search" aria-hidden="true"></span>
+        </nz-input-wrapper>
         @if (selectedRef) {
           <nz-tabs nzSize="small" [nzSelectedIndex]="selectedRef.startsWith('refs/tags/') ? 1 : 0"
             nzType="card">
