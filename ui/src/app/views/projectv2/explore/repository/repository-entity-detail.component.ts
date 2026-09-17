@@ -5,6 +5,10 @@ import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { EditorOptions, NzCodeEditorComponent } from 'ng-zorro-antd/code-editor';
 import { editor } from 'monaco-editor';
 import { lastValueFrom } from 'rxjs';
+import { Store } from '@ngxs/store';
+import { load as loadYaml } from 'js-yaml';
+import { PreferencesState } from 'app/store/preferences.state';
+import * as actionPreferences from 'app/store/preferences.action';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Entity, EntityType, EntityTypeUtil } from 'app/model/entity.model';
 import { Schema } from 'app/model/json-schema.model';
@@ -41,6 +45,10 @@ export class ProjectV2RepositoryEntityDetailComponent implements OnChanges, OnDe
     loading: boolean;
     error: string;
     isWorkflow: boolean;
+    /** A workflow written out in full can be drawn; one built from a template cannot. */
+    canPreview: boolean;
+    mode: 'yaml' | 'preview';
+    readonly modes = [{ label: 'YAML', value: 'yaml' }, { label: 'Preview', value: 'preview' }];
     editorOption: EditorOptions = {
         language: 'yaml',
         minimap: { enabled: false },
@@ -58,6 +66,11 @@ export class ProjectV2RepositoryEntityDetailComponent implements OnChanges, OnDe
     private _projectService = inject(ProjectService);
     private _router = inject(Router);
     private _drawerService = inject(NzDrawerService);
+    private _store = inject(Store);
+
+    constructor() {
+        this.mode = this._store.selectSnapshot(PreferencesState.entityDetailMode);
+    }
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
@@ -91,6 +104,7 @@ export class ProjectV2RepositoryEntityDetailComponent implements OnChanges, OnDe
             this._jsonSchema = jsonSchema;
             this.content = content;
             this.isWorkflow = content.type === EntityType.Workflow;
+            this.canPreview = this.isWorkflow && !loadYaml(content.data)?.['from'];
             // The editor outlives the entity it shows, so the schema of its type is applied on every
             // load and not only when the editor is built.
             this.applyJsonSchema();
@@ -129,6 +143,22 @@ export class ProjectV2RepositoryEntityDetailComponent implements OnChanges, OnDe
     /** Monaco does not follow its container: called when the panels around it are resized. */
     layout(): void {
         this.editor?.layout();
+    }
+
+    /** Yaml or graph; the choice is kept for the next workflows. The editor stays mounted, hidden. */
+    changeMode(mode: 'yaml' | 'preview'): void {
+        this.mode = mode;
+        this._store.dispatch(new actionPreferences.SaveEntityDetailMode({ mode }));
+        this._cd.markForCheck();
+        if (mode === 'yaml') {
+            // The editor measures itself once its box is visible again
+            setTimeout(() => this.layout());
+        }
+    }
+
+    /** What the panel shows: the graph only for a workflow that can be drawn and asks for it. */
+    get showPreview(): boolean {
+        return this.mode === 'preview' && this.canPreview;
     }
 
     /** Follow a `uses:` / `runs-on:` value to the entity it denotes. */

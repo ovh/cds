@@ -42,3 +42,8 @@ export class SaveMessageState {
     static readonly type = '[Preferences] Save message\'s state';
     constructor(public payload: { messageKey: string, value: boolean }) { }
 }
+
+export class SaveEntityDetailMode {
+    static readonly type = '[Preferences] Save entity detail mode';
+    constructor(public payload: { mode: 'yaml' | 'preview' }) { }
+}
