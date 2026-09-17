@@ -2,7 +2,7 @@
   <nz-spin nzTip="Loading repository"></nz-spin>
 }
 @if (error) {
-  <nz-alert class="error" nzType="error" nzShowIcon nzMessage="Unable to load repository" [nzDescription]="error"></nz-alert>
+  <nz-alert class="error" nzType="error" nzShowIcon nzMessage="Unable to load repository" [nzDescription]="errorMessage(error)"></nz-alert>
 }
 
 @if (ctx.repository$ | async; as repository) {
@@ -30,9 +30,7 @@
       }
     </div>
     <div class="subtitle">
-      @if (repository.distant) {
-        Not declared in this project: CDS receives its events to trigger workflows, but never reads its <code>.cds</code> files.
-      } @else {
+      @if (!repository.distant) {
         @if (ctx.ref$ | async; as ref) {
           @if (ctx.lastAnalysis(ref); as analysis) {
             <app-status-icon [status]="analysis.status" role="img" [attr.aria-label]="'Status: ' + analysis.status"></app-status-icon>
@@ -56,6 +54,17 @@
     </nz-tabs>
   </div>
   <div class="content">
+    @if (ctx.eventsError$ | async; as eventsError) {
+      <nz-alert class="events-error" nzType="warning" nzShowIcon
+        [nzMessage]="repository.distant ? 'CDS cannot read this repository with the vcs credentials of the project' : 'Unable to read the events of this repository'"
+        [nzDescription]="eventsErrorTpl"></nz-alert>
+      <ng-template #eventsErrorTpl>
+        @if (repository.distant) {
+          Make sure that user <b>{{(ctx.vcs$ | async)?.auth?.username}}</b> can access it on {{ctx.vcsName}}.
+        }
+        {{errorMessage(eventsError)}}
+      </ng-template>
+    }
     <router-outlet (activate)="childActive = true" (deactivate)="childActive = false"></router-outlet>
     @if (!childActive) {
       <nz-empty class="placeholder" nzNotFoundContent="Pick a tab to browse this repository"></nz-empty>

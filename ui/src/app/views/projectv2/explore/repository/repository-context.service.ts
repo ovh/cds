@@ -24,6 +24,8 @@ export class RepositoryContextService {
     readonly ref$ = new BehaviorSubject<string>(null);
     readonly analyses$ = new BehaviorSubject<Array<RepositoryAnalysis>>([]);
     readonly events$ = new BehaviorSubject<Array<RepositoryHookEvent>>([]);
+    /** Why the events could not be read, when they could not; the page shows it instead of failing. */
+    readonly eventsError$ = new BehaviorSubject<any>(null);
 
     private _project: Project;
     private _vcsName: string;
@@ -61,6 +63,7 @@ export class RepositoryContextService {
         this.ref$.next(null);
         this.analyses$.next([]);
         this.events$.next([]);
+        this.eventsError$.next(null);
 
         const key = this._project.key;
         const [vcs, repository] = await Promise.all([
@@ -80,15 +83,12 @@ export class RepositoryContextService {
         this.repository$.next(repository);
 
         // Events are keyed by names, so a listened repository has them too; the rest needs a declared one
-        const events = lastValueFrom(this._projectService.listRepositoryEvents(key, vcsName, repoName));
+        const events = this.readEvents(loadId);
         if (repository.distant) {
-            const loaded = await events;
-            if (loadId === this._loadId) {
-                this.events$.next(loaded ?? []);
-            }
+            await events;
             return;
         }
-        const [branches, tags, analyses, loadedEvents] = await Promise.all([
+        const [branches, tags, analyses] = await Promise.all([
             lastValueFrom(this._projectService.getVCSRepositoryBranches(key, vcsName, repoName, 50)),
             lastValueFrom(this._projectService.getVCSRepositoryTags(key, vcsName, repoName)),
             lastValueFrom(this._projectService.listVCSRepositoryAnalysis(key, vcsName, repoName)),
@@ -100,7 +100,6 @@ export class RepositoryContextService {
         this.branches$.next(branches ?? []);
         this.tags$.next(tags ?? []);
         this.analyses$.next(analyses ?? []);
-        this.events$.next(loadedEvents ?? []);
         this.ref$.next(this.resolveRef(refFromUrl));
     }
 
@@ -126,11 +125,26 @@ export class RepositoryContextService {
         this._store.dispatch(new actionPreferences.SaveProjectRefSelectState({ projectKey: this._project.key, state }));
     }
 
-    async reloadEvents(): Promise<void> {
-        const loadId = this._loadId;
-        const events = await lastValueFrom(this._projectService.listRepositoryEvents(this._project.key, this._vcsName, this._repoName));
-        if (loadId === this._loadId) {
-            this.events$.next(events ?? []);
+    reloadEvents(): Promise<void> {
+        return this.readEvents(this._loadId);
+    }
+
+    /**
+     * Events failing to read do not fail the page: for a listened repository, it usually means the
+     * vcs credentials of the project cannot reach it, which the page explains.
+     */
+    private async readEvents(loadId: number): Promise<void> {
+        try {
+            const events = await lastValueFrom(this._projectService.listRepositoryEvents(this._project.key, this._vcsName, this._repoName));
+            if (loadId === this._loadId) {
+                this.events$.next(events ?? []);
+                this.eventsError$.next(null);
+            }
+        } catch (e) {
+            if (loadId === this._loadId) {
+                this.events$.next([]);
+                this.eventsError$.next(e);
+            }
         }
     }
 

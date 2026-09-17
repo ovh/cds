@@ -4,7 +4,7 @@ import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { combineLatest, Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { ErrorUtils } from 'app/shared/error.utils';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ProjectRepository } from 'app/model/project.model';
 import { RepositoryContextService } from './repository-context.service';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../../run-start/run-start.component';
@@ -33,7 +33,7 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
     ctx = inject(RepositoryContextService);
     tabs: Array<RepositoryTab> = [];
     childActive: boolean = false;
-    error: string;
+    error: any;
 
     routeSub: Subscription;
     repositorySub: Subscription;
@@ -63,10 +63,18 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         try {
             await this.ctx.load(vcsName, repoName, ref);
         } catch (e: any) {
-            this.error = ErrorUtils.print(e);
-            this._messageService.error(`Unable to load repository: ${this.error}`, { nzDuration: 2000 });
+            this.error = e;
+            this._messageService.error(`Unable to load repository: ${this.errorMessage(e)}`, { nzDuration: 2000 });
         }
         this._cd.markForCheck();
+    }
+
+    /** What the API says went wrong, without the technical cause it appends. */
+    errorMessage(e: any): string {
+        if (e instanceof HttpErrorResponse) {
+            return e.error?.message ?? e.message;
+        }
+        return String(e);
     }
 
     /** The tabs a repository offers; each one exists once its child route does. */

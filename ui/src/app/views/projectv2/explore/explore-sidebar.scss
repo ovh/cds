@@ -12,15 +12,10 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    cursor: pointer;
     background-color: #fafafa;
 
     :host-context(.night) & {
         background-color: #202020;
-    }
-
-    .toggle {
-        margin-left: 10px;
     }
 
     .title {
@@ -51,60 +46,24 @@
 }
 
 .tree-node-header {
-    height: 26px;
+    height: 32px;
     width: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
+    gap: 5px;
     padding: 0 5px;
     cursor: pointer;
     user-select: none;
-    text-decoration: node;
     color: inherit;
     overflow: hidden;
 
-    &.large {
-        height: 32px;
-
-        .name {
-            line-height: 32px;
-        }
-    }
-
     .name {
         flex: 1;
-        padding: 0 5px;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
-        line-height: 26px;
-
-        [nz-icon] {
-            margin-right: 5px;
-        }
-
-        &.distant {
-            font-style: italic;
-            opacity: 0.7;
-        }
-    }
-
-    a {
-        color: inherit;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
-
-    a:hover {
-        text-decoration: underline;
-    }
-
-    &:has(>.active) {
-        background-color: #bae7ff;
-
-        :host-context(.night) & {
-            background-color: #11263c;
-        }
+        line-height: 32px;
     }
 
     &:hover {
@@ -113,22 +72,24 @@
         :host-context(.night) & {
             background-color: rgba(255, 255, 255, 0.08);
         }
+    }
 
+    &.repository {
+        padding-left: 12px;
+        text-decoration: none;
 
-        app-favorite-button {
-            visibility: visible;
+        &.active {
+            background-color: #bae7ff;
+
+            :host-context(.night) & {
+                background-color: #11263c;
+            }
         }
-    }
 
-    app-repository-ref-select {
-        overflow: hidden;
-        max-width: 50%;
-    }
-
-    app-favorite-button {
-        visibility: hidden;
-        font-size: 14px;
-        margin-right: 5px;
+        &.distant .name {
+            font-style: italic;
+            opacity: 0.7;
+        }
     }
 }
 
@@ -144,30 +105,5 @@
 
     nz-alert {
         margin: 10px;
-    }
-
-    nz-spin {
-        align-self: center;
-        margin: 10px;
-    }
-
-    &:has(~ .tree-node-header) {
-        margin-bottom: 3px;
-    }
-
-    &.large {
-        &:has(~ .tree-node-header) {
-            margin-bottom: 5px;
-        }
-    }
-
-    ::ng-deep {
-        app-favorite-button:has(>.content>[nz-icon].active) {
-            visibility: visible;
-        }
-    }
-
-    .analyze {
-        float: right;
     }
 }

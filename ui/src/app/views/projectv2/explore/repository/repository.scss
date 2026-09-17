@@ -13,6 +13,11 @@ nz-alert.error {
   margin: 20px;
 }
 
+nz-alert.events-error {
+  flex: none;
+  margin: 12px 20px 0;
+}
+
 .header {
   padding: 12px 20px 0;
   border-bottom: 1px solid #f0f0f0;
@@ -81,7 +86,7 @@ nz-alert.error {
   flex-direction: column;
   overflow: hidden;
 
-  > *:not(router-outlet) {
+  > *:not(router-outlet):not(nz-alert) {
     flex: 1;
     min-height: 0;
   }
