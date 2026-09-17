@@ -28,3 +28,20 @@ export function groupEntities(entities: Array<Entity>): Map<EntityType, Array<En
     groups.forEach(group => group.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
     return groups;
 }
+
+// The directory of `.cds/` each entity type is read from, as the analysis reports it
+const ENTITY_TYPE_BY_DIR: { [dir: string]: EntityType } = {
+    'workflows': EntityType.Workflow,
+    'actions': EntityType.Action,
+    'worker-models': EntityType.WorkerModel,
+    'workflow-templates': EntityType.WorkflowTemplate,
+    'jobs': EntityType.Job
+};
+
+/** The entity a file of an analysis defines, from its `.cds/<dir>/` path and file name; null when unknown. */
+export function entityOfAnalysisFile(path: string, fileName: string): { type: EntityType, name: string } {
+    const dir = (path ?? '').replace(/^\.cds\//, '').replace(/\/$/, '');
+    const type = ENTITY_TYPE_BY_DIR[dir];
+    const name = (fileName ?? '').replace(/\.ya?ml$/, '');
+    return type && name ? { type, name } : null;
+}

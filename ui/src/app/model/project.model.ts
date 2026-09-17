@@ -9,6 +9,7 @@ import { Variable } from './variable.model';
 import { Workflow } from './workflow.model';
 import { VariableSet } from './variablesets.model';
 import { VCSProject } from './vcs.model';
+import { Initiator } from './analysis.model';
 
 export class Project {
   key: string;
@@ -111,6 +112,8 @@ export class RepositoryHookEvent {
   event_name: WorkflowHookEventName;
   event_type: string;
   extracted_data: RepositoryHookEventExtractedData;
+  /** Who the event is attributed to; `username` is what older events carry instead. */
+  initiator: Initiator;
   username: string;
   last_error: string;
   vcs_server_name: string;
@@ -157,6 +160,8 @@ export class RepositoryHookWorkflow {
   run_id: string;
   run_number: string;
   error: string;
+  /** Set for a scheduler, workflow-run or manual hook: the owner of the workflow, who the run is attributed to. */
+  initiator: Initiator;
 }
 
 export class StartPurgeResponse {

@@ -66,17 +66,6 @@
     </nz-tabs>
   </div>
   <div class="content">
-    @if (ctx.eventsError$ | async; as eventsError) {
-      <nz-alert class="events-error" nzType="warning" nzShowIcon
-        [nzMessage]="repository.distant ? 'CDS cannot read this repository with the vcs credentials of the project' : 'Unable to read the events of this repository'"
-        [nzDescription]="eventsErrorTpl"></nz-alert>
-      <ng-template #eventsErrorTpl>
-        @if (repository.distant) {
-          Make sure that user <b>{{(ctx.vcs$ | async)?.auth?.username}}</b> can access it on {{ctx.vcsName}}.
-        }
-        {{errorMessage(eventsError)}}
-      </ng-template>
-    }
     <router-outlet (activate)="childActive = true" (deactivate)="childActive = false"></router-outlet>
     @if (!childActive && tabs.length) {
       <nz-empty class="placeholder" nzNotFoundContent="Pick a tab to browse this repository"></nz-empty>

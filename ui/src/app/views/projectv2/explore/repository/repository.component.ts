@@ -4,10 +4,9 @@ import { NzDrawerService } from 'ng-zorro-antd/drawer';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { combineLatest, filter, Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ProjectRepository } from 'app/model/project.model';
 import { EntityType, EntityTypeUtil } from 'app/model/entity.model';
-import { RepositoryContextService, shortRef } from './repository-context.service';
+import { apiErrorMessage, RepositoryContextService, shortRef } from './repository-context.service';
 import { ENTITY_TYPE_LABELS, ENTITY_TYPE_ORDER } from './entities';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../../run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from '../trigger-analysis/trigger-analysis.component';
@@ -83,23 +82,24 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         this._cd.markForCheck();
     }
 
-    /** What the API says went wrong, without the technical cause it appends. */
     errorMessage(e: any): string {
-        if (e instanceof HttpErrorResponse) {
-            return e.error?.message ?? e.message;
-        }
-        return String(e);
+        return apiErrorMessage(e);
     }
 
-    /** The tabs a repository offers; a listened one has no entities. */
+    /** The tabs a repository offers; a listened one has no entities, only its activity. */
     private tabsFor(repository: ProjectRepository): Array<RepositoryTab> {
-        if (!repository || repository.distant) {
+        if (!repository) {
             return [];
         }
-        return ENTITY_TYPE_ORDER
+        const activity: RepositoryTab = { path: 'activity', label: 'Activity' };
+        if (repository.distant) {
+            return [activity];
+        }
+        const entityTabs: Array<RepositoryTab> = ENTITY_TYPE_ORDER
             .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: ENTITY_TYPE_LABELS[type], count: this.ctx.entityCount(type) }))
             // Jobs are seldom defined: their tab only shows up when the ref has some
             .filter(tab => tab.count > 0 || tab.path !== EntityTypeUtil.toURLParam(EntityType.Job));
+        return [...entityTabs, activity];
     }
 
     /** Without a tab in the url, the first one opens, the url being replaced rather than stacked. */

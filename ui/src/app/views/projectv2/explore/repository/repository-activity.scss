@@ -1,0 +1,169 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 14px 20px 16px;
+  gap: 12px;
+  overflow: hidden;
+}
+
+nz-spin {
+  margin: 40px auto;
+}
+
+nz-alert.events-error {
+  flex: none;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+
+  nz-select {
+    min-width: 140px;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+}
+
+.table {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.row {
+  cursor: pointer;
+
+  td {
+    vertical-align: top;
+  }
+
+  .level {
+    font-size: 15px;
+
+    &.success { color: #52c41a; }
+    &.error { color: #ff4d4f; }
+    &.warning { color: #faad14; }
+    &.processing { color: #1890ff; }
+    &.skipped { color: rgba(0, 0, 0, 0.45); }
+
+    :host-context(.night) &.skipped { color: rgba(255, 255, 255, 0.45); }
+  }
+
+  .kind small {
+    margin-left: 4px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+  }
+
+  .ref {
+    code {
+      font-size: 12px;
+    }
+
+    .commit {
+      margin-left: 6px;
+      font-family: monospace;
+      font-size: 11.5px;
+      color: rgba(0, 0, 0, 0.45);
+
+      :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+    }
+  }
+
+  .outcome {
+    nz-tag {
+      margin: 0;
+    }
+
+    .detail {
+      margin-top: 3px;
+      font-size: 11.5px;
+      color: rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 520px;
+
+      :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+    }
+  }
+
+  .user,
+  .when {
+    color: rgba(0, 0, 0, 0.65);
+    white-space: nowrap;
+
+    :host-context(.night) & { color: rgba(255, 255, 255, 0.65); }
+  }
+}
+
+.expanded {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  padding: 8px 8px 8px 28px;
+
+  .steps {
+    flex: 1;
+    min-width: 0;
+
+    nz-spin {
+      margin: 4px 0;
+    }
+  }
+
+  .analysis {
+    margin: 4px 0 0 40px;
+    font-size: 12px;
+
+    p {
+      margin: 0 0 4px;
+    }
+
+    .error {
+      color: #ff4d4f;
+    }
+
+    .file {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+
+      small {
+        color: rgba(0, 0, 0, 0.45);
+
+        :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+      }
+    }
+  }
+
+  .aside {
+    width: 320px;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .runs {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+    }
+
+    ::ng-deep .ant-descriptions-item-content {
+      font-family: monospace;
+      font-size: 11.5px;
+      word-break: break-all;
+    }
+  }
+}

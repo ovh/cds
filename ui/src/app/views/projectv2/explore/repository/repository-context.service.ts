@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Store } from '@ngxs/store';
 import { BehaviorSubject, lastValueFrom } from 'rxjs';
 import { Project, ProjectDistantRepositoryWorkflow, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
@@ -11,6 +12,14 @@ import { PreferencesState } from 'app/store/preferences.state';
 import * as actionPreferences from 'app/store/preferences.action';
 import { ProjectV2State } from 'app/store/project-v2.state';
 import { groupEntities } from './entities';
+
+/** What the API says went wrong, without the technical cause it appends. */
+export function apiErrorMessage(e: any): string {
+    if (e instanceof HttpErrorResponse) {
+        return e.error?.message ?? e.message;
+    }
+    return String(e);
+}
 
 /** `master` for `refs/heads/master`, `v1.0` for `refs/tags/v1.0`. */
 export function shortRef(ref: string): string {
