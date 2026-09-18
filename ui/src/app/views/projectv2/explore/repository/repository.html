@@ -10,7 +10,7 @@
     <div class="title">
       <h1 [title]="ctx.vcsName + ' / ' + repository.name"><span class="vcs">{{ctx.vcsName}} /</span> {{repository.name}}</h1>
       @if (repository.distant) {
-        <nz-tag nzColor="blue" nz-tooltip nzTooltipTitle="Listened by a workflow of this project, not declared in it">listened only</nz-tag>
+        <nz-tag nzColor="blue" nz-tooltip nzTooltipTitle="Listened by a workflow of this project, not part of it">listened only</nz-tag>
       } @else {
         <app-repository-ref-select size="small" [branches]="ctx.branches$ | async" [tags]="ctx.tags$ | async"
           [ngModel]="ctx.ref$ | async" (ngModelChange)="changeRef($event)"></app-repository-ref-select>

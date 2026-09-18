@@ -25,11 +25,12 @@
                 <span nz-icon nzType="branches" nzTheme="outline"></span>
                 Branches
               </ng-template>
-              <div class="options">
+              <div class="options" role="listbox">
                 @for (opt of filteredBranches; track opt) {
-                  <div class="option" [title]="opt.display_id" appClickable
-                    [class.active]="selectedRef === 'refs/heads/' + opt.display_id"
-                  (click)="clickOption('refs/heads/' + opt.display_id)">{{opt.display_id}}</div>
+                  <div class="option" [title]="opt.display_id" role="option" tabindex="0"
+                    [class.active]="selectedRef === 'refs/heads/' + opt.display_id" [attr.aria-selected]="selectedRef === 'refs/heads/' + opt.display_id"
+                    (click)="clickOption('refs/heads/' + opt.display_id)" (keydown.enter)="clickOption('refs/heads/' + opt.display_id)"
+                    (keydown.space)="$event.preventDefault(); clickOption('refs/heads/' + opt.display_id)">{{opt.display_id}}</div>
                 }
               </div>
               @if (!filteredBranches || filteredBranches.length === 0) {
@@ -41,10 +42,12 @@
                 <span nz-icon nzType="tags" nzTheme="outline"></span>
                 Tags
               </ng-template>
-              <div class="options">
+              <div class="options" role="listbox">
                 @for (opt of filteredTags; track opt) {
-                  <div class="option" [title]="opt.tag" appClickable
-                    [class.active]="selectedRef === 'refs/tags/' + opt.tag" (click)="clickOption('refs/tags/' + opt.tag)">
+                  <div class="option" [title]="opt.tag" role="option" tabindex="0"
+                    [class.active]="selectedRef === 'refs/tags/' + opt.tag" [attr.aria-selected]="selectedRef === 'refs/tags/' + opt.tag"
+                    (click)="clickOption('refs/tags/' + opt.tag)" (keydown.enter)="clickOption('refs/tags/' + opt.tag)"
+                    (keydown.space)="$event.preventDefault(); clickOption('refs/tags/' + opt.tag)">
                   {{opt.tag}}</div>
                 }
               </div>

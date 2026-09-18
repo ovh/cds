@@ -13,7 +13,8 @@
 </div>
 <div class="content">
   @for (vcs of vcss; track vcs.name) {
-    <div class="tree-node-header" appClickable [attr.aria-expanded]="!!expanded[vcs.name]" (click)="clickVCS(vcs)">
+    <div class="tree-node-header" role="button" tabindex="0" [attr.aria-expanded]="!!expanded[vcs.name]"
+      (click)="clickVCS(vcs)" (keydown.enter)="clickVCS(vcs)" (keydown.space)="$event.preventDefault(); clickVCS(vcs)">
       <span nz-icon [nzType]="expanded[vcs.name] ? 'caret-down' : 'caret-right'" nzTheme="fill" aria-hidden="true"></span>
       <div class="name">{{vcs.name}}</div>
       <button nz-button nzSize="small" title="Add a new Repository"

@@ -1,14 +1,18 @@
 import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow } from 'app/model/project.model';
 import { Initiator } from 'app/model/analysis.model';
 
-export type VerdictLevel = 'success' | 'error' | 'warning' | 'skipped' | 'processing';
+/** filtered: the workflows ruled the event out themselves · skipped: nothing listened to it */
+export type VerdictLevel = 'success' | 'error' | 'warning' | 'filtered' | 'skipped' | 'processing';
 /**
  * finish: done · error: the step failed · warning: partly done · process: running now ·
  * pending: not reached yet · skipped: ruled out by the definitions · wait: nothing to do here
  */
 export type StepStatus = 'finish' | 'error' | 'warning' | 'process' | 'pending' | 'skipped' | 'wait';
 
+export type StepKey = 'received' | 'author' | 'analysis' | 'workflows';
+
 export interface VerdictStep {
+    key: StepKey;
     title: string;
     status: StepStatus;
     description: string;
@@ -92,8 +96,9 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
 
     const authorName = eventAuthor(event, projectKey);
     const authorKnown = eventAuthorKnown(event, projectKey);
-    const received: VerdictStep = { title: 'Event received', status: 'finish', description: describeEvent(event) };
+    const received: VerdictStep = { key: 'received', title: 'Event received', status: 'finish', description: describeEvent(event) };
     const author: VerdictStep = {
+        key: 'author',
         title: 'Author identified',
         status: authorKnown ? 'finish' : inProgress ? 'pending' : 'wait',
         description: !authorKnown ? 'Not identified'
@@ -101,11 +106,11 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
             : event.sign_key ? `${authorName} · key ${event.sign_key}` : authorName
     };
     const analysisStep: VerdictStep = distant
-        ? { title: 'Analysis', status: 'wait', description: 'Not applicable: the repository is not declared in this project.' }
+        ? { key: 'analysis', title: 'Analysis', status: 'wait', description: 'Not applicable: the repository is not declared in this project.' }
         : analysis
-            ? { title: 'Analysis', status: analysisStatus(analysis.status), description: analysis.status }
-            : { title: 'Analysis', status: !inProgress ? 'wait' : ANALYZING.indexOf(event.status) !== -1 ? 'process' : 'pending', description: inProgress ? 'Pending' : 'Not run for this event' };
-    const workflowsStep: VerdictStep = { title: 'Workflows', status: 'wait', description: describeWorkflows(done, notStarted, scheduled, skipped) };
+            ? { key: 'analysis', title: 'Analysis', status: analysisStatus(analysis.status), description: analysis.status }
+            : { key: 'analysis', title: 'Analysis', status: !inProgress ? 'wait' : ANALYZING.indexOf(event.status) !== -1 ? 'process' : 'pending', description: inProgress ? 'Pending' : 'Not run for this event' };
+    const workflowsStep: VerdictStep = { key: 'workflows', title: 'Workflows', status: 'wait', description: describeWorkflows(done, notStarted, scheduled, skipped) };
     const steps = [received, author, analysisStep, workflowsStep];
 
     if (inProgress) {
@@ -154,7 +159,7 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     if (withReason.length > 0) {
         workflowsStep.status = 'skipped';
         return {
-            level: 'skipped',
+            level: 'filtered',
             label: `${withReason.length} ${plural(withReason.length, 'workflow')} skipped by ${plural(withReason.length, 'its filters', 'their filters')}`,
             detail: [...new Set(withReason.map(w => w.error))].join(' · '),
             steps

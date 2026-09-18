@@ -67,46 +67,62 @@
             <div class="expanded">
               <div class="steps">
                 <nz-steps nzDirection="vertical" nzSize="small">
-                  @for (step of row.verdict.steps; track step.title) {
-                    <nz-step class="step status-{{step.status}}" [nzTitle]="step.title" [nzDescription]="step.description" [nzStatus]="stepAntStatus(step.status)" [nzIcon]="stepIconTpl"></nz-step>
+                  @for (step of row.verdict.steps; track step.key) {
+                    <!-- The analysis step details its files, the workflows step lists them one by one with a link to each run -->
+                    <nz-step class="step status-{{step.status}}" [nzTitle]="step.title" [nzStatus]="stepAntStatus(step.status)" [nzIcon]="stepIconTpl"
+                      [nzDescription]="step.key === 'analysis' && row.analysisId ? analysisTpl : step.key === 'workflows' && row.event.workflows?.length ? workflowsTpl : step.description"></nz-step>
                     <ng-template #stepIconTpl>
                       <span nz-icon [nzType]="stepIcon(step.status)" [nzSpin]="step.status === 'process'" nzTheme="outline"
                         class="step-icon {{step.status}}" role="img" [attr.aria-label]="step.status"></span>
                     </ng-template>
+                    <ng-template #analysisTpl>
+                      {{step.description}}
+                      @if (analysisLoading(row)) {
+                        <nz-spin nzSimple nzSize="small"></nz-spin>
+                      }
+                      @if (analysisOf(row); as analysis) {
+                        <div class="analysis">
+                          @if (analysis.data?.error) {
+                            <p class="error">{{analysis.data.error}}</p>
+                          }
+                          @if (updatedCount(analysis) === 0) {
+                            <p>No file was processed.</p>
+                          } @else {
+                            <p>{{updatedCount(analysis)}} {{updatedCount(analysis) > 1 ? 'files' : 'file'}} processed@if (rejectedFiles(analysis).length) {, <span class="error">{{rejectedFiles(analysis).length}} skipped</span>}</p>
+                          }
+                          @for (file of rejectedFiles(analysis); track file.path + file.file_name) {
+                            <div class="file">
+                              @if (fileLink(file); as link) {
+                                <a [routerLink]="link" [queryParams]="{ ref: row.event.extracted_data?.ref }">{{file.path}}{{file.file_name}}</a>
+                              } @else {
+                                {{file.path}}{{file.file_name}}
+                              }
+                              @if (file.status) { <small>{{file.status}}</small> }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </ng-template>
+                    <ng-template #workflowsTpl>
+                      <div class="workflows">
+                        @for (w of row.event.workflows; track $index) {
+                          <div class="workflow {{w.status}}">
+                            @if (runLink(w); as link) {
+                              <a [routerLink]="link" [title]="w.vcs_identifier + '/' + w.repository_identifier">{{w.workflow_name}} #{{w.run_number}}</a>
+                            } @else {
+                              <span [title]="w.vcs_identifier + '/' + w.repository_identifier">{{w.workflow_name}}@if (w.run_number) { #{{w.run_number}}}</span>
+                            }
+                            @if (workflowNote(w); as note) { <small class="note">{{note}}</small> }
+                          </div>
+                        }
+                      </div>
+                    </ng-template>
                   }
                 </nz-steps>
-                @if (analysisLoading(row)) {
-                  <nz-spin nzSimple nzSize="small"></nz-spin>
-                }
-                @if (analysisOf(row); as analysis) {
-                  <div class="analysis">
-                    @if (analysis.data?.error) {
-                      <p class="error">{{analysis.data.error}}</p>
-                    }
-                    <p>{{updatedCount(analysis)}} registered@if (rejectedFiles(analysis).length) {, {{rejectedFiles(analysis).length}} rejected}</p>
-                    @for (file of rejectedFiles(analysis); track file.file_name) {
-                      <div class="file">
-                        @if (fileLink(file); as link) {
-                          <a [routerLink]="link" [queryParams]="{ ref: row.event.extracted_data?.ref }">{{file.path}}{{file.file_name}}</a>
-                        } @else {
-                          {{file.path}}{{file.file_name}}
-                        }
-                        @if (file.status) { <small>{{file.status}}</small> }
-                      </div>
-                    }
-                  </div>
-                }
               </div>
               <div class="aside">
                 @if (row.verdict.hint) {
                   <nz-alert nzType="warning" nzShowIcon nzMessage="How to fix" [nzDescription]="row.verdict.hint"></nz-alert>
-                }
-                @if (triggeredWorkflows(row).length) {
-                  <div class="runs">
-                    @for (w of triggeredWorkflows(row); track w.run_id) {
-                      <a [routerLink]="['/project', w.project_key, 'run', w.run_id]">{{w.workflow_name}} #{{w.run_number}}</a>
-                    }
-                  </div>
                 }
                 <nz-descriptions nzSize="small" [nzColumn]="1" [nzColon]="false">
                   <nz-descriptions-item nzTitle="Event"><span nz-typography nzCopyable [nzContent]="row.event.uuid"></span></nz-descriptions-item>

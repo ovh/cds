@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { lastValueFrom, Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { RepositoryHookEvent, RepositoryHookWorkflow } from 'app/model/project.model';
+import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow } from 'app/model/project.model';
 import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
 import { EntityTypeUtil } from 'app/model/entity.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { apiErrorMessage, RepositoryContextService } from './repository-context.service';
-import { eventAuthor, HookEventVerdict, hookEventVerdict, StepStatus, VerdictLevel } from './hook-event-verdict';
+import { cleanErrorMessage, eventAuthor, HookEventVerdict, hookEventVerdict, StepStatus, VerdictLevel } from './hook-event-verdict';
 import { entityOfAnalysisFile } from './entities';
 
 /** One event of the repository, with what the page says about it. */
@@ -165,8 +165,19 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
         return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, EntityTypeUtil.toURLParam(entity.type), entity.name];
     }
 
-    triggeredWorkflows(row: ActivityRow): Array<RepositoryHookWorkflow> {
-        return (row.event.workflows ?? []).filter(w => w.project_key === this.ctx.project.key && w.run_id);
+    /** The run a workflow started, when it lives in this project. */
+    runLink(w: RepositoryHookWorkflow): Array<string> {
+        return w.run_id && w.project_key === this.ctx.project.key ? ['/project', w.project_key, 'run', w.run_id] : null;
+    }
+
+    /** Why a workflow shows no run, in a few words; nothing for a triggered one. */
+    workflowNote(w: RepositoryHookWorkflow): string {
+        switch (w.status) {
+            case HookEventWorkflowStatus.Scheduled: return 'scheduled';
+            case HookEventWorkflowStatus.Error: return w.error ? `did not start: ${cleanErrorMessage(w.error)}` : 'did not start';
+            case HookEventWorkflowStatus.Skipped: return w.error ? `skipped: ${w.error}` : 'skipped';
+            default: return null;
+        }
     }
 
     levelIcon(level: VerdictLevel): string {
@@ -175,6 +186,7 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
             case 'error': return 'close-circle';
             case 'warning': return 'exclamation-circle';
             case 'processing': return 'sync';
+            case 'filtered': return 'stop';
             default: return 'minus-circle';
         }
     }

@@ -70,8 +70,10 @@ nz-alert.events-error {
     &.error { color: #ff4d4f; }
     &.warning { color: #faad14; }
     &.processing { color: #1890ff; }
+    &.filtered,
     &.skipped { color: rgba(0, 0, 0, 0.45); }
 
+    :host-context(.night) &.filtered,
     :host-context(.night) &.skipped { color: rgba(255, 255, 255, 0.45); }
   }
 
@@ -135,7 +137,7 @@ nz-alert.events-error {
     min-width: 0;
 
     nz-spin {
-      margin: 4px 0;
+      margin: 0 6px;
     }
 
     // Steps share the palette of the rows: Ant Design's blue "finish" would say something else
@@ -195,11 +197,38 @@ nz-alert.events-error {
       white-space: pre-wrap;
       word-break: break-word;
     }
+
+    // One workflow a line, coloured on its own: a failed one reads red among the others
+    .workflows {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+
+      .workflow {
+        color: rgba(0, 0, 0, 0.65);
+
+        :host-context(.night) & { color: rgba(255, 255, 255, 0.65); }
+
+        &.Error,
+        &.Error .note { color: #ff4d4f; }
+      }
+
+      .note {
+        margin-left: 6px;
+        color: rgba(0, 0, 0, 0.45);
+
+        :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+      }
+    }
   }
 
   .analysis {
-    margin: 4px 0 0 40px;
+    margin-top: 4px;
     font-size: 12px;
+    color: rgba(0, 0, 0, 0.65);
+
+    :host-context(.night) & { color: rgba(255, 255, 255, 0.65); }
 
     p {
       margin: 0 0 4px;
@@ -228,13 +257,6 @@ nz-alert.events-error {
     display: flex;
     flex-direction: column;
     gap: 10px;
-
-    .runs {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      font-size: 12px;
-    }
 
     ::ng-deep .ant-descriptions-item-content {
       font-family: monospace;

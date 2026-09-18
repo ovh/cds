@@ -102,7 +102,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy, OnInit {
         this.loaders.repository = true;
         this._cd.markForCheck();
         try {
-            const existingProjectRepositories = await lastValueFrom(this._projectService.getVCSRepositories(this.project.key, vcs)); this.repositories = await lastValueFrom(this._repoManagerService.getV2Repositories(this.project.key, vcs, resync));
+            const existingProjectRepositories = await lastValueFrom(this._projectService.getVCSRepositories(this.project.key, vcs));
             const repositories = await lastValueFrom(this._repoManagerService.getV2Repositories(this.project.key, vcs, resync));
             this.repositories = repositories.filter(r => existingProjectRepositories.findIndex((pr) => pr.name === r.fullname) === -1);
             if (this.validateForm.value.repository && this.repositories.findIndex(r => r.fullname === this.validateForm.value.repository) === -1) {
@@ -119,7 +119,12 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy, OnInit {
         this.loaders.vcs = true;
         this._cd.markForCheck();
         this.vcsProject = this.project.vcs_servers.find(v => v.name === value) ?? null;
-        await this.loadRepositories(this.vcsProject.name, false);
+        if (this.vcsProject) {
+            await this.loadRepositories(this.vcsProject.name, false);
+        } else {
+            this.repositories = [];
+            this.validateForm.controls.repository.reset();
+        }
         this.loaders.vcs = false;
         this._cd.markForCheck();
     }

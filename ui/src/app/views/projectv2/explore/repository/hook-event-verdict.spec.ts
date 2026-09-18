@@ -56,7 +56,7 @@ describe('hookEventVerdict', () => {
 
     it('treats a workflow skipped by its filters as expected, not as a problem', () => {
         const v = hookEventVerdict(event({ workflows: [workflow('fromrunChangeset', HookEventWorkflowStatus.Skipped, { error: 'no file matches path filters' })] }), PROJECT, false);
-        expect(v.level).toBe('skipped');
+        expect(v.level).toBe('filtered');
         expect(v.label).toBe('1 workflow skipped by its filters');
         expect(v.detail).toBe('no file matches path filters');
         expect(v.steps[3].status).toBe('skipped');
