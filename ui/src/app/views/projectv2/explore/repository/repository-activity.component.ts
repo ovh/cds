@@ -8,6 +8,7 @@ import { ProjectService } from 'app/service/project/project.service';
 import { apiErrorMessage, RepositoryContextService } from './repository-context.service';
 import { cleanErrorMessage, eventAuthor, HookEventVerdict, hookEventVerdict, StepStatus, VerdictLevel } from './hook-event-verdict';
 import { entityOfAnalysisFile } from './entities';
+import { analysisFileLabel } from './analysis-outcome';
 
 /** One event of the repository, with what the page says about it. */
 interface ActivityRow {
@@ -147,6 +148,10 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
         return !!row.analysisId && this.analyses.get(row.analysisId) === 'loading';
     }
 
+    fileLabel(file: DataEntity): string {
+        return analysisFileLabel(file);
+    }
+
     /** The files an analysis did not register: the ones worth a look. */
     rejectedFiles(analysis: RepositoryAnalysis): Array<DataEntity> {
         return (analysis.data?.entities ?? []).filter(e => e.status !== 'Success');
@@ -158,7 +163,8 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
 
     /** Where a file of the analysis is read in this page, on the ref of the event. */
     fileLink(file: DataEntity): Array<string> {
-        const entity = entityOfAnalysisFile(file.path, file.file_name);
+        // Only a registered file has a page: a rejected one never made it to CDS
+        const entity = file.status === 'Success' ? entityOfAnalysisFile(file.path, file.file_name) : null;
         if (!entity) {
             return null;
         }

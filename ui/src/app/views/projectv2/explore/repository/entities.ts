@@ -17,6 +17,14 @@ export const ENTITY_TYPE_LABELS: { [type in EntityType]: string } = {
     [EntityType.Job]: 'Jobs'
 };
 
+/** The project permission an analysis needs to register an entity of each type; a job has none of its own. */
+export const ENTITY_MANAGE_PERMISSION: { [type in EntityType]?: string } = {
+    [EntityType.Workflow]: 'manage-workflow',
+    [EntityType.Action]: 'manage-action',
+    [EntityType.WorkerModel]: 'manage-worker-model',
+    [EntityType.WorkflowTemplate]: 'manage-workflow-template'
+};
+
 /** Groups entities by type, each group sorted by name; a type without entity has no group. */
 export function groupEntities(entities: Array<Entity>): Map<EntityType, Array<Entity>> {
     const groups = new Map<EntityType, Array<Entity>>();

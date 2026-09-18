@@ -97,7 +97,7 @@
                               } @else {
                                 {{file.path}}{{file.file_name}}
                               }
-                              @if (file.status) { <small>{{file.status}}</small> }
+                              @if (fileLabel(file)) { <small>{{fileLabel(file)}}</small> }
                             </div>
                           }
                         </div>

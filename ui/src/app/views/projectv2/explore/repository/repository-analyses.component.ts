@@ -5,7 +5,7 @@ import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
 import { EntityTypeUtil } from 'app/model/entity.model';
 import { RepositoryContextService, shortRef } from './repository-context.service';
 import { entityOfAnalysisFile } from './entities';
-import { AnalysisOutcome, analysisOutcome } from './analysis-outcome';
+import { analysisFileLabel, AnalysisOutcome, analysisOutcome } from './analysis-outcome';
 
 /** One analysis of the repository, with what the page says about it. */
 interface AnalysisRow {
@@ -145,7 +145,8 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
 
     /** Where a file of the analysis is read in this page, on the ref of the analysis. */
     fileLink(file: DataEntity): Array<string> {
-        const entity = entityOfAnalysisFile(file.path, file.file_name);
+        // Only a registered file has a page: a rejected one never made it to CDS
+        const entity = file.status === 'Success' ? entityOfAnalysisFile(file.path, file.file_name) : null;
         if (!entity) {
             return null;
         }
@@ -181,11 +182,7 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
 
     /** Only a file that was not taken needs a word; the green dot says enough for the others. */
     fileLabel(file: DataEntity): string {
-        switch (file.status) {
-            case 'Success': return '';
-            case 'Skipped': return 'skipped: missing permission on this type';
-            default: return 'not processed';
-        }
+        return analysisFileLabel(file);
     }
 
     shortRef(ref: string): string {

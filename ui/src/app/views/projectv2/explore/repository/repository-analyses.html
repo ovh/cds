@@ -72,17 +72,17 @@
                   <p class="none">No file was processed.</p>
                 } @else {
                   <div class="files-title">{{row.analysis.status === 'Error' ? 'Files not processed' : 'Files'}}</div>
-                  @for (file of filesToShow(row); track file.path + file.file_name) {
-                    <div class="file">
-                      <nz-badge [nzStatus]="fileBadge(file)"></nz-badge>
-                      @if (fileLink(file); as link) {
-                        <a [routerLink]="link" [queryParams]="{ ref: row.analysis.ref }">{{file.path}}{{file.file_name}}</a>
-                      } @else {
-                        <span>{{file.path}}{{file.file_name}}</span>
-                      }
-                      @if (fileLabel(file)) { <small>{{fileLabel(file)}}</small> }
-                    </div>
-                  }
+                }
+                @for (file of filesToShow(row); track file.path + file.file_name) {
+                  <div class="file">
+                    <nz-badge [nzStatus]="fileBadge(file)"></nz-badge>
+                    @if (fileLink(file); as link) {
+                      <a [routerLink]="link" [queryParams]="{ ref: row.analysis.ref }">{{file.path}}{{file.file_name}}</a>
+                    } @else {
+                      <span>{{file.path}}{{file.file_name}}</span>
+                    }
+                    @if (fileLabel(file)) { <small>{{fileLabel(file)}}</small> }
+                  </div>
                 }
               </div>
             </div>
