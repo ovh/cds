@@ -144,13 +144,18 @@ func (p *checkoutPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin
 				res.Details = fmt.Sprintf("unable to install GPG key %q: %v", gpgKey, err)
 				return stream.Send(res)
 			}
-			grpcplugins.Logf(&p.Common, "Setting up git config (user.signingkey=%s)...\n", k.KeyID)
+			grpcplugins.Logf(&p.Common, "Setting up git config (user.signingkey=%s, commit.gpgsign, tag.gpgsign)...\n", k.KeyID)
 			if err := p.Exec(ctx, workDirs, fmt.Sprintf(`git config --global user.signingkey "%s"`, k.KeyID)); err != nil {
 				res.Status = sdk.StatusFail
 				res.Details = err.Error()
 				return stream.Send(res)
 			}
 			if err := p.Exec(ctx, workDirs, `git config --global commit.gpgsign true`); err != nil {
+				res.Status = sdk.StatusFail
+				res.Details = err.Error()
+				return stream.Send(res)
+			}
+			if err := p.Exec(ctx, workDirs, `git config --global tag.gpgsign true`); err != nil {
 				res.Status = sdk.StatusFail
 				res.Details = err.Error()
 				return stream.Send(res)
