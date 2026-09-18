@@ -557,9 +557,20 @@ func (v *V2WorkflowRunResultHelmDetail) GetName() string {
 
 const V2WorkflowRunResultVariableDetailType = "V2WorkflowRunResultVariableDetail"
 
+// MaxV2WorkflowRunResultVariableValueSize is the maximum size, in bytes, of the value of a run result of type variable.
+const MaxV2WorkflowRunResultVariableValueSize = 1024
+
 type V2WorkflowRunResultVariableDetail struct {
 	Name  string `json:"name" mapstructure:"name"`
 	Value string `json:"value" mapstructure:"value"`
+}
+
+// CheckValueSize returns an error if the value exceeds MaxV2WorkflowRunResultVariableValueSize bytes.
+func (v *V2WorkflowRunResultVariableDetail) CheckValueSize() error {
+	if len(v.Value) > MaxV2WorkflowRunResultVariableValueSize {
+		return NewErrorFrom(ErrInvalidData, "value of output %q is too large: %d bytes, the maximum allowed size is %d bytes", v.Name, len(v.Value), MaxV2WorkflowRunResultVariableValueSize)
+	}
+	return nil
 }
 
 // GetLabel implements V2WorkflowRunResultDetailInterface.

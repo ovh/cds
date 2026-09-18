@@ -328,6 +328,14 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 
 	// Create run result
 	for name, value := range resolvedOutputs {
+		detail := sdk.V2WorkflowRunResultVariableDetail{
+			Name:  name,
+			Value: value,
+		}
+		if err := detail.CheckValueSize(); err != nil {
+			return w.failJob(ctx, err.Error())
+		}
+
 		result := workerruntime.V2RunResultRequest{
 			RunResult: &sdk.V2WorkflowRunResult{
 				IssuedAt:         time.Now(),
@@ -336,10 +344,7 @@ func (w *CurrentWorker) runJobAsCode(ctx context.Context) sdk.V2WorkflowRunJobRe
 				WorkflowRunJobID: w.currentJobV2.runJob.ID,
 				Type:             sdk.V2WorkflowRunResultTypeVariable,
 				Detail: sdk.V2WorkflowRunResultDetail{
-					Data: sdk.V2WorkflowRunResultVariableDetail{
-						Name:  name,
-						Value: value,
-					},
+					Data: detail,
 				},
 			},
 		}

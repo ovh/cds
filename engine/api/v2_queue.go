@@ -393,6 +393,10 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 				return sdk.WithStack(sdk.ErrWrongRequest)
 			}
 
+			if err := checkRunResultVariableValueSize(&runResult); err != nil {
+				return err
+			}
+
 			if err := workflow_v2.InsertRunResult(ctx, api.mustDB(), &runResult); err != nil {
 				return err
 			}
@@ -408,6 +412,19 @@ func (api *API) postJobRunResultHandler() ([]service.RbacChecker, service.Handle
 
 			return service.WriteJSON(w, runResult, http.StatusCreated)
 		}
+}
+
+// checkRunResultVariableValueSize enforces the maximum size of the value of a run result of type variable.
+func checkRunResultVariableValueSize(runResult *sdk.V2WorkflowRunResult) error {
+	switch runResult.Type {
+	case sdk.V2WorkflowRunResultTypeVariable, sdk.V2WorkflowRunResultVariableDetailType:
+		x, err := sdk.GetConcreteDetail[*sdk.V2WorkflowRunResultVariableDetail](runResult)
+		if err != nil {
+			return sdk.NewError(sdk.ErrInvalidData, err)
+		}
+		return x.CheckValueSize()
+	}
+	return nil
 }
 
 func (api *API) putJobRunResultSynchronizeHandler() ([]service.RbacChecker, service.Handler) {
@@ -459,6 +476,10 @@ func (api *API) putJobRunResultHandler() ([]service.RbacChecker, service.Handler
 
 			if runResult.Status == "" {
 				return sdk.WithStack(sdk.ErrWrongRequest)
+			}
+
+			if err := checkRunResultVariableValueSize(&runResult); err != nil {
+				return err
 			}
 
 			if err := workflow_v2.UpdateRunResult(ctx, api.mustDB(), &runResult); err != nil {
