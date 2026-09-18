@@ -935,15 +935,11 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		return nil
 	}
 
+	// One repository is shared by many run results
+	repositoryPackageTypes := make(map[string]string)
+
 	for i := range runResults {
 		result := &runResults[i]
-
-		jobRun, err := workflow_v2.LoadRunJobByID(ctx, db, result.WorkflowRunJobID)
-		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to load run job by ID %s: %v", result.WorkflowRunJobID, err)
-			continue
-		}
 
 		if result.ArtifactManagerIntegrationName == nil {
 			continue
@@ -963,25 +959,24 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		localRepository := result.ArtifactManagerMetadata.Get("localRepository")
 		name := result.ArtifactManagerMetadata.Get("name")
 
-		repoDetails, err := artifactClient.GetRepository(localRepository)
-		if err != nil {
-			log.Error(ctx, "unable to get repository %q fror result %s: %v", localRepository, result.ID, err)
-			continue
+		packageType, has := repositoryPackageTypes[localRepository]
+		if !has {
+			repoDetails, err := artifactClient.GetRepository(localRepository)
+			if err != nil {
+				log.Error(ctx, "unable to get repository %q fror result %s: %v", localRepository, result.ID, err)
+				continue
+			}
+			packageType = repoDetails.PackageType
+			repositoryPackageTypes[localRepository] = packageType
 		}
 
 		// To get FileInfo for a docker image, we have to check the manifest file
 		filePath := result.ArtifactManagerMetadata.Get("path")
-		if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
+		if packageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
 			filePath = path.Join(filePath, "manifest.json")
 		}
 
-		fi, err := artifactClient.GetFileInfo(localRepository, filePath)
-		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
-			continue
-		}
-
+		// Check the signature first: on an already signed result this is the only call needed
 		existingProperties, err := artifactClient.GetProperties(localRepository, filePath)
 		if err != nil && !strings.Contains(err.Error(), "404") {
 			ctx := log.ContextWithStackTrace(ctx, err)
@@ -991,6 +986,20 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 
 		if sdk.MapHasKeys(existingProperties, "cds.signature") {
 			log.Debug(ctx, "artifact is already signed by cds")
+			continue
+		}
+
+		jobRun, err := workflow_v2.LoadRunJobByID(ctx, db, result.WorkflowRunJobID)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to load run job by ID %s: %v", result.WorkflowRunJobID, err)
+			continue
+		}
+
+		fi, err := artifactClient.GetFileInfo(localRepository, filePath)
+		if err != nil {
+			ctx := log.ContextWithStackTrace(ctx, err)
+			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
 			continue
 		}
 
@@ -1020,7 +1029,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 
 		// Prepare artifact signature
 		signedProps["repository"] = virtualRepository
-		signedProps["type"] = repoDetails.PackageType
+		signedProps["type"] = packageType
 		signedProps["path"] = fi.Path
 		signedProps["name"] = name
 

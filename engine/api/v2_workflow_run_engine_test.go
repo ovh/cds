@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	artifactoryservices "github.com/jfrog/jfrog-client-go/artifactory/services"
+
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/integration"
@@ -18,6 +20,8 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/artifact_manager/mock_artifact_manager"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -4887,4 +4891,142 @@ func TestBuildJobIntegrationsContext(t *testing.T) {
 		require.Equal(t, "", result.ArtifactManager.Name)
 		require.Equal(t, "", result.Deployment.Name)
 	})
+}
+
+// The worker gives up after 30s on PUT .../runresult/synchronize, and synchronizeRunResults runs
+// inside that request. Its cost must follow the number of results left to sign: an already signed
+// result costs one call, and a repository is described once for all the results it holds.
+func TestSynchronizeRunResultsSkipsAlreadySignedResults(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	model := sdk.IntegrationModel{
+		Name:            sdk.RandomString(10),
+		ArtifactManager: true,
+	}
+	require.NoError(t, integration.InsertModel(db, &model))
+	t.Cleanup(func() {
+		_ = integration.DeleteModel(context.TODO(), db, model.ID)
+	})
+
+	projInteg := sdk.ProjectIntegration{
+		Name:               sdk.RandomString(10),
+		Model:              model,
+		ProjectID:          proj.ID,
+		IntegrationModelID: model.ID,
+		Config: sdk.IntegrationConfig{
+			sdk.ArtifactoryConfigPlatform:   {Value: "artifactory", Type: sdk.IntegrationConfigTypeString},
+			sdk.ArtifactoryConfigURL:        {Value: "https://artifactory.example.com/", Type: sdk.IntegrationConfigTypeString},
+			sdk.ArtifactoryConfigTokenName:  {Value: "my-token", Type: sdk.IntegrationConfigTypeString},
+			sdk.ArtifactoryConfigToken:      {Value: "my-secret", Type: sdk.IntegrationConfigTypePassword},
+			sdk.ArtifactoryConfigProjectKey: {Value: "my-arti-project", Type: sdk.IntegrationConfigTypeString},
+		},
+	}
+	require.NoError(t, integration.InsertIntegration(db, &projInteg))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Integrations: []string{projInteg.Name},
+		}},
+		Initiator: &sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	jobRun := sdk.V2WorkflowRunJob{
+		ProjectKey:    proj.Key,
+		WorkflowRunID: wr.ID,
+		RunAttempt:    wr.RunAttempt,
+		JobID:         "job1",
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
+		ModelType:     "docker",
+		Region:        "default",
+		Initiator: sdk.V2Initiator{
+			UserID: admin.ID,
+			User:   admin.Initiator(),
+		},
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
+
+	// Both results sit in the same repository. One was signed by a previous synchronization.
+	newRunResult := func(name string, filePath string) sdk.V2WorkflowRunResult {
+		return sdk.V2WorkflowRunResult{
+			ID:                             sdk.UUID(),
+			WorkflowRunID:                  wr.ID,
+			WorkflowRunJobID:               jobRun.ID,
+			RunAttempt:                     wr.RunAttempt,
+			IssuedAt:                       time.Now(),
+			Status:                         sdk.V2WorkflowRunResultStatusCompleted,
+			Type:                           sdk.V2WorkflowRunResultTypeGeneric,
+			ArtifactManagerIntegrationName: &projInteg.Name,
+			ArtifactManagerMetadata: &sdk.V2WorkflowRunResultArtifactManagerMetadata{
+				"repository":      "my-repo",
+				"localRepository": "my-repo-snapshot",
+				"type":            "generic",
+				"name":            name,
+				"path":            filePath,
+			},
+			Detail: sdk.V2WorkflowRunResultDetail{
+				Type: "V2WorkflowRunResultGenericDetail",
+				Data: sdk.V2WorkflowRunResultGenericDetail{Name: name},
+			},
+		}
+	}
+	signedResult := newRunResult("signed.tgz", "signed/signed.tgz")
+	require.NoError(t, workflow_v2.InsertRunResult(ctx, db, &signedResult))
+	unsignedResult := newRunResult("unsigned.tgz", "unsigned/unsigned.tgz")
+	require.NoError(t, workflow_v2.InsertRunResult(ctx, db, &unsignedResult))
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+	mockArtifactory := mock_artifact_manager.NewMockArtifactManager(ctrl)
+
+	previousFactory := artifact_manager.DefaultClientFactory
+	artifact_manager.DefaultClientFactory = func(_, _, _ string) (artifact_manager.ArtifactManager, error) {
+		return mockArtifactory, nil
+	}
+	t.Cleanup(func() {
+		artifact_manager.DefaultClientFactory = previousFactory
+	})
+
+	// One description of the repository for the two results
+	mockArtifactory.EXPECT().GetRepository("my-repo-snapshot").
+		Return(&artifactoryservices.RepositoryDetails{PackageType: "generic"}, nil).Times(1)
+
+	// The signature is read once per result
+	mockArtifactory.EXPECT().GetProperties("my-repo-snapshot", "signed/signed.tgz").
+		Return(map[string][]string{"cds.signature": {"already-signed"}}, nil).Times(1)
+	mockArtifactory.EXPECT().GetProperties("my-repo-snapshot", "unsigned/unsigned.tgz").
+		Return(map[string][]string{}, nil).Times(1)
+
+	// Only the result left to sign is inspected further
+	mockArtifactory.EXPECT().GetFileInfo("my-repo-snapshot", "unsigned/unsigned.tgz").
+		Return(sdk.FileInfo{Path: "/unsigned/unsigned.tgz", Checksums: &sdk.FileInfoChecksum{}}, nil).Times(1)
+
+	mockArtifactory.EXPECT().SetProperties(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	mockArtifactory.EXPECT().DeleteBuild(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	mockArtifactory.EXPECT().PublishBuildInfo(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	require.NoError(t, api.synchronizeRunResults(ctx, db, wr.ID))
 }
