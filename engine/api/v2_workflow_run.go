@@ -950,7 +950,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				trackSudo(ctx, w)
 			}
 			if !hasRole {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger a workflow", theOneWhoTriggers.Username())
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger this workflow", theOneWhoTriggers.Username())
 			}
 
 			originRepo := repo.Name

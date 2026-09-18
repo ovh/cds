@@ -185,11 +185,11 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
         return w.run_id && w.project_key === this.ctx.project.key ? ['/project', w.project_key, 'run', w.run_id] : null;
     }
 
-    /** Why a workflow shows no run, in a few words; nothing for a triggered one. */
+    /** Why a workflow shows no run, in a few words; nothing for a triggered one. The red says a failed one did not start. */
     workflowNote(w: RepositoryHookWorkflow): string {
         switch (w.status) {
             case HookEventWorkflowStatus.Scheduled: return 'scheduled';
-            case HookEventWorkflowStatus.Error: return w.error ? `did not start: ${cleanErrorMessage(w.error)}` : 'did not start';
+            case HookEventWorkflowStatus.Error: return cleanErrorMessage(w.error) || 'did not start';
             case HookEventWorkflowStatus.Skipped: return w.error ? `skipped: ${w.error}` : 'skipped';
             default: return null;
         }
