@@ -105,15 +105,56 @@ func (s *RedisStore) Ping() error {
 	return nil
 }
 
+// keysScanBatch is how many keys one SCAN cursor step asks for.
+const keysScanBatch = 10000
+
+// keysScanTimeout bounds a whole walk, however many cursor steps it takes, so
+// a Redis that stops answering cannot hold a caller indefinitely.
+const keysScanTimeout = 30 * time.Second
+
+// Keys returns the keys matching a pattern, walking the keyspace with SCAN.
 func (s *RedisStore) Keys(pattern string) ([]string, error) {
 	if s.Client == nil {
 		return nil, sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
-	keys, err := s.Client.Keys(context.Background(), pattern).Result()
-	if err != nil {
-		return nil, sdk.WrapError(err, "redis> cannot list keys: %s", pattern)
+	return s.scanKeys(pattern, keysScanBatch)
+}
+
+// scanKeys walks the keyspace one cursor step at a time, de-duplicating what
+// SCAN returns: a key present throughout the walk is returned at least once,
+// and more than once if the keyspace is resized while the cursor is open.
+//
+// batch is the COUNT of one step. Keys passes keysScanBatch; the tests pass a
+// smaller one to force several steps over a small keyspace.
+func (s *RedisStore) scanKeys(pattern string, batch int64) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), keysScanTimeout)
+	defer cancel()
+	seen := make(map[string]struct{})
+	keys := make([]string, 0)
+	var cursor uint64
+	for {
+		found, next, err := s.Client.Scan(ctx, cursor, pattern, batch).Result()
+		if err != nil {
+			return nil, sdk.WrapError(err, "redis> cannot list keys: %s", pattern)
+		}
+		keys = appendUnseen(seen, keys, found)
+		cursor = next
+		if cursor == 0 {
+			return keys, nil
+		}
 	}
-	return keys, nil
+}
+
+// appendUnseen adds the keys of one cursor step that have not been seen yet.
+func appendUnseen(seen map[string]struct{}, dst []string, found []string) []string {
+	for _, k := range found {
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		dst = append(dst, k)
+	}
+	return dst
 }
 
 // Get a key from redis
@@ -205,7 +246,7 @@ func (s *RedisStore) DeleteAll(pattern string) error {
 	if s.Client == nil {
 		return sdk.WithStack(fmt.Errorf("redis> cannot get redis client"))
 	}
-	keys, err := s.Client.Keys(context.Background(), pattern).Result()
+	keys, err := s.scanKeys(pattern, keysScanBatch)
 	if err != nil {
 		return sdk.WrapError(err, "redis> Error deleting %s", pattern)
 	}

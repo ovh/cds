@@ -109,3 +109,116 @@ func TestDequeueJSONRawMessagesWithContextMaxTimeout(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 95, l2)
 }
+
+// TestKeysWalksWholeKeyspace checks a walk spanning many cursor steps returns
+// every matching key and nothing else. The batch is far smaller than the
+// keyspace so the cursor loop, rather than a single round trip, is what runs.
+//
+// De-duplication is covered by TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps.
+func TestKeysWalksWholeKeyspace(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
+	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
+	require.NoError(t, err, "error when unmarshal config")
+
+	s, err := NewRedisStore(sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: int(redisDbIndex)}, 60)
+	require.NoError(t, err)
+
+	const total = 250
+	prefix := "test:keys:" + sdk.RandomString(8)
+	expected := make(map[string]struct{}, total)
+	for i := 0; i < total; i++ {
+		k := prefix + ":" + strconv.Itoa(i)
+		require.NoError(t, s.SetWithTTL(k, "v", 120))
+		expected[k] = struct{}{}
+	}
+	// A key outside the pattern, which must not come back.
+	other := "test:other:" + sdk.RandomString(8)
+	require.NoError(t, s.SetWithTTL(other, "v", 120))
+
+	t.Cleanup(func() {
+		for k := range expected {
+			s.Delete(k)
+		}
+		s.Delete(other)
+	})
+
+	// A batch far smaller than the keyspace, so the walk takes many steps.
+	found, err := s.scanKeys(prefix+":*", 10)
+	require.NoError(t, err)
+
+	require.Len(t, found, total, "Keys must return the whole keyspace matching the pattern, across cursor pages")
+	for _, k := range found {
+		_, want := expected[k]
+		require.True(t, want, "Keys returned a key outside the requested pattern: %s", k)
+	}
+
+	// The exported entry point, on the production batch, returns the same set.
+	viaKeys, err := s.Keys(prefix + ":*")
+	require.NoError(t, err)
+	require.Len(t, viaKeys, total, "Keys must return the same set whatever the batch size")
+}
+
+func TestKeysReturnsEmptyForUnmatchedPattern(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
+	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
+	require.NoError(t, err, "error when unmarshal config")
+
+	s, err := NewRedisStore(sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: int(redisDbIndex)}, 60)
+	require.NoError(t, err)
+
+	// A pattern matching nothing must terminate and return empty.
+	found, err := s.Keys("test:nothing:" + sdk.RandomString(12) + ":*")
+	require.NoError(t, err)
+	require.Empty(t, found)
+}
+
+// TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps checks a key returned by
+// more than one cursor step, or twice within one, appears once in the result.
+// SCAN returns that when the keyspace is resized while the cursor is open.
+func TestAppendUnseenDropsKeysRepeatedAcrossCursorSteps(t *testing.T) {
+	seen := make(map[string]struct{})
+	var keys []string
+
+	keys = appendUnseen(seen, keys, []string{"a", "b"})
+	// Second cursor step repeats a key from the first and adds a new one.
+	keys = appendUnseen(seen, keys, []string{"b", "c"})
+	// Third repeats within its own batch.
+	keys = appendUnseen(seen, keys, []string{"c", "c", "d"})
+
+	require.Equal(t, []string{"a", "b", "c", "d"}, keys, "each key must appear exactly once, in the order it was first seen")
+}
+
+// TestDeleteAllRemovesTheWholeMatchingKeyspace checks DeleteAll removes every
+// key matching the pattern across a keyspace larger than one cursor step, and
+// leaves keys outside the pattern alone.
+func TestDeleteAllRemovesTheWholeMatchingKeyspace(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	cfg := testConfig.LoadTestingConf(t, sdk.TypeAPI)
+	redisDbIndex, err := strconv.ParseInt(cfg["redisDbIndex"], 10, 64)
+	require.NoError(t, err, "error when unmarshal config")
+
+	s, err := NewRedisStore(sdk.RedisConf{Host: cfg["redisHost"], Password: cfg["redisPassword"], DbIndex: int(redisDbIndex)}, 60)
+	require.NoError(t, err)
+
+	const total = 250
+	prefix := "test:deleteall:" + sdk.RandomString(8)
+	for i := 0; i < total; i++ {
+		require.NoError(t, s.SetWithTTL(prefix+":"+strconv.Itoa(i), "v", 120))
+	}
+	// A key outside the pattern, which must survive.
+	other := "test:deleteall-other:" + sdk.RandomString(8)
+	require.NoError(t, s.SetWithTTL(other, "v", 120))
+	t.Cleanup(func() { s.Delete(other) })
+
+	require.NoError(t, s.DeleteAll(prefix+":*"))
+
+	left, err := s.Keys(prefix + ":*")
+	require.NoError(t, err)
+	require.Empty(t, left, "DeleteAll must remove every key matching the pattern")
+
+	survived, err := s.Keys(other)
+	require.NoError(t, err)
+	require.Len(t, survived, 1, "DeleteAll must not touch keys outside the pattern")
+}
