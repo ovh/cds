@@ -1,5 +1,6 @@
 import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow } from 'app/model/project.model';
 import { Initiator } from 'app/model/analysis.model';
+import { analysisOutcome } from './analysis-outcome';
 
 /** filtered: the workflows ruled the event out themselves · skipped: nothing listened to it */
 export type VerdictLevel = 'success' | 'error' | 'warning' | 'filtered' | 'skipped' | 'processing';
@@ -108,7 +109,7 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     const analysisStep: VerdictStep = distant
         ? { key: 'analysis', title: 'Analysis', status: 'wait', description: 'Not applicable: the repository is not declared in this project.' }
         : analysis
-            ? { key: 'analysis', title: 'Analysis', status: analysisStatus(analysis.status), description: analysis.status }
+            ? { key: 'analysis', title: 'Analysis', status: analysisStatus(analysis.status, analysis.error), description: analysis.error ? `${analysis.status} · ${analysis.error}` : analysis.status }
             : { key: 'analysis', title: 'Analysis', status: !inProgress ? 'wait' : ANALYZING.indexOf(event.status) !== -1 ? 'process' : 'pending', description: inProgress ? 'Pending' : 'Not run for this event' };
     const workflowsStep: VerdictStep = { key: 'workflows', title: 'Workflows', status: 'wait', description: describeWorkflows(done, notStarted, scheduled, skipped) };
     const steps = [received, author, analysisStep, workflowsStep];
@@ -121,7 +122,8 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     if (analysis?.status === 'Error') {
         analysisStep.status = 'error';
         workflowsStep.description = 'Not evaluated: the analysis must succeed first.';
-        return { level: 'error', label: 'Analysis failed', detail: 'Workflows of this ref were not evaluated', steps, hint: hintFor(lastError) };
+        const analysisError = cleanErrorMessage(analysis.error);
+        return { level: 'error', label: 'Analysis failed', detail: firstLine(analysisError) ?? 'Workflows of this ref were not evaluated', steps, hint: hintFor(analysisError || lastError) };
     }
 
     // The hooks service gives up on an event with a reason, whether it marks it Error or Skipped
@@ -217,12 +219,13 @@ function names(workflows: Array<RepositoryHookWorkflow>): string {
     return workflows.map(w => w.run_number ? `${w.workflow_name} #${w.run_number}` : w.workflow_name).join(', ');
 }
 
-function analysisStatus(status: string): StepStatus {
-    switch (status) {
-        case 'Success': case 'Skipped': return 'finish';
-        case 'Error': return 'error';
-        case 'InProgress': return 'process';
-        default: return 'wait';
+function analysisStatus(status: string, error: string): StepStatus {
+    switch (analysisOutcome(status, error)) {
+        case 'success': return 'finish';
+        case 'warning': return 'warning';
+        case 'error': return 'error';
+        case 'processing': return 'process';
+        default: return status === 'Skipped' ? 'finish' : 'wait';
     }
 }
 

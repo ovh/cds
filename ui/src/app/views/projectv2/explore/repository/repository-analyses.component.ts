@@ -5,6 +5,7 @@ import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
 import { EntityTypeUtil } from 'app/model/entity.model';
 import { RepositoryContextService, shortRef } from './repository-context.service';
 import { entityOfAnalysisFile } from './entities';
+import { analysisOutcome } from './analysis-outcome';
 
 /** One analysis of the repository, with what the page says about it. */
 interface AnalysisRow {
@@ -17,13 +18,6 @@ interface AnalysisRow {
     /** `event` when a repository event started it, `manual` otherwise. */
     origin: string;
 }
-
-const STATUS_BADGE: { [status: string]: string } = {
-    Success: 'success',
-    Error: 'error',
-    Skipped: 'default',
-    InProgress: 'processing'
-};
 
 /**
  * The analyses of the repository: each read of a ref's `.cds/` folder, what it registered and what
@@ -139,8 +133,8 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
         return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, EntityTypeUtil.toURLParam(entity.type), entity.name];
     }
 
-    badge(status: string): string {
-        return STATUS_BADGE[status] ?? 'default';
+    badge(analysis: RepositoryAnalysis): string {
+        return analysisOutcome(analysis.status, analysis.data?.error);
     }
 
     /**

@@ -37,7 +37,7 @@
       <tbody>
         @for (row of table.data; track row.analysis.id) {
           <tr class="row" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
-            <td><nz-badge [nzStatus]="badge(row.analysis.status)" [nzText]="row.analysis.status"></nz-badge></td>
+            <td><nz-badge [nzStatus]="badge(row.analysis)" [nzText]="row.analysis.status"></nz-badge></td>
             <td class="ref"><code>{{shortRef(row.analysis.ref)}}</code>@if (isTag(row.analysis.ref)) { <small>tag</small> }</td>
             <td class="commit">{{row.analysis.commit | slice:0:7}}</td>
             <td class="result">

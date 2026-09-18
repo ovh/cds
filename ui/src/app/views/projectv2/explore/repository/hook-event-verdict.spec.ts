@@ -23,8 +23,22 @@ describe('hookEventVerdict', () => {
         const v = hookEventVerdict(event({ status: 'Error', analyses: [{ analyze_id: 'a1', status: 'Error', project_key: PROJECT }] }), PROJECT, false);
         expect(v.level).toBe('error');
         expect(v.label).toBe('Analysis failed');
+        expect(v.detail).toBe('Workflows of this ref were not evaluated');
         expect(v.steps[2].status).toBe('error');
         expect(v.steps[3].status).toBe('wait');
+    });
+
+    it('names the failure of the analysis when the event carries it', () => {
+        const v = hookEventVerdict(event({ status: 'Error', analyses: [{ analyze_id: 'a1', status: 'Error', project_key: PROJECT, error: "workflow release: integration artifactory doesn't exist.\nsecond line" }] }), PROJECT, false);
+        expect(v.detail).toBe("workflow release: integration artifactory doesn't exist.");
+        expect(v.steps[2].description).toContain("workflow release: integration artifactory doesn't exist.");
+    });
+
+    it('warns on an analysis that succeeded but left files out', () => {
+        const v = hookEventVerdict(event({ analyses: [{ analyze_id: 'a1', status: 'Success', project_key: PROJECT, error: "User doesn't have the permission to manage WorkerModel" }], workflows: [workflow('checkout', HookEventWorkflowStatus.Done, { run_number: '12' })] }), PROJECT, false);
+        expect(v.level).toBe('success');
+        expect(v.steps[2].status).toBe('warning');
+        expect(v.steps[2].description).toBe("Success · User doesn't have the permission to manage WorkerModel");
     });
 
     it('ignores the analyses of other projects', () => {

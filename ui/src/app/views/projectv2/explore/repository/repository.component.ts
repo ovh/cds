@@ -5,10 +5,12 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { combineLatest, filter, Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { ProjectRepository } from 'app/model/project.model';
+import { RepositoryAnalysis } from 'app/model/analysis.model';
 import { EntityType, EntityTypeUtil } from 'app/model/entity.model';
 import { apiErrorMessage, RepositoryContextService, shortRef } from './repository-context.service';
 import { ENTITY_TYPE_LABELS, ENTITY_TYPE_ORDER } from './entities';
 import { hookEventVerdict } from './hook-event-verdict';
+import { analysisOutcome } from './analysis-outcome';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../../run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from '../trigger-analysis/trigger-analysis.component';
 import { ProjectV2RepositoryAddComponent, ProjectV2RepositoryAddComponentParams } from '../repository-add/repository-add.component';
@@ -183,5 +185,9 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
 
     shortRef(ref: string): string {
         return shortRef(ref);
+    }
+
+    analysisBadge(analysis: RepositoryAnalysis): string {
+        return analysisOutcome(analysis.status, analysis.data?.error);
     }
 }

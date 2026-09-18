@@ -49,7 +49,7 @@
       } @else {
         @if (ctx.ref$ | async; as ref) {
           @if (ctx.lastAnalysis(ref); as analysis) {
-            <app-status-icon [status]="analysis.status" role="img" [attr.aria-label]="'Status: ' + analysis.status"></app-status-icon>
+            <nz-badge [nzStatus]="analysisBadge(analysis)" role="img" [attr.aria-label]="'Status: ' + analysis.status"></nz-badge>
             Last analysis on {{shortRef(ref)}}: {{analysis.status}} ·
             <app-date-from-now [value]="analysis.created"></app-date-from-now>
             @if (analysis.data?.error) {

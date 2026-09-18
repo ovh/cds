@@ -134,6 +134,8 @@ export class RepositoryHookEventAnalysis {
   analyze_id: string;
   status: string;
   project_key: string;
+  /** What the analysis reported, also on a Success that left files out */
+  error?: string;
 }
 
 export enum HookEventWorkflowStatus {
