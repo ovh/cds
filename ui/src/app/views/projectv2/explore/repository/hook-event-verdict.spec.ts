@@ -189,6 +189,9 @@ describe('cleanErrorMessage', () => {
     it('unwraps the API envelope and drops the request id', () => {
         expect(cleanErrorMessage('internal server error (caused by: unable to get git info: API Error: resource not found (request_id: abc))')).toBe('unable to get git info: resource not found');
         expect(cleanErrorMessage('User with key 4603 not found')).toBe('User with key 4603 not found');
+        expect(cleanErrorMessage('unable to run workflow checkout: forbidden (from: user forgejo_build/robot-cds-sgu has no right to trigger a workflow, request_id: bbee06db-3bfc)'))
+            .toBe('unable to run workflow checkout: user forgejo_build/robot-cds-sgu has no right to trigger a workflow');
+        expect(cleanErrorMessage('not found (from: entity go not found)')).toBe('entity go not found');
         expect(cleanErrorMessage(null)).toBe('');
     });
 });
@@ -196,6 +199,7 @@ describe('cleanErrorMessage', () => {
 describe('hintFor', () => {
     it('knows the usual failures and stays quiet otherwise', () => {
         expect(hintFor('yaml: unmarshal errors: line 12')).toContain('definition file');
+        expect(hintFor('user robot has no right to trigger a workflow')).toContain('trigger role');
         expect(hintFor('something else entirely')).toBeUndefined();
         expect(hintFor('')).toBeUndefined();
     });

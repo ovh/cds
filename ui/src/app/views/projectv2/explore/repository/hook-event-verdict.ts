@@ -41,6 +41,7 @@ const HINTS: Array<{ pattern: RegExp, hint: string }> = [
     { pattern: /User with key/i, hint: 'The commit signing key is not linked to any CDS user: the author must add it to their CDS profile, then push again.' },
     { pattern: /Commit not signed/i, hint: 'Commits must be signed with a key linked to a CDS user for CDS to run anything from them.' },
     { pattern: /unable to get git info/i, hint: 'The ref or commit the event points at could not be read on the repository: check that it still exists and that the vcs credentials of the project can reach it.' },
+    { pattern: /no right to trigger a workflow/i, hint: 'The user the run is attributed to needs the trigger role on this workflow: grant it in the permissions of the project, then push again or start the workflow by hand.' },
     { pattern: /worker model/i, hint: 'The workflow references a worker model that does not exist on this ref: add it under .cds/worker-models or fix its runs-on value.' },
     { pattern: /yaml|unmarshal|unknown field|cannot parse/i, hint: 'A definition file is invalid: fix it on this ref and push again, or trigger an analysis after amending.' }
 ];
@@ -186,6 +187,8 @@ export function cleanErrorMessage(raw: string): string {
         message = wrapped[1];
     }
     return message
+        // `forbidden (from: the cause, request_id: …)`: the cause says it all
+        .replace(/\b\w[\w ]*\s\(from: (.*?)(?:, request_id: [^)]*)?\)/gi, '$1')
         .replace(/\s*\(request_id: [^)]*\)/gi, '')
         .replace(/API Error: /gi, '')
         .trim();

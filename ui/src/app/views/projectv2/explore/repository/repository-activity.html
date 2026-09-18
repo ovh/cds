@@ -100,7 +100,7 @@
                             } @else {
                               <span [title]="w.vcs_identifier + '/' + w.repository_identifier">{{w.workflow_name}}@if (w.run_number) { #{{w.run_number}}}</span>
                             }
-                            @if (workflowNote(w); as note) { <small class="note">{{note}}</small> }
+                            @if (workflowNote(w); as note) { <small class="note"> {{note}}</small> }
                           </div>
                         }
                       </div>
