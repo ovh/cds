@@ -85,10 +85,13 @@ nz-alert.events-error {
   }
 
   .ref {
-    code {
-      font-size: 12px;
+    .name {
+      color: rgba(0, 0, 0, 0.85);
+
+      :host-context(.night) & { color: rgba(255, 255, 255, 0.85); }
     }
 
+    // A hash reads better in monospace; the only other typeface of the row
     .commit {
       margin-left: 6px;
       font-family: monospace;

@@ -26,30 +26,29 @@
       [nzNoResult]="noResult">
       <thead>
         <tr>
-          <th nzWidth="110px">Status</th>
-          <th nzWidth="190px">Ref</th>
-          <th nzWidth="90px">Commit</th>
-          <th>Result</th>
-          <th nzWidth="170px">Requested by</th>
+          <th nzWidth="36px"></th>
+          <th>Ref</th>
+          <th>Outcome</th>
+          <th nzWidth="170px">User</th>
           <th nzWidth="110px" nzAlign="right">When</th>
         </tr>
       </thead>
       <tbody>
         @for (row of table.data; track row.analysis.id) {
           <tr class="row" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
-            <td><nz-badge [nzStatus]="badge(row.analysis)" [nzText]="row.analysis.status"></nz-badge></td>
-            <td class="ref"><code>{{shortRef(row.analysis.ref)}}</code>@if (isTag(row.analysis.ref)) { <small>tag</small> }</td>
-            <td class="commit">{{row.analysis.commit | slice:0:7}}</td>
-            <td class="result">
-              @if (row.analysis.data?.error) {
-                <span class="error" [title]="row.analysis.data.error">{{row.analysis.data.error}}</span>
-              } @else if (row.analysis.status === 'Skipped') {
-                Nothing to register
-              } @else {
-                {{row.registered}} {{row.registered > 1 ? 'files' : 'file'}} processed@if (row.rejected) {, <span class="error">{{row.rejected}} skipped</span>}
-              }
+            <td>
+              <span nz-icon [nzType]="outcomeIcon(row.outcome)" [nzSpin]="row.outcome === 'processing'" nzTheme="outline"
+                class="level {{row.outcome}}" role="img" [attr.aria-label]="row.analysis.status"></span>
             </td>
-            <td class="who">{{row.origin}}@if (row.requestedBy) { · {{row.requestedBy}} }</td>
+            <td class="ref">
+              <span class="name">{{row.analysis.ref}}</span>
+              @if (row.analysis.commit) { <span class="commit">{{row.analysis.commit | slice:0:7}}</span> }
+            </td>
+            <td class="outcome">
+              <nz-tag [nzColor]="row.outcome">{{row.label}}</nz-tag>
+              @if (row.detail) { <div class="detail" [title]="row.detail">{{row.detail}}</div> }
+            </td>
+            <td class="user">{{row.origin}}@if (row.requestedBy) { · {{row.requestedBy}} }</td>
             <td class="when"><app-date-from-now [value]="row.analysis.created"></app-date-from-now></td>
           </tr>
           <tr [nzExpand]="isExpanded(row)">

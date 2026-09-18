@@ -5,7 +5,7 @@ import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
 import { EntityTypeUtil } from 'app/model/entity.model';
 import { RepositoryContextService, shortRef } from './repository-context.service';
 import { entityOfAnalysisFile } from './entities';
-import { analysisOutcome } from './analysis-outcome';
+import { AnalysisOutcome, analysisOutcome } from './analysis-outcome';
 
 /** One analysis of the repository, with what the page says about it. */
 interface AnalysisRow {
@@ -17,6 +17,10 @@ interface AnalysisRow {
     requestedBy: string;
     /** `event` when a repository event started it, `manual` otherwise. */
     origin: string;
+    outcome: AnalysisOutcome;
+    /** The outcome in a few words, and what explains it when something went wrong. */
+    label: string;
+    detail: string;
 }
 
 /**
@@ -65,18 +69,33 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
             .map(analysis => {
                 const files = analysis.data?.entities ?? [];
                 const registered = files.filter(e => e.status === 'Success').length;
+                const rejected = files.length - registered;
+                const outcome = analysisOutcome(analysis.status, analysis.data?.error);
                 return {
                     analysis,
                     files,
                     registered,
-                    rejected: files.length - registered,
+                    rejected,
                     requestedBy: this.requestedBy(analysis),
-                    origin: analysis.data?.hook_event_uuid ? 'event' : 'manual'
+                    origin: analysis.data?.hook_event_uuid ? 'event' : 'manual',
+                    outcome,
+                    label: this.label(analysis, outcome, registered, rejected),
+                    detail: outcome === 'success' ? null : analysis.data?.error || null
                 };
             })
             .sort((a, b) => Date.parse(b.analysis.created) - Date.parse(a.analysis.created));
         this.refs = [...new Set(this.rows.map(r => r.analysis.ref))].sort();
         this.applyFilters();
+    }
+
+    private label(analysis: RepositoryAnalysis, outcome: AnalysisOutcome, registered: number, rejected: number): string {
+        switch (outcome) {
+            case 'success': return `${registered} ${registered > 1 ? 'files' : 'file'} processed`;
+            case 'warning': return `${rejected} ${rejected > 1 ? 'files' : 'file'} skipped`;
+            case 'error': return 'Analysis failed';
+            case 'processing': return 'In progress';
+            default: return analysis.status === 'Skipped' ? 'Nothing to register' : analysis.status;
+        }
     }
 
     /** Who asked: the CDS user of the initiator, else its vcs user, else what older analyses carry. */
@@ -133,8 +152,14 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
         return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, EntityTypeUtil.toURLParam(entity.type), entity.name];
     }
 
-    badge(analysis: RepositoryAnalysis): string {
-        return analysisOutcome(analysis.status, analysis.data?.error);
+    outcomeIcon(outcome: AnalysisOutcome): string {
+        switch (outcome) {
+            case 'success': return 'check-circle';
+            case 'error': return 'close-circle';
+            case 'warning': return 'exclamation-circle';
+            case 'processing': return 'sync';
+            default: return 'minus-circle';
+        }
     }
 
     /**
@@ -161,10 +186,6 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
             case 'Skipped': return 'skipped: missing permission on this type';
             default: return 'not processed';
         }
-    }
-
-    isTag(ref: string): boolean {
-        return (ref ?? '').startsWith('refs/tags/');
     }
 
     shortRef(ref: string): string {

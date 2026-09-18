@@ -51,7 +51,7 @@
             </td>
             <td class="kind">{{row.event.event_name}}@if (row.event.event_type) { <small>({{row.event.event_type}})</small> }</td>
             <td class="ref">
-              <code>{{row.event.extracted_data?.ref}}</code>
+              <span class="name">{{row.event.extracted_data?.ref}}</span>
               @if (row.event.extracted_data?.commit) { <span class="commit">{{row.event.extracted_data.commit | slice:0:7}}</span> }
             </td>
             <td class="outcome">
