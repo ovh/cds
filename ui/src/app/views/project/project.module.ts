@@ -32,13 +32,13 @@ import { ProjectRunRetentionComponent } from './settings/retention/retention.com
 import { ProjectRunRetentionReportComponent } from './settings/retention/retention.report.component';
 import { ProjectV2ExploreComponent } from '../projectv2/explore/explore.component';
 import { ProjectV2ExploreOverviewComponent } from '../projectv2/explore/explore-overview.component';
-import { ProjectV2ExploreRepositoryComponent } from '../projectv2/explore/explore-repository.component';
 import { ProjectV2ExploreSidebarComponent } from '../projectv2/explore/explore-sidebar.component';
 import { ProjectV2RepositoryComponent } from '../projectv2/explore/repository/repository.component';
 import { ProjectV2RepositoryEntitiesComponent } from '../projectv2/explore/repository/repository-entities.component';
 import { ProjectV2RepositoryEntityDetailComponent } from '../projectv2/explore/repository/repository-entity-detail.component';
 import { ProjectV2RepositoryActivityComponent } from '../projectv2/explore/repository/repository-activity.component';
 import { ProjectV2RepositoryAnalysesComponent } from '../projectv2/explore/repository/repository-analyses.component';
+import { ProjectV2RepositorySettingsComponent } from '../projectv2/explore/repository/repository-settings.component';
 import { ProjectV2RepositoryAddComponent } from '../projectv2/explore/repository-add/repository-add.component';
 import { ProjectV2RunComponent } from '../projectv2/run/run.component';
 import { ProjectV2RunListComponent } from '../projectv2/run-list/run-list.component';
@@ -83,13 +83,13 @@ import { TimelineModule } from '../../../../libs/timeline/src/public-api';
         ProjectShowComponent,
         ProjectV2ExploreComponent,
         ProjectV2ExploreOverviewComponent,
-        ProjectV2ExploreRepositoryComponent,
         ProjectV2ExploreSidebarComponent,
         ProjectV2RepositoryComponent,
         ProjectV2RepositoryEntitiesComponent,
         ProjectV2RepositoryEntityDetailComponent,
         ProjectV2RepositoryActivityComponent,
         ProjectV2RepositoryAnalysesComponent,
+        ProjectV2RepositorySettingsComponent,
         ProjectV2RepositoryAddComponent,
         ProjectV2RunComponent,
         ProjectV2RunListComponent,

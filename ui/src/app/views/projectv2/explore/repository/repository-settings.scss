@@ -1,0 +1,40 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  padding: 14px 20px 16px;
+  overflow: auto;
+}
+
+nz-descriptions {
+  ::ng-deep .ant-descriptions-item-label {
+    width: 160px;
+  }
+
+  code {
+    font-size: 12px;
+  }
+}
+
+.danger {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid #ffa39e;
+  border-radius: 4px;
+  background-color: #fff2f0;
+  font-size: 13px;
+
+  :host-context(.night) & {
+    border-color: #58181c;
+    background-color: #2a1215;
+  }
+
+  div {
+    flex: 1;
+  }
+}

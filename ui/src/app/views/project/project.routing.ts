@@ -14,6 +14,7 @@ import { ProjectV2RepositoryComponent } from '../projectv2/explore/repository/re
 import { ProjectV2RepositoryEntitiesComponent } from '../projectv2/explore/repository/repository-entities.component';
 import { ProjectV2RepositoryActivityComponent } from '../projectv2/explore/repository/repository-activity.component';
 import { ProjectV2RepositoryAnalysesComponent } from '../projectv2/explore/repository/repository-analyses.component';
+import { ProjectV2RepositorySettingsComponent } from '../projectv2/explore/repository/repository-settings.component';
 import { EntityTypeUtil } from 'app/model/entity.model';
 
 /** Only a known entity type takes the ':entityType' segment, so that the repository tabs keep theirs. */
@@ -91,6 +92,11 @@ const projectRoutes: Routes = [
                                         path: 'analyses',
                                         component: ProjectV2RepositoryAnalysesComponent,
                                         data: { title: '{repoName} • Analyses' }
+                                    },
+                                    {
+                                        path: 'settings',
+                                        component: ProjectV2RepositorySettingsComponent,
+                                        data: { title: '{repoName} • Settings' }
                                     },
                                     {
                                         path: ':entityType',
