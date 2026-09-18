@@ -17,6 +17,15 @@ export const ENTITY_TYPE_LABELS: { [type in EntityType]: string } = {
     [EntityType.Job]: 'Jobs'
 };
 
+/** How to count entities of each type: one, many. */
+export const ENTITY_TYPE_NOUNS: { [type in EntityType]: [string, string] } = {
+    [EntityType.Workflow]: ['workflow', 'workflows'],
+    [EntityType.Action]: ['action', 'actions'],
+    [EntityType.WorkerModel]: ['worker model', 'worker models'],
+    [EntityType.WorkflowTemplate]: ['template', 'templates'],
+    [EntityType.Job]: ['job', 'jobs']
+};
+
 /** The project permission an analysis needs to register an entity of each type; a job has none of its own. */
 export const ENTITY_MANAGE_PERMISSION: { [type in EntityType]?: string } = {
     [EntityType.Workflow]: 'manage-workflow',

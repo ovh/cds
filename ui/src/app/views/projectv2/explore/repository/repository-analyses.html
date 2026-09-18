@@ -35,7 +35,7 @@
       </thead>
       <tbody>
         @for (row of table.data; track row.analysis.id) {
-          <tr class="row" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
+          <tr class="row" [id]="'analysis-' + row.analysis.id" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
             <td>
               <span nz-icon [nzType]="outcomeIcon(row.outcome)" [nzSpin]="row.outcome === 'processing'" nzTheme="outline"
                 class="level {{row.outcome}}" role="img" [attr.aria-label]="row.analysis.status"></span>
@@ -59,13 +59,16 @@
               @if (row.analysis.data?.error) {
                 <p class="full-error">{{row.analysis.data.error}}</p>
               }
-              <nz-descriptions nzSize="small" [nzColumn]="1" [nzColon]="false">
-                <nz-descriptions-item nzTitle="Analysis"><span nz-typography nzCopyable [nzContent]="row.analysis.id"></span></nz-descriptions-item>
-                <nz-descriptions-item nzTitle="Commit"><span nz-typography nzCopyable [nzContent]="row.analysis.commit"></span></nz-descriptions-item>
+              <dl class="ids">
+                <dt>Analysis</dt>
+                <dd><span nz-typography nzCopyable [nzContent]="row.analysis.id"></span></dd>
+                <dt>Commit</dt>
+                <dd><span nz-typography nzCopyable [nzContent]="row.analysis.commit"></span></dd>
                 @if (row.analysis.data?.hook_event_uuid) {
-                  <nz-descriptions-item nzTitle="Event"><span nz-typography nzCopyable [nzContent]="row.analysis.data.hook_event_uuid"></span></nz-descriptions-item>
+                  <dt>Event</dt>
+                  <dd><span nz-typography nzCopyable [nzContent]="row.analysis.data.hook_event_uuid"></span></dd>
                 }
-              </nz-descriptions>
+              </dl>
               </div>
               <div class="files">
                 @if (row.registered === 0) {

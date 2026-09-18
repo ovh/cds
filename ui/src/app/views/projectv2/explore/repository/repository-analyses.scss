@@ -136,10 +136,31 @@ nz-spin {
     word-break: break-word;
   }
 
-  ::ng-deep .ant-descriptions-item-content {
-    font-family: monospace;
-    font-size: 11.5px;
-    word-break: break-all;
+  // Label and id side by side, on one baseline, outside any table the global styles would frame
+  .ids {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 4px;
+    align-items: baseline;
+    font-size: 12px;
+
+    dt {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.45);
+
+      :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+    }
+
+    dd {
+      margin: 0;
+      min-width: 0;
+      font-family: monospace;
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 
   .files {

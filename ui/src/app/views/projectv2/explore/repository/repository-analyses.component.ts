@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
@@ -47,16 +48,39 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
     loading: boolean = false;
 
     analysesSub: Subscription;
+    querySub: Subscription;
 
+    /** The analysis the url asks to open, until it is shown. */
+    private _wanted: string = null;
     private _cd = inject(ChangeDetectorRef);
+    private _route = inject(ActivatedRoute);
+    private _router = inject(Router);
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
     ngOnInit(): void {
         this.analysesSub = this.ctx.analyses$.subscribe(analyses => {
             this.buildRows(analyses);
+            this.revealWanted();
             this._cd.markForCheck();
         });
+        this.querySub = this._route.queryParamMap.subscribe(params => {
+            this._wanted = params.get('analysis');
+            this.revealWanted();
+        });
+    }
+
+    /** Opens the analysis the url names once it is listed, then drops the parameter so that it does not follow to the other tabs. */
+    private revealWanted(): void {
+        if (!this._wanted || !this.rows?.some(r => r.analysis.id === this._wanted)) {
+            return;
+        }
+        const id = this._wanted;
+        this._wanted = null;
+        this.expanded.add(id);
+        this._cd.markForCheck();
+        setTimeout(() => document.getElementById(`analysis-${id}`)?.scrollIntoView({ block: 'center' }));
+        this._router.navigate([], { relativeTo: this._route, queryParams: { analysis: null }, queryParamsHandling: 'merge', replaceUrl: true });
     }
 
     private buildRows(analyses: Array<RepositoryAnalysis>): void {

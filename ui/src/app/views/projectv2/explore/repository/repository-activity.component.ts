@@ -2,13 +2,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestro
 import { lastValueFrom, Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow } from 'app/model/project.model';
-import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
-import { EntityTypeUtil } from 'app/model/entity.model';
+import { RepositoryAnalysis } from 'app/model/analysis.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { apiErrorMessage, RepositoryContextService } from './repository-context.service';
 import { cleanErrorMessage, eventAuthor, HookEventVerdict, hookEventVerdict, StepStatus, VerdictLevel } from './hook-event-verdict';
-import { entityOfAnalysisFile } from './entities';
-import { analysisFileLabel } from './analysis-outcome';
+import { AnalysisSummaryPart, analysisSummary } from './analysis-outcome';
 
 /** One event of the repository, with what the page says about it. */
 interface ActivityRow {
@@ -148,27 +146,13 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
         return !!row.analysisId && this.analyses.get(row.analysisId) === 'loading';
     }
 
-    fileLabel(file: DataEntity): string {
-        return analysisFileLabel(file);
+    analysisSummary(analysis: RepositoryAnalysis): Array<AnalysisSummaryPart> {
+        return analysisSummary(analysis);
     }
 
-    /** The files an analysis did not register: the ones worth a look. */
-    rejectedFiles(analysis: RepositoryAnalysis): Array<DataEntity> {
-        return (analysis.data?.entities ?? []).filter(e => e.status !== 'Success');
-    }
-
-    updatedCount(analysis: RepositoryAnalysis): number {
-        return (analysis.data?.entities ?? []).filter(e => e.status === 'Success').length;
-    }
-
-    /** Where a file of the analysis is read in this page, on the ref of the event. */
-    fileLink(file: DataEntity): Array<string> {
-        // Only a registered file has a page: a rejected one never made it to CDS
-        const entity = file.status === 'Success' ? entityOfAnalysisFile(file.path, file.file_name) : null;
-        if (!entity) {
-            return null;
-        }
-        return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, EntityTypeUtil.toURLParam(entity.type), entity.name];
+    /** The analyses tab of the repository, where an analysis is read in full. */
+    get analysesLink(): Array<string> {
+        return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, 'analyses'];
     }
 
     /** The run a workflow started, when it lives in this project. */

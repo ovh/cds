@@ -80,26 +80,14 @@
                       @if (analysisLoading(row)) {
                         <nz-spin nzSimple nzSize="small"></nz-spin>
                       }
-                      @if (analysisOf(row); as analysis) {
+                      @if (row.analysisId) {
                         <div class="analysis">
-                          @if (analysis.data?.error) {
-                            <p class="error">{{analysis.data.error}}</p>
+                          @if (analysisOf(row); as analysis) {
+                            @for (part of analysisSummary(analysis); track part.text) {
+                              <span [class]="part.fate === 'skipped' ? 'skipped' : part.fate === 'not processed' ? 'failed' : ''">{{part.text}}</span> ·
+                            }
                           }
-                          @if (updatedCount(analysis) === 0) {
-                            <p>No file was processed.</p>
-                          } @else {
-                            <p>{{updatedCount(analysis)}} {{updatedCount(analysis) > 1 ? 'files' : 'file'}} processed@if (rejectedFiles(analysis).length) {, <span class="error">{{rejectedFiles(analysis).length}} skipped</span>}</p>
-                          }
-                          @for (file of rejectedFiles(analysis); track file.path + file.file_name) {
-                            <div class="file">
-                              @if (fileLink(file); as link) {
-                                <a [routerLink]="link" [queryParams]="{ ref: row.event.extracted_data?.ref }">{{file.path}}{{file.file_name}}</a>
-                              } @else {
-                                {{file.path}}{{file.file_name}}
-                              }
-                              @if (fileLabel(file)) { <small>{{fileLabel(file)}}</small> }
-                            </div>
-                          }
+                          <a [routerLink]="analysesLink" [queryParams]="{ analysis: row.analysisId }" queryParamsHandling="merge">See analysis</a>
                         </div>
                       }
                     </ng-template>
@@ -124,12 +112,14 @@
                 @if (row.verdict.hint) {
                   <nz-alert nzType="warning" nzShowIcon nzMessage="How to fix" [nzDescription]="row.verdict.hint"></nz-alert>
                 }
-                <nz-descriptions nzSize="small" [nzColumn]="1" [nzColon]="false">
-                  <nz-descriptions-item nzTitle="Event"><span nz-typography nzCopyable [nzContent]="row.event.uuid"></span></nz-descriptions-item>
+                <dl class="ids">
+                  <dt>Event</dt>
+                  <dd><span nz-typography nzCopyable [nzContent]="row.event.uuid"></span></dd>
                   @if (row.analysisId) {
-                    <nz-descriptions-item nzTitle="Analysis"><span nz-typography nzCopyable [nzContent]="row.analysisId"></span></nz-descriptions-item>
+                    <dt>Analysis</dt>
+                    <dd><span nz-typography nzCopyable [nzContent]="row.analysisId"></span></dd>
                   }
-                </nz-descriptions>
+                </dl>
               </div>
             </div>
             }
