@@ -86,6 +86,11 @@ export class RepositoryContextService implements OnDestroy {
             await this.selectRef(refFromUrl);
             return;
         }
+        await this.read(vcsName, repoName, refFromUrl);
+    }
+
+    /** Reads the repository from scratch, whatever was shown so far. */
+    private async read(vcsName: string, repoName: string, refFromUrl: string): Promise<void> {
         const loadId = ++this._loadId;
         this._project = this._store.selectSnapshot(ProjectV2State.current);
         this._vcsName = vcsName;
@@ -246,6 +251,12 @@ export class RepositoryContextService implements OnDestroy {
                 break;
             case EventV2Type.EventRunCrafted:
                 this.reloadEventsSoon();
+                break;
+            case EventV2Type.EventRepositoryCreated:
+                // Declared while shown as listened only: the page takes its full shape
+                if (this.repository$.value.distant) {
+                    this.read(this._vcsName, this._repoName, this.ref);
+                }
                 break;
         }
     }

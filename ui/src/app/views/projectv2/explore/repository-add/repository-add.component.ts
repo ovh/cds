@@ -15,6 +15,8 @@ import { NzDrawerRef } from 'ng-zorro-antd/drawer';
 
 export class ProjectV2RepositoryAddComponentParams {
     vcs: string;
+    /** Preselected among the repositories of the vcs, matched regardless of case. */
+    repository?: string;
 }
 
 @Component({
@@ -81,9 +83,16 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy, OnInit {
             this.loaders.global = false;
             this._cd.markForCheck();
         }
-        let selectedVCS = this.params.vcs ?? null;
+        const selectedVCS = this.params.vcs ?? null;
         if (selectedVCS && this.vcss.findIndex(v => v.name === selectedVCS) !== -1) {
             this.validateForm.controls.vcs.setValue(selectedVCS);
+            await this.vcsChange(selectedVCS);
+            // A listened repository is only known lowercased; the vcs keeps the real name
+            const wanted = (this.params.repository ?? '').toLowerCase();
+            const preselected = wanted ? (this.repositories ?? []).find(r => r.fullname.toLowerCase() === wanted) : null;
+            if (preselected) {
+                this.validateForm.controls.repository.setValue(preselected.fullname);
+            }
         }
         this.loaders.global = false;
         this._cd.markForCheck();
@@ -110,7 +119,7 @@ export class ProjectV2RepositoryAddComponent implements OnDestroy, OnInit {
         this.loaders.vcs = true;
         this._cd.markForCheck();
         this.vcsProject = this.project.vcs_servers.find(v => v.name === value) ?? null;
-        this.loadRepositories(this.vcsProject.name, false);
+        await this.loadRepositories(this.vcsProject.name, false);
         this.loaders.vcs = false;
         this._cd.markForCheck();
     }

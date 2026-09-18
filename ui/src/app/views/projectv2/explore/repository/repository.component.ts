@@ -11,6 +11,7 @@ import { ENTITY_TYPE_LABELS, ENTITY_TYPE_ORDER } from './entities';
 import { hookEventVerdict } from './hook-event-verdict';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../../run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from '../trigger-analysis/trigger-analysis.component';
+import { ProjectV2RepositoryAddComponent, ProjectV2RepositoryAddComponentParams } from '../repository-add/repository-add.component';
 
 /** A tab of the repository page: a child route, its label and, for an entity type, how many it holds. */
 export interface RepositoryTab {
@@ -133,6 +134,22 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
     changeRef(ref: string): void {
         this.ctx.rememberRef(ref);
         this._router.navigate([], { queryParams: { ref }, queryParamsHandling: 'merge' });
+    }
+
+    get canManage(): boolean {
+        return this.ctx.project?.permissions?.writable ?? false;
+    }
+
+    /** Adds the listened repository to the project, the drawer opening on it. */
+    openRepositoryAddDrawer(): void {
+        this._drawerService.create<ProjectV2RepositoryAddComponent, { params: ProjectV2RepositoryAddComponentParams }, string>({
+            nzTitle: 'Add a new Repository',
+            nzContent: ProjectV2RepositoryAddComponent,
+            nzContentParams: {
+                params: <ProjectV2RepositoryAddComponentParams>{ vcs: this.ctx.vcsName, repository: this.ctx.repoName }
+            },
+            nzSize: 'large'
+        });
     }
 
     openRunStartDrawer(): void {

@@ -16,6 +16,14 @@
           [ngModel]="ctx.ref$ | async" (ngModelChange)="changeRef($event)"></app-repository-ref-select>
       }
       <span class="spacer"></span>
+      @if (repository.distant && canManage) {
+        <!-- Events unreadable means the vcs credentials of the project cannot see the repository: adding it would fail -->
+        <span nz-tooltip [nzTooltipTitle]="(ctx.eventsError$ | async) ? 'User ' + (ctx.vcs$ | async)?.auth?.username + ' cannot read this repository on ' + ctx.vcsName : null">
+          <button nz-button nzType="primary" [disabled]="(ctx.eventsError$ | async) !== null" (click)="openRepositoryAddDrawer()">
+            <span nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></span>Add to project
+          </button>
+        </span>
+      }
       @if (!repository.distant) {
         <button nz-button nzType="primary" (click)="openRunStartDrawer()">
           <span nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>Start a workflow
