@@ -7,12 +7,8 @@
 
 @if (ready && (ctx.repository$ | async); as repository) {
   <div class="header">
-    <nz-breadcrumb>
-      <nz-breadcrumb-item>{{ctx.vcsName}}</nz-breadcrumb-item>
-      <nz-breadcrumb-item>{{repository.name}}</nz-breadcrumb-item>
-    </nz-breadcrumb>
     <div class="title">
-      <h1 [title]="repository.name">{{repository.name}}</h1>
+      <h1 [title]="ctx.vcsName + ' / ' + repository.name"><span class="vcs">{{ctx.vcsName}} /</span> {{repository.name}}</h1>
       @if (repository.distant) {
         <nz-tag nzColor="blue" nz-tooltip nzTooltipTitle="Listened by a workflow of this project, not declared in it">listened only</nz-tag>
       } @else {
@@ -60,7 +56,7 @@
     <nz-tabs nzLinkRouter [nzLinkExact]="false" nzSize="small">
       @for (tab of tabs; track tab.path) {
         <nz-tab>
-          <a *nzTabLink nz-tab-link [routerLink]="[tab.path]" queryParamsHandling="preserve">{{tab.label}}@if (tab.count !== null && tab.count !== undefined) { <span class="count">{{tab.count}}</span> }@if (tab.alert) { <span class="alert-dot" role="img" aria-label="The last event is in error"></span> }</a>
+          <a *nzTabLink nz-tab-link [routerLink]="[tab.path]" queryParamsHandling="preserve">@if (tab.refScoped) { <span nz-icon nzType="branches" nzTheme="outline" class="ref-icon" nz-tooltip [nzTooltipTitle]="'On ' + shortRef(ctx.ref)" role="img" [attr.aria-label]="'On ' + shortRef(ctx.ref)"></span> }{{tab.label}}@if (tab.count !== null && tab.count !== undefined) { <span class="count">{{tab.count}}</span> }@if (tab.alert) { <span class="alert-dot" role="img" aria-label="The last event is in error"></span> }</a>
         </nz-tab>
       }
     </nz-tabs>

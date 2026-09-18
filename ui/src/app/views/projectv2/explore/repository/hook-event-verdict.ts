@@ -2,7 +2,11 @@ import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow } 
 import { Initiator } from 'app/model/analysis.model';
 
 export type VerdictLevel = 'success' | 'error' | 'warning' | 'skipped' | 'processing';
-export type StepStatus = 'finish' | 'error' | 'wait' | 'process';
+/**
+ * finish: done · error: the step failed · warning: partly done · process: running now ·
+ * pending: not reached yet · skipped: ruled out by the definitions · wait: nothing to do here
+ */
+export type StepStatus = 'finish' | 'error' | 'warning' | 'process' | 'pending' | 'skipped' | 'wait';
 
 export interface VerdictStep {
     title: string;
@@ -23,6 +27,8 @@ export interface HookEventVerdict {
 
 // Statuses the hooks service goes through before an event is settled
 const IN_PROGRESS = ['Scheduled', 'Analyzing', 'CheckAnalyzing', 'WorkflowHooks', 'GitInfo', 'Workflow'];
+// A workflow skipped for one of these reasons did what its definition asks: nothing to fix
+const FILTER_SKIP = /no file matches path filters|does not match .*filter|skip CI directive/i;
 const ANALYZING = ['Analyzing', 'CheckAnalyzing'];
 const TRIGGERING = ['WorkflowHooks', 'GitInfo', 'Workflow'];
 
@@ -75,9 +81,11 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     const workflows = (event.workflows ?? []).filter(w => w.project_key === projectKey);
     const done = workflows.filter(w => w.status === HookEventWorkflowStatus.Done);
     const scheduled = workflows.filter(w => w.status === HookEventWorkflowStatus.Scheduled);
-    // A workflow skipped with a reason did not start because of a problem; skipped without one, a filter ruled it out
-    const notStarted = workflows.filter(w => w.status === HookEventWorkflowStatus.Error || (w.status === HookEventWorkflowStatus.Skipped && !!w.error));
-    const skipped = workflows.filter(w => w.status === HookEventWorkflowStatus.Skipped && !w.error);
+    // A workflow skipped by its own filters behaved as defined; skipped for any other reason, or in
+    // error, it did not start because of a problem
+    const isFilterSkip = (w: RepositoryHookWorkflow) => w.status === HookEventWorkflowStatus.Skipped && (!w.error || FILTER_SKIP.test(w.error));
+    const skipped = workflows.filter(isFilterSkip);
+    const notStarted = workflows.filter(w => (w.status === HookEventWorkflowStatus.Error || w.status === HookEventWorkflowStatus.Skipped) && !isFilterSkip(w));
     const analysis = (event.analyses ?? []).find(a => a.project_key === projectKey);
     const inProgress = IN_PROGRESS.indexOf(event.status) !== -1;
     const lastError = cleanErrorMessage(event.last_error);
@@ -87,7 +95,7 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     const received: VerdictStep = { title: 'Event received', status: 'finish', description: describeEvent(event) };
     const author: VerdictStep = {
         title: 'Author identified',
-        status: authorKnown ? 'finish' : inProgress ? 'process' : 'wait',
+        status: authorKnown ? 'finish' : inProgress ? 'pending' : 'wait',
         description: !authorKnown ? 'Not identified'
             : !authorName ? 'Identified'
             : event.sign_key ? `${authorName} · key ${event.sign_key}` : authorName
@@ -96,14 +104,12 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
         ? { title: 'Analysis', status: 'wait', description: 'Not applicable: the repository is not declared in this project.' }
         : analysis
             ? { title: 'Analysis', status: analysisStatus(analysis.status), description: analysis.status }
-            : { title: 'Analysis', status: inProgress && ANALYZING.indexOf(event.status) !== -1 ? 'process' : 'wait', description: inProgress ? 'Pending' : 'Not run for this event' };
+            : { title: 'Analysis', status: !inProgress ? 'wait' : ANALYZING.indexOf(event.status) !== -1 ? 'process' : 'pending', description: inProgress ? 'Pending' : 'Not run for this event' };
     const workflowsStep: VerdictStep = { title: 'Workflows', status: 'wait', description: describeWorkflows(done, notStarted, scheduled, skipped) };
     const steps = [received, author, analysisStep, workflowsStep];
 
     if (inProgress) {
-        if (TRIGGERING.indexOf(event.status) !== -1) {
-            workflowsStep.status = 'process';
-        }
+        workflowsStep.status = TRIGGERING.indexOf(event.status) !== -1 ? 'process' : 'pending';
         return { level: 'processing', label: 'In progress', detail: event.status, steps };
     }
 
@@ -126,7 +132,7 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     }
 
     if (notStarted.length > 0) {
-        workflowsStep.status = 'error';
+        workflowsStep.status = done.length > 0 ? 'warning' : 'error';
         const errors = [...new Set(notStarted.map(w => cleanErrorMessage(w.error)).filter(e => !!e))].join(' · ');
         const label = done.length > 0
             ? `${notStarted.length} of ${notStarted.length + done.length} did not start`
@@ -144,6 +150,16 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
         return { level: 'success', label: `${done.length} ${plural(done.length, 'workflow')} triggered`, detail: names(done), steps };
     }
 
+    const withReason = skipped.filter(w => !!w.error);
+    if (withReason.length > 0) {
+        workflowsStep.status = 'skipped';
+        return {
+            level: 'skipped',
+            label: `${withReason.length} ${plural(withReason.length, 'workflow')} skipped by ${plural(withReason.length, 'its filters', 'their filters')}`,
+            detail: [...new Set(withReason.map(w => w.error))].join(' · '),
+            steps
+        };
+    }
     return {
         level: 'skipped',
         label: 'No workflow matched',
@@ -188,7 +204,7 @@ function describeWorkflows(done: Array<RepositoryHookWorkflow>, notStarted: Arra
     if (done.length) { parts.push(`triggered: ${names(done)}`); }
     if (notStarted.length) { parts.push(`did not start: ${notStarted.map(w => w.error ? `${w.workflow_name} (${cleanErrorMessage(w.error)})` : w.workflow_name).join(', ')}`); }
     if (scheduled.length) { parts.push(`scheduled: ${names(scheduled)}`); }
-    if (skipped.length) { parts.push(`skipped: ${names(skipped)}`); }
+    if (skipped.length) { parts.push(`skipped: ${skipped.map(w => w.error ? `${w.workflow_name} (${w.error})` : w.workflow_name).join(', ')}`); }
     return parts.length ? parts.join(' · ') : 'None evaluated';
 }
 
@@ -209,6 +225,6 @@ function firstLine(message: string): string {
     return (message ?? '').split('\n')[0].trim() || null;
 }
 
-function plural(n: number, word: string): string {
-    return n > 1 ? `${word}s` : word;
+function plural(n: number, word: string, pluralForm: string = `${word}s`): string {
+    return n > 1 ? pluralForm : word;
 }

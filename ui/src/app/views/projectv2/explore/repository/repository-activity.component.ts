@@ -6,7 +6,7 @@ import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
 import { EntityTypeUtil } from 'app/model/entity.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { apiErrorMessage, RepositoryContextService } from './repository-context.service';
-import { eventAuthor, HookEventVerdict, hookEventVerdict, VerdictLevel } from './hook-event-verdict';
+import { eventAuthor, HookEventVerdict, hookEventVerdict, StepStatus, VerdictLevel } from './hook-event-verdict';
 import { entityOfAnalysisFile } from './entities';
 
 /** One event of the repository, with what the page says about it. */
@@ -37,8 +37,7 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
     /** All the events, most recent first; null until read. */
     rows: Array<ActivityRow> = null;
     filtered: Array<ActivityRow> = [];
-    /** Decided from the first events: problems first when there are some. */
-    problemsOnly: boolean = null;
+    problemsOnly: boolean = false;
     eventFilter: string = null;
     eventNames: Array<string> = [];
     expanded = new Set<string>();
@@ -81,9 +80,6 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
             }))
             .sort((a, b) => b.event.created - a.event.created);
         this.eventNames = [...new Set(this.rows.map(r => String(r.event.event_name)))].sort();
-        if (this.problemsOnly === null) {
-            this.problemsOnly = this.rows.some(r => PROBLEM_LEVELS.indexOf(r.verdict.level) !== -1);
-        }
         this.applyFilters();
     }
 
@@ -180,6 +176,31 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
             case 'warning': return 'exclamation-circle';
             case 'processing': return 'sync';
             default: return 'minus-circle';
+        }
+    }
+
+    /** The icon of a step, in the same palette as the row: green done, red failed, orange partly, blue running, grey otherwise. */
+    stepIcon(status: StepStatus): string {
+        switch (status) {
+            case 'finish': return 'check-circle';
+            case 'error': return 'close-circle';
+            case 'warning': return 'exclamation-circle';
+            case 'process': return 'sync';
+            case 'pending': return 'clock-circle';
+            case 'skipped': return 'stop';
+            default: return 'minus-circle';
+        }
+    }
+
+    /**
+     * What Ant Design knows of a step. Never `error`: it would draw its own cross next to ours; the
+     * red of a failed step comes from a class of ours instead.
+     */
+    stepAntStatus(status: StepStatus): string {
+        switch (status) {
+            case 'finish': case 'warning': case 'error': return 'finish';
+            case 'process': return 'process';
+            default: return 'wait';
         }
     }
 

@@ -16,6 +16,7 @@ describe('hookEventVerdict', () => {
         const v = hookEventVerdict(event({ status: 'Analyzing' }), PROJECT, false);
         expect(v.level).toBe('processing');
         expect(v.steps[2].status).toBe('process');
+        expect(v.steps[3].status).toBe('pending');
     });
 
     it('blames the analysis when the one of the project failed', () => {
@@ -53,6 +54,15 @@ describe('hookEventVerdict', () => {
         expect(v.hint).toContain('signed');
     });
 
+    it('treats a workflow skipped by its filters as expected, not as a problem', () => {
+        const v = hookEventVerdict(event({ workflows: [workflow('fromrunChangeset', HookEventWorkflowStatus.Skipped, { error: 'no file matches path filters' })] }), PROJECT, false);
+        expect(v.level).toBe('skipped');
+        expect(v.label).toBe('1 workflow skipped by its filters');
+        expect(v.detail).toBe('no file matches path filters');
+        expect(v.steps[3].status).toBe('skipped');
+        expect(v.steps[3].description).toContain('skipped: fromrunChangeset (no file matches path filters)');
+    });
+
     it('reports a workflow skipped with a reason as not started', () => {
         const v = hookEventVerdict(event({ workflows: [workflow('deploy', HookEventWorkflowStatus.Skipped, { error: 'unknown user' })] }), PROJECT, false);
         expect(v.level).toBe('error');
@@ -85,6 +95,7 @@ describe('hookEventVerdict', () => {
         ] }), PROJECT, false);
         expect(v.level).toBe('warning');
         expect(v.label).toBe('1 of 2 did not start');
+        expect(v.steps[3].status).toBe('warning');
         expect(v.hint).toContain('worker model');
     });
 

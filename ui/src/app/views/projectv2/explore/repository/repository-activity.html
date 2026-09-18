@@ -30,7 +30,7 @@
   </div>
 
   <div class="table">
-    <nz-table #table [nzData]="filtered" nzSize="small" [nzFrontPagination]="false" [nzShowPagination]="false" [nzLoading]="loading"
+    <nz-table #table [nzData]="filtered" nzSize="small" nzTableLayout="fixed" [nzFrontPagination]="false" [nzShowPagination]="false" [nzLoading]="loading"
       [nzNoResult]="noResult">
       <thead>
         <tr>
@@ -62,11 +62,17 @@
             <td class="when"><app-date-from-now [value]="row.created"></app-date-from-now></td>
           </tr>
           <tr [nzExpand]="isExpanded(row)">
+            <!-- A collapsed expand row stays in the DOM, hidden: its content is only built once opened -->
+            @if (isExpanded(row)) {
             <div class="expanded">
               <div class="steps">
                 <nz-steps nzDirection="vertical" nzSize="small">
                   @for (step of row.verdict.steps; track step.title) {
-                    <nz-step [nzTitle]="step.title" [nzDescription]="step.description" [nzStatus]="step.status"></nz-step>
+                    <nz-step class="step status-{{step.status}}" [nzTitle]="step.title" [nzDescription]="step.description" [nzStatus]="stepAntStatus(step.status)" [nzIcon]="stepIconTpl"></nz-step>
+                    <ng-template #stepIconTpl>
+                      <span nz-icon [nzType]="stepIcon(step.status)" [nzSpin]="step.status === 'process'" nzTheme="outline"
+                        class="step-icon {{step.status}}" role="img" [attr.aria-label]="step.status"></span>
+                    </ng-template>
                   }
                 </nz-steps>
                 @if (analysisLoading(row)) {
@@ -110,6 +116,7 @@
                 </nz-descriptions>
               </div>
             </div>
+            }
           </tr>
         }
       </tbody>

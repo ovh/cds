@@ -31,7 +31,25 @@ nz-spin {
 .table {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  // The table never scrolls sideways: it takes the width it is given and its cells cut what does not fit
+  ::ng-deep {
+    .ant-table-content {
+      overflow-x: hidden !important;
+    }
+
+    table {
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    td {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
 }
 
 .row {
@@ -110,19 +128,34 @@ nz-spin {
   }
 
   .files {
+    flex: 1;
+    min-width: 0;
     font-size: 12px;
 
-    .files-title {
-      margin-bottom: 4px;
+    .files-title,
+    .none {
       color: rgba(0, 0, 0, 0.45);
 
       :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+    }
+
+    .files-title {
+      margin-bottom: 4px;
+    }
+
+    .none {
+      margin: 0;
     }
 
     .file {
       display: flex;
       gap: 8px;
       align-items: baseline;
+      line-height: 22px;
+
+      nz-badge {
+        line-height: 1;
+      }
 
       small {
         color: rgba(0, 0, 0, 0.45);

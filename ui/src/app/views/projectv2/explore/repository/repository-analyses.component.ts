@@ -9,8 +9,10 @@ import { entityOfAnalysisFile } from './entities';
 /** One analysis of the repository, with what the page says about it. */
 interface AnalysisRow {
     analysis: RepositoryAnalysis;
+    /** Every file the analysis read, registered or not, in the order it reports them. */
+    files: Array<DataEntity>;
     registered: number;
-    rejected: Array<DataEntity>;
+    rejected: number;
     requestedBy: string;
     /** `event` when a repository event started it, `manual` otherwise. */
     origin: string;
@@ -66,13 +68,18 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
             return;
         }
         this.rows = analyses
-            .map(analysis => ({
-                analysis,
-                registered: (analysis.data?.entities ?? []).filter(e => e.status === 'Success').length,
-                rejected: (analysis.data?.entities ?? []).filter(e => e.status !== 'Success'),
-                requestedBy: this.requestedBy(analysis),
-                origin: analysis.data?.hook_event_uuid ? 'event' : 'manual'
-            }))
+            .map(analysis => {
+                const files = analysis.data?.entities ?? [];
+                const registered = files.filter(e => e.status === 'Success').length;
+                return {
+                    analysis,
+                    files,
+                    registered,
+                    rejected: files.length - registered,
+                    requestedBy: this.requestedBy(analysis),
+                    origin: analysis.data?.hook_event_uuid ? 'event' : 'manual'
+                };
+            })
             .sort((a, b) => Date.parse(b.analysis.created) - Date.parse(a.analysis.created));
         this.refs = [...new Set(this.rows.map(r => r.analysis.ref))].sort();
         this.applyFilters();
@@ -134,6 +141,32 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
 
     badge(status: string): string {
         return STATUS_BADGE[status] ?? 'default';
+    }
+
+    /**
+     * The files worth listing: all of them for an analysis that went through, only the ones left
+     * unregistered for one that did not.
+     */
+    filesToShow(row: AnalysisRow): Array<DataEntity> {
+        return row.analysis.status === 'Error' ? row.files.filter(f => f.status !== 'Success') : row.files;
+    }
+
+    /** A file's fate, as a badge: registered, refused for lack of permission, or never reached. */
+    fileBadge(file: DataEntity): string {
+        switch (file.status) {
+            case 'Success': return 'success';
+            case 'Skipped': return 'warning';
+            default: return 'default';
+        }
+    }
+
+    /** Only a file that was not taken needs a word; the green dot says enough for the others. */
+    fileLabel(file: DataEntity): string {
+        switch (file.status) {
+            case 'Success': return '';
+            case 'Skipped': return 'skipped: missing permission on this type';
+            default: return 'not processed';
+        }
     }
 
     isTag(ref: string): boolean {

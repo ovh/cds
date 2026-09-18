@@ -35,7 +35,25 @@ nz-alert.events-error {
 .table {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  // The table never scrolls sideways: it takes the width it is given and its cells cut what does not fit
+  ::ng-deep {
+    .ant-table-content {
+      overflow-x: hidden !important;
+    }
+
+    table {
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    td {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
 }
 
 .row {
@@ -120,6 +138,58 @@ nz-alert.events-error {
       margin: 4px 0;
     }
 
+    // Steps share the palette of the rows: Ant Design's blue "finish" would say something else
+    .step-icon {
+      font-size: 18px;
+
+      &.finish { color: #52c41a; }
+      &.error { color: #ff4d4f; }
+      &.warning { color: #faad14; }
+      &.process { color: #1890ff; }
+      &.pending,
+      &.skipped,
+      &.wait { color: rgba(0, 0, 0, 0.35); }
+
+      :host-context(.night) &.pending,
+      :host-context(.night) &.skipped,
+      :host-context(.night) &.wait { color: rgba(255, 255, 255, 0.35); }
+    }
+
+    ::ng-deep {
+      // Custom icons lose Ant Design's 24px box: given back so that the tail starts from their centre
+      .ant-steps-item-custom .ant-steps-item-icon {
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+
+        .ant-steps-icon {
+          display: inline-flex;
+          width: 24px;
+          height: 24px;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+
+      // One neutral line between every step, whatever their statuses
+      .ant-steps-item-tail::after {
+        background-color: rgba(0, 0, 0, 0.15) !important;
+      }
+
+      :host-context(.night) & .ant-steps-item-tail::after {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+      }
+
+      .status-error .ant-steps-item-title,
+      .status-error .ant-steps-item-description {
+        color: #ff4d4f !important;
+      }
+
+      .status-warning .ant-steps-item-title {
+        color: #faad14 !important;
+      }
+    }
+
     // The row shows a verdict cut short; the steps carry the messages in full
     ::ng-deep .ant-steps-item-description {
       white-space: pre-wrap;
@@ -153,8 +223,8 @@ nz-alert.events-error {
   }
 
   .aside {
-    width: 320px;
-    flex: none;
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -169,7 +239,9 @@ nz-alert.events-error {
     ::ng-deep .ant-descriptions-item-content {
       font-family: monospace;
       font-size: 11.5px;
-      word-break: break-all;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }

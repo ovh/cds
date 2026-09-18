@@ -22,7 +22,7 @@
   </div>
 
   <div class="table">
-    <nz-table #table [nzData]="filtered" nzSize="small" [nzFrontPagination]="false" [nzShowPagination]="false" [nzLoading]="loading"
+    <nz-table #table [nzData]="filtered" nzSize="small" nzTableLayout="fixed" [nzFrontPagination]="false" [nzShowPagination]="false" [nzLoading]="loading"
       [nzNoResult]="noResult">
       <thead>
         <tr>
@@ -46,13 +46,15 @@
               } @else if (row.analysis.status === 'Skipped') {
                 Nothing to register
               } @else {
-                {{row.registered}} registered@if (row.rejected.length) {, <span class="error">{{row.rejected.length}} rejected</span>}
+                {{row.registered}} {{row.registered > 1 ? 'files' : 'file'}} processed@if (row.rejected) {, <span class="error">{{row.rejected}} skipped</span>}
               }
             </td>
             <td class="who">{{row.origin}}@if (row.requestedBy) { · {{row.requestedBy}} }</td>
             <td class="when"><app-date-from-now [value]="row.analysis.created"></app-date-from-now></td>
           </tr>
           <tr [nzExpand]="isExpanded(row)">
+            <!-- A collapsed expand row stays in the DOM, hidden: its content is only built once opened -->
+            @if (isExpanded(row)) {
             <div class="expanded">
               <div class="main">
               @if (row.analysis.data?.error) {
@@ -66,22 +68,26 @@
                 }
               </nz-descriptions>
               </div>
-              @if (row.rejected.length) {
-                <div class="files">
-                  <div class="files-title">Rejected files</div>
-                  @for (file of row.rejected; track file.file_name) {
+              <div class="files">
+                @if (row.registered === 0) {
+                  <p class="none">No file was processed.</p>
+                } @else {
+                  <div class="files-title">{{row.analysis.status === 'Error' ? 'Files not processed' : 'Files'}}</div>
+                  @for (file of filesToShow(row); track file.path + file.file_name) {
                     <div class="file">
+                      <nz-badge [nzStatus]="fileBadge(file)"></nz-badge>
                       @if (fileLink(file); as link) {
                         <a [routerLink]="link" [queryParams]="{ ref: row.analysis.ref }">{{file.path}}{{file.file_name}}</a>
                       } @else {
-                        {{file.path}}{{file.file_name}}
+                        <span>{{file.path}}{{file.file_name}}</span>
                       }
-                      @if (file.status) { <small>{{file.status}}</small> }
+                      @if (fileLabel(file)) { <small>{{fileLabel(file)}}</small> }
                     </div>
                   }
-                </div>
-              }
+                }
+              </div>
             </div>
+            }
           </tr>
         }
       </tbody>

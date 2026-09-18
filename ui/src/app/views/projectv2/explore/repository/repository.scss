@@ -14,7 +14,7 @@ nz-alert.error {
 }
 
 .header {
-  padding: 12px 20px 0;
+  padding: 14px 20px 0;
   border-bottom: 1px solid #f0f0f0;
 
   :host-context(.night) & {
@@ -27,7 +27,6 @@ nz-alert.error {
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 4px;
 
     h1 {
       margin: 0;
@@ -37,6 +36,16 @@ nz-alert.error {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+
+      // The vcs reads as a prefix of the repository name, not as a title of its own
+      .vcs {
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.45);
+
+        :host-context(.night) & {
+          color: rgba(255, 255, 255, 0.45);
+        }
+      }
     }
 
     nz-tag {
@@ -65,6 +74,17 @@ nz-alert.error {
   .count {
     margin-left: 6px;
     font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  // Marks the tabs that show the selected ref rather than the repository as a whole
+  .ref-icon {
+    margin-right: 6px;
+    font-size: 12px;
     color: rgba(0, 0, 0, 0.45);
 
     :host-context(.night) & {
