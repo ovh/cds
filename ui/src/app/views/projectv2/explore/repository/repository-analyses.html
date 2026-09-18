@@ -69,6 +69,9 @@
                   <dd><span nz-typography nzCopyable [nzContent]="row.analysis.data.hook_event_uuid"></span></dd>
                 }
               </dl>
+              @if (row.analysis.data?.hook_event_uuid) {
+                <a class="event-link" [routerLink]="activityLink" [queryParams]="{ event: row.analysis.data.hook_event_uuid }" queryParamsHandling="merge">See event</a>
+              }
               </div>
               <div class="files">
                 @if (row.registered === 0) {

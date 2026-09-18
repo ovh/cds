@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { lastValueFrom, Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow } from 'app/model/project.model';
@@ -47,6 +48,12 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
 
     eventsSub: Subscription;
     repositorySub: Subscription;
+    querySub: Subscription;
+
+    /** The event the url asks to open, until it is shown. */
+    private _wanted: string = null;
+    private _route = inject(ActivatedRoute);
+    private _router = inject(Router);
 
     private _cd = inject(ChangeDetectorRef);
     private _projectService = inject(ProjectService);
@@ -59,8 +66,26 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
         });
         this.eventsSub = this.ctx.events$.subscribe(events => {
             this.buildRows(events);
+            this.revealWanted();
             this._cd.markForCheck();
         });
+        this.querySub = this._route.queryParamMap.subscribe(params => {
+            this._wanted = params.get('event');
+            this.revealWanted();
+        });
+    }
+
+    /** Opens the event the url names once it is listed, then drops the parameter so that it does not follow to the other tabs. */
+    private revealWanted(): void {
+        if (!this._wanted || !this.rows?.some(r => r.event.uuid === this._wanted)) {
+            return;
+        }
+        const uuid = this._wanted;
+        this._wanted = null;
+        this.expanded.add(uuid);
+        this._cd.markForCheck();
+        setTimeout(() => document.getElementById(`event-${uuid}`)?.scrollIntoView({ block: 'center' }));
+        this._router.navigate([], { relativeTo: this._route, queryParams: { event: null }, queryParamsHandling: 'merge', replaceUrl: true });
     }
 
     private buildRows(events: Array<RepositoryHookEvent>): void {

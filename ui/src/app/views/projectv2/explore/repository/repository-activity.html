@@ -44,7 +44,7 @@
       </thead>
       <tbody>
         @for (row of table.data; track row.event.uuid) {
-          <tr class="row" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
+          <tr class="row" [id]="'event-' + row.event.uuid" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
             <td>
               <span nz-icon [nzType]="levelIcon(row.verdict.level)" [nzSpin]="row.verdict.level === 'processing'" nzTheme="outline"
                 class="level {{row.verdict.level}}" role="img" [attr.aria-label]="row.verdict.level"></span>
@@ -84,7 +84,7 @@
                         <div class="analysis">
                           @if (analysisOf(row); as analysis) {
                             @for (part of analysisSummary(analysis); track part.text) {
-                              <span [class]="part.fate === 'skipped' ? 'skipped' : part.fate === 'not processed' ? 'failed' : ''">{{part.text}}</span> ·
+                              <div [class]="part.fate === 'skipped' ? 'skipped' : part.fate === 'not processed' ? 'failed' : ''">{{part.text}}</div>
                             }
                           }
                           <a [routerLink]="analysesLink" [queryParams]="{ analysis: row.analysisId }" queryParamsHandling="merge">See analysis</a>

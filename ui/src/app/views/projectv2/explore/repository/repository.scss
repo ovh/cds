@@ -107,6 +107,11 @@ nz-alert.error {
       margin: 0;
     }
 
+    // A tab is a link, but reads as a tab: the colour of the tab, not the blue of a hyperlink
+    .ant-tabs-tab a {
+      color: inherit;
+    }
+
     // The tabs only carry links: their panes stay empty, the router-outlet below shows the content.
     .ant-tabs-content-holder {
       display: none;

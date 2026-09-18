@@ -125,6 +125,12 @@ nz-spin {
   .main {
     flex: 1;
     min-width: 0;
+
+    .event-link {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 12px;
+    }
   }
 
   // The row shows the error cut short; here it is read in full

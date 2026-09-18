@@ -167,6 +167,11 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
         return this.expanded.has(row.analysis.id);
     }
 
+    /** The activity tab of the repository, where the event that started an analysis is read in full. */
+    get activityLink(): Array<string> {
+        return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, 'activity'];
+    }
+
     /** Where a file of the analysis is read in this page, on the ref of the analysis. */
     fileLink(file: DataEntity): Array<string> {
         // Only a registered file has a page: a rejected one never made it to CDS
