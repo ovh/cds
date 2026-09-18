@@ -37,7 +37,7 @@
         @for (row of table.data; track row.analysis.id) {
           <tr class="row" [id]="'analysis-' + row.analysis.id" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
             <td>
-              <span nz-icon [nzType]="outcomeIcon(row.outcome)" [nzSpin]="row.outcome === 'processing'" nzTheme="outline"
+              <span nz-icon [nzType]="icon(row.outcome)" [nzSpin]="row.outcome === 'processing'" nzTheme="outline"
                 class="level {{row.outcome}}" role="img" [attr.aria-label]="row.analysis.status"></span>
             </td>
             <td class="ref">
@@ -45,7 +45,7 @@
               @if (row.analysis.commit) { <span class="commit">{{row.analysis.commit | slice:0:7}}</span> }
             </td>
             <td class="outcome">
-              <nz-tag [nzColor]="row.outcome">{{row.label}}</nz-tag>
+              <nz-tag [nzColor]="color(row.outcome)">{{row.label}}</nz-tag>
               @if (row.detail) { <div class="detail" [title]="row.detail">{{row.detail}}</div> }
             </td>
             <td class="user">{{row.origin}}@if (row.requestedBy) { · {{row.requestedBy}} }</td>

@@ -9,22 +9,30 @@ export const ENTITY_TYPE_ORDER: Array<EntityType> = [
     EntityType.Job
 ];
 
-export const ENTITY_TYPE_LABELS: { [type in EntityType]: string } = {
-    [EntityType.Workflow]: 'Workflows',
-    [EntityType.Action]: 'Actions',
-    [EntityType.WorkerModel]: 'Worker models',
-    [EntityType.WorkflowTemplate]: 'Templates',
-    [EntityType.Job]: 'Jobs'
-};
-
-/** How to count entities of each type: one, many. */
-export const ENTITY_TYPE_NOUNS: { [type in EntityType]: [string, string] } = {
+/** How to name entities of each type: one, many. */
+const ENTITY_TYPE_NOUNS: { [type in EntityType]: [string, string] } = {
     [EntityType.Workflow]: ['workflow', 'workflows'],
     [EntityType.Action]: ['action', 'actions'],
     [EntityType.WorkerModel]: ['worker model', 'worker models'],
     [EntityType.WorkflowTemplate]: ['template', 'templates'],
     [EntityType.Job]: ['job', 'jobs']
 };
+
+/** The title of the tab of a type: `Worker models`. */
+export function entityTypeLabel(type: EntityType): string {
+    const many = ENTITY_TYPE_NOUNS[type][1];
+    return many[0].toUpperCase() + many.slice(1);
+}
+
+/** `workflow` or `workflows`, after how many there are; a type of null counts files. */
+export function entityNoun(type: EntityType, n: number): string {
+    const [one, many] = type ? ENTITY_TYPE_NOUNS[type] : ['file', 'files'];
+    return plural(n, one, many);
+}
+
+export function plural(n: number, word: string, pluralForm: string = `${word}s`): string {
+    return n > 1 ? pluralForm : word;
+}
 
 /** The project permission an analysis needs to register an entity of each type; a job has none of its own. */
 export const ENTITY_MANAGE_PERMISSION: { [type in EntityType]?: string } = {

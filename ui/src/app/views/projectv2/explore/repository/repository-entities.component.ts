@@ -8,7 +8,7 @@ import * as actionPreferences from 'app/store/preferences.action';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Entity, EntityType, EntityTypeUtil } from 'app/model/entity.model';
 import { RepositoryContextService, shortRef } from './repository-context.service';
-import { ENTITY_TYPE_LABELS } from './entities';
+import { entityTypeLabel } from './entities';
 import { ProjectV2RepositoryEntityDetailComponent } from './repository-entity-detail.component';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from '../trigger-analysis/trigger-analysis.component';
 
@@ -60,7 +60,7 @@ export class ProjectV2RepositoryEntitiesComponent implements OnInit, OnDestroy {
         this.routeSub = this._route.paramMap.subscribe(params => {
             this.type = EntityTypeUtil.fromURLParam(params.get('entityType'));
             this.typeParam = EntityTypeUtil.toURLParam(this.type);
-            this.typeLabel = ENTITY_TYPE_LABELS[this.type];
+            this.typeLabel = entityTypeLabel(this.type);
             this.selectedName = params.get('entityName');
             this.apply();
         });
@@ -104,7 +104,7 @@ export class ProjectV2RepositoryEntitiesComponent implements OnInit, OnDestroy {
     }
 
     linkTo(entity: Entity): Array<string> {
-        return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, this.typeParam, entity.name];
+        return this.ctx.repositoryLink(this.typeParam, entity.name);
     }
 
     shortRef(ref: string): string {
@@ -118,7 +118,7 @@ export class ProjectV2RepositoryEntitiesComponent implements OnInit, OnDestroy {
     }
 
     seeAnalyses(): void {
-        this._router.navigate(['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, 'analyses'], { queryParamsHandling: 'preserve' });
+        this._router.navigate(this.ctx.repositoryLink('analyses'), { queryParamsHandling: 'preserve' });
     }
 
     /** The ref lives in the url; the page reacts to it like to any navigation. */

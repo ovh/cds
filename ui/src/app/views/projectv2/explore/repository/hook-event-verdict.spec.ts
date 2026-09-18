@@ -15,7 +15,7 @@ describe('hookEventVerdict', () => {
     it('reports an event still being handled as in progress', () => {
         const v = hookEventVerdict(event({ status: 'Analyzing' }), PROJECT, false);
         expect(v.level).toBe('processing');
-        expect(v.steps[2].status).toBe('process');
+        expect(v.steps[2].status).toBe('processing');
         expect(v.steps[3].status).toBe('pending');
     });
 
@@ -25,7 +25,7 @@ describe('hookEventVerdict', () => {
         expect(v.label).toBe('Analysis failed');
         expect(v.detail).toBe('Workflows of this ref were not evaluated');
         expect(v.steps[2].status).toBe('error');
-        expect(v.steps[3].status).toBe('wait');
+        expect(v.steps[3].status).toBe('none');
     });
 
     it('names the failure of the analysis when the event carries it', () => {
@@ -59,7 +59,6 @@ describe('hookEventVerdict', () => {
         expect(v.level).toBe('error');
         expect(v.label).toBe('Signer unknown');
         expect(v.steps[1].status).toBe('error');
-        expect(v.steps[3].description).toContain('did not start: distant1');
     });
 
     it('names an unsigned commit for what it is', () => {
@@ -73,8 +72,7 @@ describe('hookEventVerdict', () => {
         expect(v.level).toBe('filtered');
         expect(v.label).toBe('1 workflow skipped by its filters');
         expect(v.detail).toBe('no file matches path filters');
-        expect(v.steps[3].status).toBe('skipped');
-        expect(v.steps[3].description).toContain('skipped: fromrunChangeset (no file matches path filters)');
+        expect(v.steps[3].status).toBe('filtered');
     });
 
     it('reports a workflow skipped with a reason as not started', () => {
@@ -90,7 +88,7 @@ describe('hookEventVerdict', () => {
         expect(v.level).toBe('error');
         expect(v.label).toBe('Git information unavailable');
         expect(v.detail).toBe('unable to get git info: resource not found');
-        expect(v.steps[0].status).toBe('finish');
+        expect(v.steps[0].status).toBe('success');
         expect(v.steps[3].status).toBe('error');
         expect(v.hint).toContain('vcs credentials');
     });
@@ -137,14 +135,14 @@ describe('hookEventVerdict', () => {
 
     it('says when nothing matched', () => {
         const v = hookEventVerdict(event({ workflows: [workflow('a', HookEventWorkflowStatus.Skipped)] }), PROJECT, false);
-        expect(v.level).toBe('skipped');
+        expect(v.level).toBe('none');
         expect(v.label).toBe('No workflow matched');
         expect(v.detail).toContain('1 workflow evaluated');
     });
 
     it('never expects an analysis on a listened repository', () => {
         const v = hookEventVerdict(event({ workflows: [workflow('distant1', HookEventWorkflowStatus.Done, { run_number: '12' })] }), PROJECT, true);
-        expect(v.steps[2].status).toBe('wait');
+        expect(v.steps[2].status).toBe('none');
         expect(v.steps[2].description).toContain('Not applicable');
     });
 
@@ -180,7 +178,7 @@ describe('eventAuthor', () => {
 
     it('identifies the author of an event from its initiator', () => {
         const v = hookEventVerdict(event({ username: null, initiator: <any>{ user_id: 'u1', user: { username: 'sguiheux' } }, sign_key: 'B3F1' }), PROJECT, false);
-        expect(v.steps[1].status).toBe('finish');
+        expect(v.steps[1].status).toBe('success');
         expect(v.steps[1].description).toBe('sguiheux · key B3F1');
     });
 });

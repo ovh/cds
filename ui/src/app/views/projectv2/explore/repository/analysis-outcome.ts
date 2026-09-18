@@ -1,20 +1,17 @@
 import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
-import { EntityType } from 'app/model/entity.model';
-import { ENTITY_MANAGE_PERMISSION, ENTITY_TYPE_NOUNS, ENTITY_TYPE_ORDER, entityOfAnalysisFile } from './entities';
-
-/** How an analysis went, as the Ant Design badge and step palettes name it. */
-export type AnalysisOutcome = 'success' | 'warning' | 'error' | 'processing' | 'default';
+import { ENTITY_MANAGE_PERMISSION, ENTITY_TYPE_ORDER, entityNoun, entityOfAnalysisFile } from './entities';
+import { Tone } from './palette';
 
 /**
- * A Success that still reports an error is a partial one: some files were left out, for a
- * permission missing on their type; it reads as a warning rather than a plain success.
+ * How an analysis went. A Success that still reports an error is a partial one: some files were left
+ * out, for a permission missing on their type; it reads as a warning rather than a plain success.
  */
-export function analysisOutcome(status: string, error?: string): AnalysisOutcome {
+export function analysisOutcome(status: string, error?: string): Tone {
     switch (status) {
         case 'Success': return error ? 'warning' : 'success';
         case 'Error': return 'error';
         case 'InProgress': return 'processing';
-        default: return 'default';
+        default: return 'none';
     }
 }
 
@@ -30,7 +27,7 @@ export function analysisFileLabel(file: DataEntity): string {
     }
 }
 
-export type FileFate = 'processed' | 'skipped' | 'not processed';
+type FileFate = 'processed' | 'skipped' | 'not processed';
 
 /** One count of the summary of an analysis, coloured after what became of the files. */
 export interface AnalysisSummaryPart {
@@ -64,14 +61,9 @@ export function analysisSummary(analysis: RepositoryAnalysis): Array<AnalysisSum
         for (const fate of FILE_FATES) {
             const n = counts.get(`${type ?? ''}|${fate}`);
             if (n) {
-                parts.push({ text: `${n} ${noun(type, n)} ${fate}`, fate });
+                parts.push({ text: `${n} ${entityNoun(type, n)} ${fate}`, fate });
             }
         }
     }
     return parts;
-}
-
-function noun(type: EntityType, n: number): string {
-    const nouns = type ? ENTITY_TYPE_NOUNS[type] : ['file', 'files'];
-    return nouns[n > 1 ? 1 : 0];
 }

@@ -5,8 +5,9 @@ import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { DataEntity, RepositoryAnalysis } from 'app/model/analysis.model';
 import { EntityTypeUtil } from 'app/model/entity.model';
 import { RepositoryContextService, shortRef } from './repository-context.service';
-import { entityOfAnalysisFile } from './entities';
-import { analysisFileLabel, AnalysisOutcome, analysisOutcome } from './analysis-outcome';
+import { entityOfAnalysisFile, plural } from './entities';
+import { analysisFileLabel, analysisOutcome } from './analysis-outcome';
+import { Tone, toneColor, toneIcon } from './palette';
 
 /** One analysis of the repository, with what the page says about it. */
 interface AnalysisRow {
@@ -18,7 +19,7 @@ interface AnalysisRow {
     requestedBy: string;
     /** `event` when a repository event started it, `manual` otherwise. */
     origin: string;
-    outcome: AnalysisOutcome;
+    outcome: Tone;
     /** The outcome in a few words, and what explains it when something went wrong. */
     label: string;
     detail: string;
@@ -46,6 +47,8 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
     statusFilter: string = null;
     expanded = new Set<string>();
     loading: boolean = false;
+    readonly icon = toneIcon;
+    readonly color = toneColor;
 
     analysesSub: Subscription;
     querySub: Subscription;
@@ -112,10 +115,10 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
         this.applyFilters();
     }
 
-    private label(analysis: RepositoryAnalysis, outcome: AnalysisOutcome, registered: number, rejected: number): string {
+    private label(analysis: RepositoryAnalysis, outcome: Tone, registered: number, rejected: number): string {
         switch (outcome) {
-            case 'success': return `${registered} ${registered > 1 ? 'files' : 'file'} processed`;
-            case 'warning': return `${rejected} ${rejected > 1 ? 'files' : 'file'} skipped`;
+            case 'success': return `${registered} ${plural(registered, 'file')} processed`;
+            case 'warning': return `${rejected} ${plural(rejected, 'file')} skipped`;
             case 'error': return 'Analysis failed';
             case 'processing': return 'In progress';
             default: return analysis.status === 'Skipped' ? 'Nothing to register' : analysis.status;
@@ -169,7 +172,7 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
 
     /** The activity tab of the repository, where the event that started an analysis is read in full. */
     get activityLink(): Array<string> {
-        return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, 'activity'];
+        return this.ctx.repositoryLink('activity');
     }
 
     /** Where a file of the analysis is read in this page, on the ref of the analysis. */
@@ -179,17 +182,7 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
         if (!entity) {
             return null;
         }
-        return ['/project', this.ctx.project.key, 'explore', 'vcs', this.ctx.vcsName, 'repository', this.ctx.repoName, EntityTypeUtil.toURLParam(entity.type), entity.name];
-    }
-
-    outcomeIcon(outcome: AnalysisOutcome): string {
-        switch (outcome) {
-            case 'success': return 'check-circle';
-            case 'error': return 'close-circle';
-            case 'warning': return 'exclamation-circle';
-            case 'processing': return 'sync';
-            default: return 'minus-circle';
-        }
+        return this.ctx.repositoryLink(EntityTypeUtil.toURLParam(entity.type), entity.name);
     }
 
     /**

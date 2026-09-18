@@ -17,8 +17,8 @@ describe('analysisOutcome', () => {
     });
 
     it('is neutral for a skipped or unknown status', () => {
-        expect(analysisOutcome('Skipped', 'no file found')).toBe('default');
-        expect(analysisOutcome(undefined)).toBe('default');
+        expect(analysisOutcome('Skipped', 'no file found')).toBe('none');
+        expect(analysisOutcome(undefined)).toBe('none');
     });
 });
 

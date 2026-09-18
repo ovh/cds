@@ -8,9 +8,10 @@ import { ProjectRepository } from 'app/model/project.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
 import { EntityType, EntityTypeUtil } from 'app/model/entity.model';
 import { apiErrorMessage, RepositoryContextService, shortRef } from './repository-context.service';
-import { ENTITY_TYPE_LABELS, ENTITY_TYPE_ORDER } from './entities';
+import { ENTITY_TYPE_ORDER, entityTypeLabel } from './entities';
 import { hookEventVerdict } from './hook-event-verdict';
 import { analysisOutcome } from './analysis-outcome';
+import { toneColor } from './palette';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../../run-start/run-start.component';
 import { ProjectV2TriggerAnalysisComponent, ProjectV2TriggerAnalysisComponentParams } from '../trigger-analysis/trigger-analysis.component';
 import { ProjectV2RepositoryAddComponent, ProjectV2RepositoryAddComponentParams } from '../repository-add/repository-add.component';
@@ -104,7 +105,7 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
             return [activity];
         }
         const entityTabs: Array<RepositoryTab> = ENTITY_TYPE_ORDER
-            .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: ENTITY_TYPE_LABELS[type], count: this.ctx.entityCount(type), refScoped: true }))
+            .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: entityTypeLabel(type), count: this.ctx.entityCount(type), refScoped: true }))
             // Jobs are seldom defined: their tab only shows up when the ref has some
             .filter(tab => tab.count > 0 || tab.path !== EntityTypeUtil.toURLParam(EntityType.Job));
         const tabs: Array<RepositoryTab> = [activity, { path: 'analyses', label: 'Analyses' }, ...entityTabs];
@@ -188,6 +189,6 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
     }
 
     analysisBadge(analysis: RepositoryAnalysis): string {
-        return analysisOutcome(analysis.status, analysis.data?.error);
+        return toneColor(analysisOutcome(analysis.status, analysis.data?.error));
     }
 }

@@ -71,10 +71,10 @@ nz-alert.events-error {
     &.warning { color: #faad14; }
     &.processing { color: #1890ff; }
     &.filtered,
-    &.skipped { color: rgba(0, 0, 0, 0.45); }
+    &.none { color: rgba(0, 0, 0, 0.45); }
 
     :host-context(.night) &.filtered,
-    :host-context(.night) &.skipped { color: rgba(255, 255, 255, 0.45); }
+    :host-context(.night) &.none { color: rgba(255, 255, 255, 0.45); }
   }
 
   .kind small {
@@ -147,17 +147,17 @@ nz-alert.events-error {
     .step-icon {
       font-size: 18px;
 
-      &.finish { color: #52c41a; }
+      &.success { color: #52c41a; }
       &.error { color: #ff4d4f; }
       &.warning { color: #faad14; }
-      &.process { color: #1890ff; }
+      &.processing { color: #1890ff; }
       &.pending,
-      &.skipped,
-      &.wait { color: rgba(0, 0, 0, 0.35); }
+      &.filtered,
+      &.none { color: rgba(0, 0, 0, 0.35); }
 
       :host-context(.night) &.pending,
-      :host-context(.night) &.skipped,
-      :host-context(.night) &.wait { color: rgba(255, 255, 255, 0.35); }
+      :host-context(.night) &.filtered,
+      :host-context(.night) &.none { color: rgba(255, 255, 255, 0.35); }
     }
 
     ::ng-deep {

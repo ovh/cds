@@ -46,7 +46,7 @@
         @for (row of table.data; track row.event.uuid) {
           <tr class="row" [id]="'event-' + row.event.uuid" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
             <td>
-              <span nz-icon [nzType]="levelIcon(row.verdict.level)" [nzSpin]="row.verdict.level === 'processing'" nzTheme="outline"
+              <span nz-icon [nzType]="icon(row.verdict.level)" [nzSpin]="row.verdict.level === 'processing'" nzTheme="outline"
                 class="level {{row.verdict.level}}" role="img" [attr.aria-label]="row.verdict.level"></span>
             </td>
             <td class="kind">{{row.event.event_name}}@if (row.event.event_type) { <small>({{row.event.event_type}})</small> }</td>
@@ -55,7 +55,7 @@
               @if (row.event.extracted_data?.commit) { <span class="commit">{{row.event.extracted_data.commit | slice:0:7}}</span> }
             </td>
             <td class="outcome">
-              <nz-tag [nzColor]="tagColor(row.verdict.level)">{{row.verdict.label}}</nz-tag>
+              <nz-tag [nzColor]="color(row.verdict.level)">{{row.verdict.label}}</nz-tag>
               @if (row.verdict.detail) { <div class="detail" [title]="row.verdict.detail">{{row.verdict.detail}}</div> }
             </td>
             <td class="user">{{author(row)}}</td>
@@ -72,7 +72,7 @@
                     <nz-step class="step status-{{step.status}}" [nzTitle]="step.title" [nzStatus]="stepAntStatus(step.status)" [nzIcon]="stepIconTpl"
                       [nzDescription]="step.key === 'analysis' && row.analysisId ? analysisTpl : step.key === 'workflows' && row.event.workflows?.length ? workflowsTpl : step.description"></nz-step>
                     <ng-template #stepIconTpl>
-                      <span nz-icon [nzType]="stepIcon(step.status)" [nzSpin]="step.status === 'process'" nzTheme="outline"
+                      <span nz-icon [nzType]="icon(step.status)" [nzSpin]="step.status === 'processing'" nzTheme="outline"
                         class="step-icon {{step.status}}" role="img" [attr.aria-label]="step.status"></span>
                     </ng-template>
                     <ng-template #analysisTpl>

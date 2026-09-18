@@ -77,6 +77,11 @@ export class RepositoryContextService implements OnDestroy {
     get repositoryPath(): string { return `${this._vcsName}/${this._repoName}`; }
     get ref(): string { return this.ref$.value; }
 
+    /** The url of a page of the repository: the explore route of the project down to the repository, then `tail`. */
+    repositoryLink(...tail: Array<string>): Array<string> {
+        return ['/project', this._project.key, 'explore', 'vcs', this._vcsName, 'repository', this._repoName, ...tail];
+    }
+
     /**
      * Reads what the page needs for the repository the url names. Called again for the same
      * repository, it only applies the ref.
@@ -155,7 +160,7 @@ export class RepositoryContextService implements OnDestroy {
     }
 
     /** Applies the ref the url carries, falling back to the remembered one, then to the default branch. */
-    async selectRef(refFromUrl: string): Promise<void> {
+    private async selectRef(refFromUrl: string): Promise<void> {
         if (!this.repository$.value || this.repository$.value.distant) {
             return;
         }
@@ -174,7 +179,7 @@ export class RepositoryContextService implements OnDestroy {
         return entities ? entities.get(type)?.length ?? 0 : null;
     }
 
-    reloadEntities(): Promise<void> {
+    private reloadEntities(): Promise<void> {
         return this.readEntities(this._loadId);
     }
 

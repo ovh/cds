@@ -1,27 +1,20 @@
 import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow } from 'app/model/project.model';
 import { Initiator } from 'app/model/analysis.model';
 import { analysisOutcome } from './analysis-outcome';
-
-/** filtered: the workflows ruled the event out themselves · skipped: nothing listened to it */
-export type VerdictLevel = 'success' | 'error' | 'warning' | 'filtered' | 'skipped' | 'processing';
-/**
- * finish: done · error: the step failed · warning: partly done · process: running now ·
- * pending: not reached yet · skipped: ruled out by the definitions · wait: nothing to do here
- */
-export type StepStatus = 'finish' | 'error' | 'warning' | 'process' | 'pending' | 'skipped' | 'wait';
-
-export type StepKey = 'received' | 'author' | 'analysis' | 'workflows';
+import { plural } from './entities';
+import { Tone } from './palette';
 
 export interface VerdictStep {
-    key: StepKey;
+    key: 'received' | 'author' | 'analysis' | 'workflows';
     title: string;
-    status: StepStatus;
+    status: Tone;
     description: string;
 }
 
 /** What happened to a repository event, in one line, and step by step. */
 export interface HookEventVerdict {
-    level: VerdictLevel;
+    /** filtered: the workflows ruled the event out themselves · none: nothing listened to it */
+    level: Tone;
     label: string;
     detail: string;
     /** Received, author identified, analysis, workflows: always these four, in this order. */
@@ -98,25 +91,26 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
 
     const authorName = eventAuthor(event, projectKey);
     const authorKnown = eventAuthorKnown(event, projectKey);
-    const received: VerdictStep = { key: 'received', title: 'Event received', status: 'finish', description: describeEvent(event) };
+    const received: VerdictStep = { key: 'received', title: 'Event received', status: 'success', description: describeEvent(event) };
     const author: VerdictStep = {
         key: 'author',
         title: 'Author identified',
-        status: authorKnown ? 'finish' : inProgress ? 'pending' : 'wait',
+        status: authorKnown ? 'success' : inProgress ? 'pending' : 'none',
         description: !authorKnown ? 'Not identified'
             : !authorName ? 'Identified'
             : event.sign_key ? `${authorName} · key ${event.sign_key}` : authorName
     };
     const analysisStep: VerdictStep = distant
-        ? { key: 'analysis', title: 'Analysis', status: 'wait', description: 'Not applicable: the repository is not declared in this project.' }
+        ? { key: 'analysis', title: 'Analysis', status: 'none', description: 'Not applicable: the repository is not declared in this project.' }
         : analysis
             ? { key: 'analysis', title: 'Analysis', status: analysisStatus(analysis.status, analysis.error), description: analysis.error ? `${analysis.status} · ${analysis.error}` : analysis.status }
-            : { key: 'analysis', title: 'Analysis', status: !inProgress ? 'wait' : ANALYZING.indexOf(event.status) !== -1 ? 'process' : 'pending', description: inProgress ? 'Pending' : 'Not run for this event' };
-    const workflowsStep: VerdictStep = { key: 'workflows', title: 'Workflows', status: 'wait', description: describeWorkflows(done, notStarted, scheduled, skipped) };
+            : { key: 'analysis', title: 'Analysis', status: !inProgress ? 'none' : ANALYZING.indexOf(event.status) !== -1 ? 'processing' : 'pending', description: inProgress ? 'Pending' : 'Not run for this event' };
+    // The page lists the workflows itself; the text only stands when there is none to list
+    const workflowsStep: VerdictStep = { key: 'workflows', title: 'Workflows', status: 'none', description: 'None evaluated' };
     const steps = [received, author, analysisStep, workflowsStep];
 
     if (inProgress) {
-        workflowsStep.status = TRIGGERING.indexOf(event.status) !== -1 ? 'process' : 'pending';
+        workflowsStep.status = TRIGGERING.indexOf(event.status) !== -1 ? 'processing' : 'pending';
         return { level: 'processing', label: 'In progress', detail: event.status, steps };
     }
 
@@ -149,18 +143,18 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     }
 
     if (scheduled.length > 0) {
-        workflowsStep.status = 'process';
+        workflowsStep.status = 'processing';
         return { level: 'processing', label: `${scheduled.length} ${plural(scheduled.length, 'workflow')} scheduled`, detail: names(scheduled), steps };
     }
 
     if (done.length > 0) {
-        workflowsStep.status = 'finish';
+        workflowsStep.status = 'success';
         return { level: 'success', label: `${done.length} ${plural(done.length, 'workflow')} triggered`, detail: names(done), steps };
     }
 
     const withReason = skipped.filter(w => !!w.error);
     if (withReason.length > 0) {
-        workflowsStep.status = 'skipped';
+        workflowsStep.status = 'filtered';
         return {
             level: 'filtered',
             label: `${withReason.length} ${plural(withReason.length, 'workflow')} skipped by ${plural(withReason.length, 'its filters', 'their filters')}`,
@@ -169,7 +163,7 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
         };
     }
     return {
-        level: 'skipped',
+        level: 'none',
         label: 'No workflow matched',
         detail: skipped.length > 0 ? `${skipped.length} ${plural(skipped.length, 'workflow')} evaluated, none listens to this event` : 'No workflow listens to this event',
         steps
@@ -211,33 +205,16 @@ function describeEvent(event: RepositoryHookEvent): string {
     return [kind, ref ? `on ${ref}` : null, commit ? `· ${commit.substring(0, 7)}` : null].filter(p => !!p).join(' ');
 }
 
-function describeWorkflows(done: Array<RepositoryHookWorkflow>, notStarted: Array<RepositoryHookWorkflow>, scheduled: Array<RepositoryHookWorkflow>, skipped: Array<RepositoryHookWorkflow>): string {
-    const parts: Array<string> = [];
-    if (done.length) { parts.push(`triggered: ${names(done)}`); }
-    if (notStarted.length) { parts.push(`did not start: ${notStarted.map(w => w.error ? `${w.workflow_name} (${cleanErrorMessage(w.error)})` : w.workflow_name).join(', ')}`); }
-    if (scheduled.length) { parts.push(`scheduled: ${names(scheduled)}`); }
-    if (skipped.length) { parts.push(`skipped: ${skipped.map(w => w.error ? `${w.workflow_name} (${w.error})` : w.workflow_name).join(', ')}`); }
-    return parts.length ? parts.join(' · ') : 'None evaluated';
-}
-
 function names(workflows: Array<RepositoryHookWorkflow>): string {
     return workflows.map(w => w.run_number ? `${w.workflow_name} #${w.run_number}` : w.workflow_name).join(', ');
 }
 
-function analysisStatus(status: string, error: string): StepStatus {
-    switch (analysisOutcome(status, error)) {
-        case 'success': return 'finish';
-        case 'warning': return 'warning';
-        case 'error': return 'error';
-        case 'processing': return 'process';
-        default: return status === 'Skipped' ? 'finish' : 'wait';
-    }
+/** The analysis step went through when the analysis ran, even to register nothing. */
+function analysisStatus(status: string, error: string): Tone {
+    const outcome = analysisOutcome(status, error);
+    return outcome === 'none' && status === 'Skipped' ? 'success' : outcome;
 }
 
 function firstLine(message: string): string {
     return (message ?? '').split('\n')[0].trim() || null;
-}
-
-function plural(n: number, word: string, pluralForm: string = `${word}s`): string {
-    return n > 1 ? pluralForm : word;
 }
