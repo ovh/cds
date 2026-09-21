@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rockbears/log"
 	"github.com/sirupsen/logrus"
@@ -272,6 +273,15 @@ func (wk *CurrentWorker) SendLog(ctx context.Context, level workerruntime.Level,
 	if err != nil {
 		log.Error(wk.GetContext(), "unable to prepare log: %v", err)
 		return
+	}
+
+	// Cut after the blur so a secret split by the cut cannot leak its prefix
+	if len(msg.Value) > cdslog.MaxLogLineSize {
+		cut := cdslog.MaxLogLineSize
+		for cut > 0 && !utf8.RuneStart(msg.Value[cut]) {
+			cut--
+		}
+		msg.Value = msg.Value[:cut] + "...truncated\n"
 	}
 
 	if isReadinessServices, _ := workerruntime.IsReadinessServices(ctx); isReadinessServices {
