@@ -72,6 +72,23 @@ func newAckState() *ackState {
 	}
 }
 
+// newConnectionAckState returns the ack state of a new log connection, or nil when the protocol
+// is disabled by the configuration. A nil state costs nothing on the read path: no allocation,
+// no scan of the received lines, no deadline, no write. This is the single place where the
+// feature flag is read.
+func (s *Service) newConnectionAckState() *ackState {
+	if !s.Cfg.Log.AckProtocolEnabled {
+		return nil
+	}
+	return newAckState()
+}
+
+// active reports whether this connection is acknowledging. False on a nil state, which is how
+// the disabled protocol is expressed on the read path.
+func (a *ackState) active() bool {
+	return a != nil && a.enabled
+}
+
 // observe records a received sequence number. It is called for every line read from the
 // connection, INCLUDING the ones the intake rejects: an ack says "this line reached the CDN",
 // not "this line was stored". A worker cannot fix a bad signature by sending the line again, so
@@ -108,7 +125,7 @@ func (a *ackState) observe(seq uint64) {
 
 // due reports whether an ack must be written now.
 func (a *ackState) due() bool {
-	if !a.enabled || !a.pending || a.contiguous == 0 {
+	if !a.active() || !a.pending || a.contiguous == 0 {
 		return false
 	}
 	return a.sinceLastAck >= a.everyMessages || time.Since(a.lastAckAt) >= a.everyDuration

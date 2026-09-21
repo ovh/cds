@@ -157,6 +157,57 @@ func TestAckState_WriteDeadlineSkipsTheAck(t *testing.T) {
 	require.Equal(t, `{"ack":2}`, <-ack)
 }
 
+// serveAcks runs the acknowledgement part of handleConnection, with the very same gates: the
+// state comes from the feature flag, and everything the protocol does is conditioned on it.
+func serveAcks(s *Service, ln net.Listener) {
+	conn, err := ln.Accept()
+	if err != nil {
+		return
+	}
+	defer conn.Close() // nolint
+
+	acks := s.newConnectionAckState()
+	if acks != nil {
+		acks.everyMessages = 1
+	}
+
+	buf := make([]byte, 1024)
+	var frame []byte
+	for {
+		if acks.active() {
+			_ = conn.SetReadDeadline(time.Now().Add(acks.everyDuration))
+		}
+		n, err := conn.Read(buf)
+		for i := 0; i < n; i++ {
+			if buf[i] != 0 {
+				frame = append(frame, buf[i])
+				continue
+			}
+			if acks != nil {
+				if seq, ok := extractAckSeq(frame); ok {
+					acks.observe(seq)
+				}
+			}
+			frame = frame[:0]
+			acks.flush(context.TODO(), conn)
+		}
+		if err != nil {
+			if acks.active() && isTimeout(err) {
+				acks.flush(context.TODO(), conn)
+				continue
+			}
+			return
+		}
+	}
+}
+
+func ackTestService(t *testing.T, enabled bool) *Service {
+	t.Helper()
+	s := new(Service)
+	s.Cfg.Log.AckProtocolEnabled = enabled
+	return s
+}
+
 // The two sides of the protocol, over a real socket: the writer of the worker against the ack
 // loop of the CDN. Neither unit test can catch a disagreement between the two implementations,
 // this one can.
@@ -167,36 +218,7 @@ func TestAckProtocol_EndToEnd(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = ln.Close() })
 
-	go func() {
-		conn, err := ln.Accept()
-		if err != nil {
-			return
-		}
-		defer conn.Close() // nolint
-
-		// Same loop as handleConnection, without the intake itself
-		a := newAckState()
-		a.everyMessages = 1
-		buf := make([]byte, 1024)
-		var frame []byte
-		for {
-			n, err := conn.Read(buf)
-			for i := 0; i < n; i++ {
-				if buf[i] != 0 {
-					frame = append(frame, buf[i])
-					continue
-				}
-				if seq, ok := extractAckSeq(frame); ok {
-					a.observe(seq)
-				}
-				frame = frame[:0]
-				a.flush(context.TODO(), conn)
-			}
-			if err != nil {
-				return
-			}
-		}
-	}()
+	go serveAcks(ackTestService(t, true), ln)
 
 	w, err := graylog.NewTCPWriter(ln.Addr().String(), nil)
 	require.NoError(t, err)
@@ -211,8 +233,51 @@ func TestAckProtocol_EndToEnd(t *testing.T) {
 		"the worker must have released its replay ring from the acks written by the CDN")
 }
 
-// A worker that does not number its messages must get exactly the previous behavior: nothing
-// written back, no deadline, no state.
+// Flag off is the default and must be a platform wide no-op: a worker that numbers its messages
+// keeps sending them and never receives anything back, so it never arms and behaves exactly as
+// it did before the protocol existed.
+func TestAckProtocol_DisabledByFlag(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = ln.Close() })
+
+	go serveAcks(ackTestService(t, false), ln)
+
+	w, err := graylog.NewTCPWriter(ln.Addr().String(), nil)
+	require.NoError(t, err)
+
+	for i := 0; i < 3; i++ {
+		require.NoError(t, w.WriteMessage(&graylog.Message{
+			Version: "1.1", Host: "worker", Short: "hello", Level: 6,
+		}))
+	}
+
+	// Long enough for any ack to have been written, and for a read deadline to have fired
+	time.Sleep(300 * time.Millisecond)
+	require.Equal(t, uint64(0), w.Stats().Acked, "no ack may be written when the protocol is disabled")
+
+	// And the connection is still perfectly usable: the worker keeps streaming
+	require.NoError(t, w.WriteMessage(&graylog.Message{
+		Version: "1.1", Host: "worker", Short: "still alive", Level: 6,
+	}))
+	require.Equal(t, uint64(4), w.Stats().Sent)
+}
+
+// The flag is off unless the configuration says otherwise: a missing key in the TOML reads as
+// false, which is exactly what is wanted for an experimental protocol.
+func TestNewConnectionAckState_OffByDefault(t *testing.T) {
+	var s Service
+	require.Nil(t, s.newConnectionAckState(), "no configuration at all must mean no ack")
+	require.False(t, s.newConnectionAckState().active(), "and the read path must tolerate that nil state")
+
+	s.Cfg.Log.AckProtocolEnabled = true
+	require.NotNil(t, s.newConnectionAckState())
+}
+
+// Protocol enabled, but a worker that does not number its messages: it must get exactly the
+// previous behavior, nothing written back and no deadline.
 func TestAckState_StaysInertForAnOldWorker(t *testing.T) {
 	a := newAckState()
 	require.False(t, a.enabled)

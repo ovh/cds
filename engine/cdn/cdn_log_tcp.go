@@ -109,10 +109,10 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 
 	bufReader := bufio.NewReader(conn)
 
-	// Acknowledgement of the received lines, see cdn_log_tcp_ack.go. It stays inert until the
-	// client numbers its messages, so a client that does not know the protocol is read exactly
-	// as before.
-	acks := newAckState()
+	// Acknowledgement of the received lines, see cdn_log_tcp_ack.go. Nil when the protocol is
+	// disabled: the connection is then read exactly as it was before this existed, whatever the
+	// client sends. When enabled it still stays inert until the client numbers its messages.
+	acks := s.newConnectionAckState()
 
 	b := make([]byte, 1024)
 	currentBuffer := make([]byte, 0)
@@ -126,13 +126,13 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 
 		// Only a connection that asked for acks gets a read deadline: without one this read
 		// blocks until the client speaks, and the time based ack cadence could never fire.
-		if acks.enabled {
+		if acks.active() {
 			_ = conn.SetReadDeadline(time.Now().Add(acks.everyDuration))
 		}
 
 		n, err := bufReader.Read(b)
 		if err != nil {
-			if acks.enabled && isTimeout(err) {
+			if acks.active() && isTimeout(err) {
 				acks.flush(ctx, conn)
 				continue
 			}
@@ -170,9 +170,12 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 			}
 			// The sequence is read before the message is handled: an ack tells the client that
 			// the line reached the CDN, whether the intake keeps it or rejects it. A rejected
-			// line would be rejected again on a replay.
-			if seq, ok := extractAckSeq(currentBuffer); ok {
-				acks.observe(seq)
+			// line would be rejected again on a replay. Not even scanned when the protocol is
+			// disabled.
+			if acks != nil {
+				if seq, ok := extractAckSeq(currentBuffer); ok {
+					acks.observe(seq)
+				}
 			}
 
 			if err := handle(ctx, currentBuffer); err != nil {

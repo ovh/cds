@@ -342,4 +342,15 @@ type LogConfig struct {
 	StepLinesRateLimit  int64 `toml:"stepLinesRateLimit" default:"1800" comment:"Number of lines that a worker can send by seconds" json:"stepLinesRateLimit"`
 	NbJobLogsGoroutines int64 `toml:"nbJobLogsGoroutines" default:"10" comment:"Maximum number of job logs queues dequeued concurrently by a CDN instance" json:"nbJobLogsGoroutines"`
 	DequeueBatchSize    int   `toml:"dequeueBatchSize" default:"100" comment:"Maximum number of log messages read from a job logs queue in a single batch" json:"dequeueBatchSize"`
+	// AckProtocolEnabled drives the application level acknowledgement of the received log
+	// lines (see engine/cdn/cdn_log_tcp_ack.go). Off means strictly today's behavior: nothing
+	// is ever written back on a log connection, no read deadline is set on it, and a worker
+	// that numbers its messages simply never gets an ack. A missing key reads as false, which
+	// is what makes the default safe: the `default` struct tags are only applied when a
+	// configuration is generated, never when one is loaded.
+	//
+	// Turning it off while workers are connected costs exactly one reconnection wave and no
+	// more: a worker already armed sees the acks stop, declares the pipe dead after 10s,
+	// reconnects, replays what was not acknowledged, and that new connection never arms.
+	AckProtocolEnabled bool `toml:"ackProtocolEnabled" default:"false" comment:"Acknowledge the received log lines on the worker tcp connection, so that a worker can detect a broken pipe and replay what was not received (experimental)" json:"ackProtocolEnabled"`
 }
