@@ -90,6 +90,7 @@ describe('hookEventVerdict', () => {
         expect(v.detail).toBe('unable to get git info: resource not found');
         expect(v.steps[0].status).toBe('success');
         expect(v.steps[3].status).toBe('error');
+        expect(v.steps[3].description).toBe('unable to get git info: resource not found');
         expect(v.hint).toContain('vcs credentials');
     });
 
@@ -98,6 +99,20 @@ describe('hookEventVerdict', () => {
         expect(v.level).toBe('error');
         expect(v.label).toBe('unable to read hook payload');
         expect(v.steps[0].status).toBe('error');
+    });
+
+    it('blames the workflows, not the reception, when the event error only sums up their failures', () => {
+        const v = hookEventVerdict(event({ status: 'Error', event_name: WorkflowHookEventName.WorkflowHookEventNameScheduler,
+            last_error: 'All workflow hooks failed: unable to run workflow ngfw-cron: user steven.guiheux has no right to trigger a workflow',
+            workflows: [workflow('ngfw-cron', HookEventWorkflowStatus.Error, { error: 'unable to run workflow ngfw-cron: user steven.guiheux has no right to trigger a workflow' })] }), PROJECT, false);
+        expect(v.level).toBe('error');
+        expect(v.label).toBe('1 workflow did not start');
+        expect(v.detail).toBe('user steven.guiheux has no right to trigger a workflow');
+        expect(v.steps[3].description).toBe('');
+        expect(v.steps[0].status).toBe('success');
+        expect(v.steps[0].description).toBe('scheduler on refs/heads/master · 3f11f6f');
+        expect(v.steps[3].status).toBe('error');
+        expect(v.hint).toContain('trigger role');
     });
 
     it('warns when some workflows failed to start while others ran', () => {

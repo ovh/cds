@@ -64,6 +64,24 @@ nz-alert.events-error {
     vertical-align: top;
   }
 
+  .caret {
+    padding-right: 0;
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+  }
+
+  // Both icons sit on the centre of the first line of the row, the one the tag is on
+  .caret,
+  .status {
+    [nz-icon] {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+    }
+  }
+
   .level {
     font-size: 15px;
 
@@ -128,6 +146,33 @@ nz-alert.events-error {
 
     :host-context(.night) & { color: rgba(255, 255, 255, 0.65); }
   }
+}
+
+// An open line and its details read as one block: the same tint, a blue rule along their left edge, no line between them
+.row.open > td {
+  background-color: rgba(24, 144, 255, 0.07);
+  border-bottom-color: transparent;
+
+  :host-context(.night) & { background-color: rgba(24, 144, 255, 0.14); }
+}
+
+// A border rather than a shadow: it runs the full height of the cell, so the rule has no gap
+.row.open > td:first-child,
+.list ::ng-deep tr.details > td {
+  border-left: 3px solid #1890ff;
+  padding-left: 5px;
+}
+
+// Where two borders of different colours meet, the corner is split between them: no bottom border on
+// this cell, so the rule reaches the details in one piece
+.row.open > td:first-child {
+  border-bottom-width: 0;
+}
+
+.list ::ng-deep tr.details > td {
+  background-color: rgba(24, 144, 255, 0.07) !important;
+
+  :host-context(.night) & { background-color: rgba(24, 144, 255, 0.14) !important; }
 }
 
 .expanded {
@@ -214,7 +259,8 @@ nz-alert.events-error {
         :host-context(.night) & { color: rgba(255, 255, 255, 0.65); }
 
         &.Error,
-        &.Error .note { color: #ff4d4f; }
+        &.Error .note,
+        &.stuck .note { color: #ff4d4f; }
       }
 
       .note {

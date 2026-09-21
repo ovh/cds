@@ -105,8 +105,9 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
         : analysis
             ? { key: 'analysis', title: 'Analysis', status: analysisStatus(analysis.status, analysis.error), description: analysis.error ? `${analysis.status} · ${analysis.error}` : analysis.status }
             : { key: 'analysis', title: 'Analysis', status: !inProgress ? 'none' : ANALYZING.indexOf(event.status) !== -1 ? 'processing' : 'pending', description: inProgress ? 'Pending' : 'Not run for this event' };
-    // The page lists the workflows itself; the text only stands when there is none to list
-    const workflowsStep: VerdictStep = { key: 'workflows', title: 'Workflows', status: 'none', description: 'None evaluated' };
+    // The page lists the workflows itself: the step only speaks when there is none to list, or when
+    // something failed at the step itself, above the list
+    const workflowsStep: VerdictStep = { key: 'workflows', title: 'Workflows', status: 'none', description: workflows.length ? '' : inProgress ? 'Pending' : 'None evaluated' };
     const steps = [received, author, analysisStep, workflowsStep];
 
     if (inProgress) {
@@ -121,16 +122,18 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
         return { level: 'error', label: 'Analysis failed', detail: firstLine(analysisError) ?? 'Workflows of this ref were not evaluated', steps, hint: hintFor(analysisError || lastError) };
     }
 
-    // The hooks service gives up on an event with a reason, whether it marks it Error or Skipped
-    if (lastError && !analysis) {
-        const failure = EVENT_FAILURES.find(f => f.pattern.test(lastError));
-        const failed = steps[failure?.step ?? 0];
+    // The hooks service gives up on an event with a reason, whether it marks it Error or Skipped. A
+    // known one names the step that failed; any other only speaks for itself when the workflows do
+    // not: when all of them failed to start, it merely repeats their errors.
+    const failure = lastError && !analysis ? EVENT_FAILURES.find(f => f.pattern.test(lastError)) : null;
+    if (failure) {
+        const failed = steps[failure.step];
         failed.status = 'error';
-        failed.description = failed === received ? `${received.description} · ${lastError}` : lastError;
+        failed.description = lastError;
         if (failed === author && workflows.length === 0) {
             workflowsStep.description = 'Not evaluated: the author must be identified first.';
         }
-        return { level: 'error', label: failure?.label ?? firstLine(lastError) ?? 'Error', detail: lastError, steps, hint: hintFor(lastError) };
+        return { level: 'error', label: failure.label, detail: lastError, steps, hint: hintFor(lastError) };
     }
 
     if (notStarted.length > 0) {
@@ -140,6 +143,12 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
             ? `${notStarted.length} of ${notStarted.length + done.length} did not start`
             : `${notStarted.length} ${plural(notStarted.length, 'workflow')} did not start`;
         return { level: done.length > 0 ? 'warning' : 'error', label, detail: errors, steps, hint: hintFor(errors) };
+    }
+
+    if (lastError && !analysis) {
+        received.status = 'error';
+        received.description = `${received.description} · ${lastError}`;
+        return { level: 'error', label: firstLine(lastError) ?? 'Error', detail: lastError, steps, hint: hintFor(lastError) };
     }
 
     if (scheduled.length > 0) {

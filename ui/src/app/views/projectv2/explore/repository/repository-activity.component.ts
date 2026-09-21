@@ -4,6 +4,7 @@ import { lastValueFrom, Subscription } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { HookEventWorkflowStatus, RepositoryHookEvent, RepositoryHookWorkflow } from 'app/model/project.model';
 import { RepositoryAnalysis } from 'app/model/analysis.model';
+import { OperationStatus } from 'app/model/workflow-template.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { apiErrorMessage, RepositoryContextService } from './repository-context.service';
 import { cleanErrorMessage, eventAuthor, HookEventVerdict, hookEventVerdict } from './hook-event-verdict';
@@ -188,10 +189,20 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
         return w.run_id && w.project_key === this.ctx.project.key ? ['/project', w.project_key, 'run', w.run_id] : null;
     }
 
-    /** Why a workflow shows no run, in a few words; nothing for a triggered one. The red says a failed one did not start. */
-    workflowNote(w: RepositoryHookWorkflow): string {
+    /**
+     * Why a workflow shows no run, in a few words; nothing for a triggered one. The red says a failed
+     * one did not start. One still scheduled once the event is settled never will: its git information
+     * could not be read, or the event failed before reaching it.
+     */
+    workflowNote(row: ActivityRow, w: RepositoryHookWorkflow): string {
         switch (w.status) {
-            case HookEventWorkflowStatus.Scheduled: return 'scheduled';
+            case HookEventWorkflowStatus.Scheduled:
+                if (row.verdict.level === 'processing') {
+                    return 'scheduled';
+                }
+                return w.operation_status === OperationStatus.ERROR
+                    ? `git information unavailable${w.operation_error ? ': ' + cleanErrorMessage(w.operation_error) : ''}`
+                    : 'not started';
             case HookEventWorkflowStatus.Error: return cleanErrorMessage(w.error) || 'did not start';
             case HookEventWorkflowStatus.Skipped: return w.error ? `skipped: ${w.error}` : 'skipped';
             default: return null;

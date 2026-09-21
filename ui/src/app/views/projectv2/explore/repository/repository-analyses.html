@@ -16,8 +16,8 @@
       <nz-option nzValue="InProgress" nzLabel="In progress"></nz-option>
     </nz-select>
     <span class="spacer"></span>
-    <button nz-button nzType="text" nzSize="small" nz-tooltip nzTooltipTitle="Refresh" aria-label="Refresh analyses" (click)="refresh()">
-      <span nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></span>
+    <button nz-button nzSize="small" (click)="refresh()">
+      <span nz-icon nzType="reload" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></span>Refresh
     </button>
   </div>
 
@@ -26,6 +26,7 @@
       [nzNoResult]="noResult">
       <thead>
         <tr>
+          <th nzWidth="28px"></th>
           <th nzWidth="36px"></th>
           <th>Ref</th>
           <th>Outcome</th>
@@ -35,8 +36,9 @@
       </thead>
       <tbody>
         @for (row of table.data; track row.analysis.id) {
-          <tr class="row" [id]="'analysis-' + row.analysis.id" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
-            <td>
+          <tr class="row" [class.open]="isExpanded(row)" [id]="'analysis-' + row.analysis.id" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
+            <td class="caret"><span nz-icon [nzType]="isExpanded(row) ? 'down' : 'right'" nzTheme="outline" aria-hidden="true"></span></td>
+            <td class="status">
               <span nz-icon [nzType]="icon(row.outcome)" [nzSpin]="row.outcome === 'processing'" nzTheme="outline"
                 class="level {{row.outcome}}" role="img" [attr.aria-label]="row.analysis.status"></span>
             </td>
@@ -51,7 +53,7 @@
             <td class="user">{{row.requestedBy || '–'}}@if (row.manual) { <nz-tag class="manual" nz-tooltip nzTooltipTitle="Asked for by hand, not by a repository event">manual</nz-tag> }</td>
             <td class="when"><app-date-from-now [value]="row.analysis.created"></app-date-from-now></td>
           </tr>
-          <tr [nzExpand]="isExpanded(row)">
+          <tr class="details" [nzExpand]="isExpanded(row)">
             <!-- A collapsed expand row stays in the DOM, hidden: its content is only built once opened -->
             @if (isExpanded(row)) {
             <div class="expanded">

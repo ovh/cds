@@ -24,8 +24,8 @@
       }
     </nz-select>
     <span class="spacer"></span>
-    <button nz-button nzType="text" nzSize="small" nz-tooltip nzTooltipTitle="Refresh" aria-label="Refresh events" (click)="refresh()">
-      <span nz-icon nzType="sync" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></span>
+    <button nz-button nzSize="small" (click)="refresh()">
+      <span nz-icon nzType="reload" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></span>Refresh
     </button>
   </div>
 
@@ -34,6 +34,7 @@
       [nzNoResult]="noResult">
       <thead>
         <tr>
+          <th nzWidth="28px"></th>
           <th nzWidth="36px"></th>
           <th nzWidth="150px">Event</th>
           <th>Ref</th>
@@ -44,8 +45,9 @@
       </thead>
       <tbody>
         @for (row of table.data; track row.event.uuid) {
-          <tr class="row" [id]="'event-' + row.event.uuid" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
-            <td>
+          <tr class="row" [class.open]="isExpanded(row)" [id]="'event-' + row.event.uuid" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
+            <td class="caret"><span nz-icon [nzType]="isExpanded(row) ? 'down' : 'right'" nzTheme="outline" aria-hidden="true"></span></td>
+            <td class="status">
               <span nz-icon [nzType]="icon(row.verdict.level)" [nzSpin]="row.verdict.level === 'processing'" nzTheme="outline"
                 class="level {{row.verdict.level}}" role="img" [attr.aria-label]="row.verdict.level"></span>
             </td>
@@ -61,7 +63,7 @@
             <td class="user">{{author(row) || '–'}}</td>
             <td class="when"><app-date-from-now [value]="row.created"></app-date-from-now></td>
           </tr>
-          <tr [nzExpand]="isExpanded(row)">
+          <tr class="details" [nzExpand]="isExpanded(row)">
             <!-- A collapsed expand row stays in the DOM, hidden: its content is only built once opened -->
             @if (isExpanded(row)) {
             <div class="expanded">
@@ -92,15 +94,18 @@
                       }
                     </ng-template>
                     <ng-template #workflowsTpl>
+                      @if (step.description) {
+                        <div>{{step.description}}</div>
+                      }
                       <div class="workflows">
                         @for (w of row.event.workflows; track $index) {
-                          <div class="workflow {{w.status}}">
+                          <div class="workflow {{w.status}}" [class.stuck]="w.status === 'Scheduled' && row.verdict.level !== 'processing'">
                             @if (runLink(w); as link) {
                               <a [routerLink]="link" [title]="w.vcs_identifier + '/' + w.repository_identifier">{{w.workflow_name}} #{{w.run_number}}</a>
                             } @else {
                               <span [title]="w.vcs_identifier + '/' + w.repository_identifier">{{w.workflow_name}}@if (w.run_number) { #{{w.run_number}}}</span>
                             }
-                            @if (workflowNote(w); as note) { <span class="note"> {{note}}</span> }
+                            @if (workflowNote(row, w); as note) { <span class="note"> {{note}}</span> }
                           </div>
                         }
                       </div>

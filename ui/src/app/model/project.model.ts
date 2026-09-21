@@ -164,6 +164,8 @@ export class RepositoryHookWorkflow {
   error: string;
   /** Set for a scheduler, workflow-run or manual hook: the owner of the workflow, who the run is attributed to. */
   initiator: Initiator;
+  operation_status?: number;
+  operation_error?: string;
 }
 
 export class StartPurgeResponse {
