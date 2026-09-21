@@ -23,8 +23,6 @@ export interface RepositoryTab {
     count?: number;
     /** Something in the tab deserves a look: the last event in error, for Activity. */
     alert?: boolean;
-    /** The tab shows the selected ref, not the repository as a whole. */
-    refScoped?: boolean;
 }
 
 /**
@@ -105,7 +103,7 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
             return [activity];
         }
         const entityTabs: Array<RepositoryTab> = ENTITY_TYPE_ORDER
-            .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: entityTypeLabel(type), count: this.ctx.entityCount(type), refScoped: true }))
+            .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: entityTypeLabel(type), count: this.ctx.entityCount(type) }))
             // Jobs are seldom defined: their tab only shows up when the ref has some
             .filter(tab => tab.count > 0 || tab.path !== EntityTypeUtil.toURLParam(EntityType.Job));
         const tabs: Array<RepositoryTab> = [activity, { path: 'analyses', label: 'Analyses' }, ...entityTabs];

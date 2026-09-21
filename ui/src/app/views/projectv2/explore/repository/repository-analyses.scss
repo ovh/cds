@@ -28,7 +28,8 @@ nz-spin {
   }
 }
 
-.table {
+// Not named `table`: a global rule of that name frames every table it holds
+.list {
   flex: 1;
   min-height: 0;
   overflow-x: hidden;
@@ -113,6 +114,13 @@ nz-spin {
     white-space: nowrap;
 
     :host-context(.night) & { color: rgba(255, 255, 255, 0.65); }
+  }
+
+  .manual {
+    margin: 0 0 0 6px;
+    font-size: 11px;
+    line-height: 16px;
+    padding: 0 5px;
   }
 }
 

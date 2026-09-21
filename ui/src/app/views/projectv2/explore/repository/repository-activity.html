@@ -29,7 +29,7 @@
     </button>
   </div>
 
-  <div class="table">
+  <div class="list">
     <nz-table #table [nzData]="filtered" nzSize="small" nzTableLayout="fixed" [nzFrontPagination]="false" [nzShowPagination]="false" [nzLoading]="loading"
       [nzNoResult]="noResult">
       <thead>
@@ -38,7 +38,7 @@
           <th nzWidth="150px">Event</th>
           <th>Ref</th>
           <th>Outcome</th>
-          <th nzWidth="140px">User</th>
+          <th nzWidth="140px">Triggered by</th>
           <th nzWidth="110px" nzAlign="right">When</th>
         </tr>
       </thead>
@@ -58,7 +58,7 @@
               <nz-tag [nzColor]="color(row.verdict.level)">{{row.verdict.label}}</nz-tag>
               @if (row.verdict.detail) { <div class="detail" [title]="row.verdict.detail">{{row.verdict.detail}}</div> }
             </td>
-            <td class="user">{{author(row)}}</td>
+            <td class="user">{{author(row) || '–'}}</td>
             <td class="when"><app-date-from-now [value]="row.created"></app-date-from-now></td>
           </tr>
           <tr [nzExpand]="isExpanded(row)">

@@ -32,7 +32,8 @@ nz-alert.events-error {
   }
 }
 
-.table {
+// Not named `table`: a global rule of that name frames every table it holds
+.list {
   flex: 1;
   min-height: 0;
   overflow-x: hidden;

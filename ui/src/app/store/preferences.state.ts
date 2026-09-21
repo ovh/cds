@@ -23,8 +23,6 @@ export class PreferencesStateModel {
         [projectKey: string]: { [key: string]: string };
     };
     messages: { [projectKey: string]: boolean };
-    /** How the definition of an entity opens: as yaml, or as the graph of a workflow. */
-    entityDetailMode: 'yaml' | 'preview';
 }
 
 @State<PreferencesStateModel>({
@@ -38,8 +36,7 @@ export class PreferencesStateModel {
         projectRunFilters: {},
         projectTreeExpandState: {},
         projectRefSelectState: {},
-        messages: {},
-        entityDetailMode: 'yaml'
+        messages: {}
     }
 })
 @Injectable()
@@ -63,11 +60,6 @@ export class PreferencesState {
     @Selector()
     static resizing(state: PreferencesStateModel) {
         return state.panel.resizing;
-    }
-
-    @Selector()
-    static entityDetailMode(state: PreferencesStateModel): 'yaml' | 'preview' {
-        return state.entityDetailMode ?? 'yaml';
     }
 
     static selectProjectRunFilters(projectKey: string) {
@@ -216,10 +208,5 @@ export class PreferencesState {
         let messages = { ...state.messages };
         messages[action.payload.messageKey] = action.payload.value;
         ctx.setState({ ...state, messages });
-    }
-
-    @Action(actionPreferences.SaveEntityDetailMode)
-    saveEntityDetailMode(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SaveEntityDetailMode) {
-        ctx.setState({ ...ctx.getState(), entityDetailMode: action.payload.mode });
     }
 }

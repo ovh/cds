@@ -81,17 +81,6 @@ nz-alert.error {
     }
   }
 
-  // Marks the tabs that show the selected ref rather than the repository as a whole
-  .ref-icon {
-    margin-right: 6px;
-    font-size: 12px;
-    color: rgba(0, 0, 0, 0.45);
-
-    :host-context(.night) & {
-      color: rgba(255, 255, 255, 0.45);
-    }
-  }
-
   .alert-dot {
     display: inline-block;
     width: 6px;

@@ -63,8 +63,7 @@ nz-alert.error {
   margin: 12px;
 }
 
-.editor,
-.preview {
+.editor {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -78,11 +77,6 @@ nz-alert.error {
 }
 
 .editor {
-  // Kept mounted behind the preview: monaco is costly to build
-  &.hidden {
-    display: none;
-  }
-
   nz-code-editor {
     flex: 1;
     height: 100%;
@@ -90,12 +84,5 @@ nz-alert.error {
     :host-context(.night) & {
       background-color: #1e1e1e;
     }
-  }
-}
-
-.preview {
-  app-graph {
-    flex: 1;
-    overflow: auto;
   }
 }

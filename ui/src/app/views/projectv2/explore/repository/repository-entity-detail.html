@@ -2,9 +2,6 @@
   <span class="name">{{entity.name}}</span>
   <span class="path">{{entity.file_path}}</span>
   <span class="spacer"></span>
-  @if (canPreview && content) {
-    <nz-segmented nzSize="small" [nzOptions]="modes" [ngModel]="mode" (ngModelChange)="changeMode($event)"></nz-segmented>
-  }
   @if (isWorkflow && content) {
     <button nz-button nzType="primary" nzSize="small" (click)="openRunStartDrawer()">
       <span nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>Run
@@ -23,13 +20,8 @@
   <nz-alert class="error" nzType="error" nzShowIcon nzMessage="Unable to read this entity" [nzDescription]="error"></nz-alert>
 }
 @if (content) {
-  <div class="editor" [class.loading]="loading" [class.hidden]="showPreview">
+  <div class="editor" [class.loading]="loading">
     <nz-code-editor #editor [ngModel]="content.data" [nzEditorOption]="editorOption"
       (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
   </div>
-  @if (showPreview) {
-    <div class="preview" [class.loading]="loading">
-      <app-graph [navigationDisabled]="true" [workflow]="content.data"></app-graph>
-    </div>
-  }
 }

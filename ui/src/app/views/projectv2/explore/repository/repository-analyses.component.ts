@@ -17,8 +17,8 @@ interface AnalysisRow {
     registered: number;
     rejected: number;
     requestedBy: string;
-    /** `event` when a repository event started it, `manual` otherwise. */
-    origin: string;
+    /** Asked for by hand rather than started by a repository event. */
+    manual: boolean;
     outcome: Tone;
     /** The outcome in a few words, and what explains it when something went wrong. */
     label: string;
@@ -104,7 +104,7 @@ export class ProjectV2RepositoryAnalysesComponent implements OnInit, OnDestroy {
                     registered,
                     rejected,
                     requestedBy: this.requestedBy(analysis),
-                    origin: analysis.data?.hook_event_uuid ? 'event' : 'manual',
+                    manual: !analysis.data?.hook_event_uuid,
                     outcome,
                     label: this.label(analysis, outcome, registered, rejected),
                     detail: outcome === 'success' ? null : analysis.data?.error || null
