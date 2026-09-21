@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdn"
+	"github.com/ovh/cds/sdk/telemetry"
 )
 
 // storeLogsCache memoizes item and item unit lookups for the lifetime of a dequeued batch:
@@ -134,6 +135,9 @@ func (s *Service) storeLogsWithCache(ctx context.Context, c *storeLogsCache, ite
 		if err := bufferUnit.Add(*iu, uint(countLine), uint(ms), content); err != nil {
 			return err
 		}
+		// Only lines actually written in the buffer are counted: cdn/dequeue/messages counts
+		// the dequeue batches, not what reached the buffer.
+		telemetry.Record(ctx, s.Metrics.logStoredCount, 1)
 	}
 
 	// Send an event in WS broker to refresh streams on current item
@@ -153,6 +157,17 @@ func (s *Service) storeLogsWithCache(ctx context.Context, c *storeLogsCache, ite
 		if err := tx.Commit(); err != nil {
 			return sdk.WithStack(err)
 		}
+
+		// countLine was read before the last line was added: it is the number of lines stored
+		// for that item, at no extra cost. Logged so that the worker side of the accounting can
+		// be joined with this one, per job, in the log search engine.
+		storedLines := countLine
+		if !emptyLastLogLine {
+			storedLines++
+		}
+		// Both job identifiers are always logged: a v1 signature carries JobID, a v2 one
+		// RunJobID, and the joining field must be found at a fixed place in the message.
+		log.Info(ctx, "log accounting: item completed item_id=%s run_job_id=%s job_id=%d lines=%d", it.ID, signature.RunJobID, signature.JobID, storedLines)
 
 		// completeItem changed the item status in database: evict the cached entries so a
 		// late line for this item reloads a fresh state and gets skipped as completed.

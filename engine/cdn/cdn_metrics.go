@@ -22,6 +22,7 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	tagItemType := telemetry.MustNewKey(telemetry.TagType)
 	tagStatus := telemetry.MustNewKey(telemetry.TagStatus)
 	tagPercentil := telemetry.MustNewKey(telemetry.TagPercentil)
+	tagReason := telemetry.MustNewKey(telemetry.TagReason)
 
 	s.RegisterCommonMetricsView(ctx)
 
@@ -36,6 +37,19 @@ func (s *Service) initMetrics(ctx context.Context) error {
 
 	s.Metrics.tcpServerServiceLogCount = stats.Int64("cdn/tcp/service_log_count", "number of service log received", stats.UnitDimensionless)
 	tcpServerServiceLogCountView := telemetry.NewViewCount(s.Metrics.tcpServerServiceLogCount.Name(), s.Metrics.tcpServerServiceLogCount, []tag.Key{tagServiceName, tagServiceType})
+
+	// Accounting of the log lines: received (tcpServerStepLogCount + tcpServerServiceLogCount)
+	// = accepted + rejected, then accepted = stored once dequeued. Without the reason dimension
+	// on the rejections, a worker sending an unverifiable signature and a worker unknown from
+	// the API are indistinguishable outside of Graylog.
+	s.Metrics.tcpServerLogAcceptedCount = stats.Int64("cdn/tcp/log_accepted_count", "number of log lines enqueued into the incoming queue", stats.UnitDimensionless)
+	tcpServerLogAcceptedCountView := telemetry.NewViewCount(s.Metrics.tcpServerLogAcceptedCount.Name(), s.Metrics.tcpServerLogAcceptedCount, []tag.Key{tagServiceName, tagServiceType})
+
+	s.Metrics.tcpServerLogRejectedCount = stats.Int64("cdn/tcp/log_rejected_count", "number of log lines rejected by reason", stats.UnitDimensionless)
+	tcpServerLogRejectedCountView := telemetry.NewViewCount(s.Metrics.tcpServerLogRejectedCount.Name(), s.Metrics.tcpServerLogRejectedCount, []tag.Key{tagServiceName, tagServiceType, tagReason})
+
+	s.Metrics.logStoredCount = stats.Int64("cdn/buffer/log_stored_count", "number of log lines written into the buffer", stats.UnitDimensionless)
+	logStoredCountView := telemetry.NewViewCount(s.Metrics.logStoredCount.Name(), s.Metrics.logStoredCount, []tag.Key{tagServiceName, tagServiceType})
 
 	s.Metrics.dequeuedJobQueues = stats.Int64("cdn/dequeue/job_queues", "number of job logs queues currently claimed by this instance", stats.UnitDimensionless)
 	dequeuedJobQueuesView := telemetry.NewViewLast(s.Metrics.dequeuedJobQueues.Name(), s.Metrics.dequeuedJobQueues, []tag.Key{tagServiceName, tagServiceType})
@@ -81,6 +95,9 @@ func (s *Service) initMetrics(ctx context.Context) error {
 		tcpServerHitsCountView,
 		tcpServerStepLogCountView,
 		tcpServerServiceLogCountView,
+		tcpServerLogAcceptedCountView,
+		tcpServerLogRejectedCountView,
+		logStoredCountView,
 		dequeuedJobQueuesView,
 		dequeuedMessagesView,
 		itemCompletedByGCCountView,

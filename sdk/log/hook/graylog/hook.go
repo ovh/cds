@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/eapache/go-resiliency/retrier"
@@ -82,7 +83,26 @@ type Hook struct {
 	throttleTicker *time.Ticker
 	throttlePolicy ThrottlePolicy
 
+	// Accounting of the messages handled by the hook: what enters it, what it drops itself and
+	// what it fails to write. A log line missing at the other end of the pipe is either counted
+	// here or lost further away, which is what tells the worker apart from the CDN.
+	emitted     atomic.Uint64
+	dropped     atomic.Uint64
+	writeErrors atomic.Uint64
+
 	stopChan chan bool
+}
+
+// Counters returns the number of messages that entered the hook, the number of messages dropped
+// because the trailing buffer was full, and the number of messages given up after all the write
+// retries.
+func (hook *Hook) Counters() (emitted uint64, dropped uint64, writeErrors uint64) {
+	return hook.emitted.Load(), hook.dropped.Load(), hook.writeErrors.Load()
+}
+
+// countDropped is called by the throttle policy when it cannot keep a message.
+func (hook *Hook) countDropped() {
+	hook.dropped.Add(1)
 }
 
 // NewHook creates a hook to be added to an instance of logger.
@@ -195,6 +215,7 @@ func (hook *Hook) IsThrottled() bool {
 }
 
 func (hook *Hook) FireMessage(msg Message) error {
+	hook.emitted.Add(1)
 	switch {
 	case !hook.IsThrottled() && !hook.throttlePolicy.PendingTrailingMessages():
 		hook.throttleStack.Push(msg)
@@ -221,6 +242,7 @@ func (hook *Hook) send(m Message) {
 	})
 	// if after all the retries we still cannot write the message, just skip
 	if err != nil {
+		hook.writeErrors.Add(1)
 		fmt.Fprintln(os.Stderr, "[graylog] could not write message to Graylog after several retries:", err)
 	}
 }

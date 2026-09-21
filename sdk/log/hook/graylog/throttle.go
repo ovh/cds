@@ -30,10 +30,12 @@ var _ ThrottlePolicy = new(DefaultThrottlePolicy)
 type DefaultThrottlePolicy struct {
 	mutex  sync.Mutex
 	buffer chan Message
+	hook   *Hook
 }
 
 func (d *DefaultThrottlePolicy) Init(hook *Hook) {
 	d.buffer = make(chan Message, BufSize)
+	d.hook = hook
 	go func() {
 		for {
 			time.Sleep(1 * time.Millisecond)
@@ -56,6 +58,9 @@ func (d *DefaultThrottlePolicy) HandleTrailingMessage(m Message) {
 	select {
 	case d.buffer <- m:
 	default:
+		if d.hook != nil {
+			d.hook.countDropped()
+		}
 		fmt.Fprintf(os.Stderr, "[graylog] message dropped\n")
 	}
 }

@@ -45,21 +45,24 @@ type Service struct {
 	dequeuingJobQueues  atomic.Int64 // job log queues currently claimed by this instance
 	dequeueOwnerID      string       // unique instance id stored as heartbeat value
 	Metrics             struct {
-		tcpServerErrorsCount     *stats.Int64Measure
-		tcpServerHitsCount       *stats.Int64Measure
-		tcpServerStepLogCount    *stats.Int64Measure
-		tcpServerServiceLogCount *stats.Int64Measure
-		dequeuedJobQueues        *stats.Int64Measure
-		dequeuedMessages         *stats.Int64Measure
-		itemCompletedByGCCount   *stats.Int64Measure
-		itemInDatabaseCount      *stats.Int64Measure
-		itemPerStorageUnitCount  *stats.Int64Measure
-		ItemSize                 *stats.Int64Measure
-		ItemToSyncCount          *stats.Int64Measure
-		WSClients                *stats.Int64Measure
-		WSEvents                 *stats.Int64Measure
-		ItemToDelete             *stats.Int64Measure
-		ItemUnitToDelete         *stats.Int64Measure
+		tcpServerErrorsCount      *stats.Int64Measure
+		tcpServerHitsCount        *stats.Int64Measure
+		tcpServerStepLogCount     *stats.Int64Measure
+		tcpServerServiceLogCount  *stats.Int64Measure
+		tcpServerLogAcceptedCount *stats.Int64Measure
+		tcpServerLogRejectedCount *stats.Int64Measure
+		logStoredCount            *stats.Int64Measure
+		dequeuedJobQueues         *stats.Int64Measure
+		dequeuedMessages          *stats.Int64Measure
+		itemCompletedByGCCount    *stats.Int64Measure
+		itemInDatabaseCount       *stats.Int64Measure
+		itemPerStorageUnitCount   *stats.Int64Measure
+		ItemSize                  *stats.Int64Measure
+		ItemToSyncCount           *stats.Int64Measure
+		WSClients                 *stats.Int64Measure
+		WSEvents                  *stats.Int64Measure
+		ItemToDelete              *stats.Int64Measure
+		ItemUnitToDelete          *stats.Int64Measure
 	}
 	storageUnitLags          sync.Map
 	storageUnitPreviousLags  sync.Map
