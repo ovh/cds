@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
@@ -108,6 +109,11 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 
 	bufReader := bufio.NewReader(conn)
 
+	// Acknowledgement of the received lines, see cdn_log_tcp_ack.go. It stays inert until the
+	// client numbers its messages, so a client that does not know the protocol is read exactly
+	// as before.
+	acks := newAckState()
+
 	b := make([]byte, 1024)
 	currentBuffer := make([]byte, 0)
 	var dropped int64 // bytes discarded from the current oversized message, 0 while accumulating
@@ -118,8 +124,18 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 			continue
 		}
 
+		// Only a connection that asked for acks gets a read deadline: without one this read
+		// blocks until the client speaks, and the time based ack cadence could never fire.
+		if acks.enabled {
+			_ = conn.SetReadDeadline(time.Now().Add(acks.everyDuration))
+		}
+
 		n, err := bufReader.Read(b)
 		if err != nil {
+			if acks.enabled && isTimeout(err) {
+				acks.flush(ctx, conn)
+				continue
+			}
 			log.Debug(ctx, "client left: (%v) %v", conn.RemoteAddr(), err)
 			return
 		}
@@ -152,11 +168,19 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				continue
 			}
+			// The sequence is read before the message is handled: an ack tells the client that
+			// the line reached the CDN, whether the intake keeps it or rejects it. A rejected
+			// line would be rejected again on a replay.
+			if seq, ok := extractAckSeq(currentBuffer); ok {
+				acks.observe(seq)
+			}
+
 			if err := handle(ctx, currentBuffer); err != nil {
 				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
 				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 			}
 			currentBuffer = make([]byte, 0)
+			acks.flush(ctx, conn)
 		}
 	}
 }
