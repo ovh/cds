@@ -16,13 +16,13 @@
   }
 } @else {
   <div class="toolbar">
-    <nz-segmented nzSize="small" [nzOptions]="scopes" [ngModel]="problemsOnly ? 'problems' : 'all'" (ngModelChange)="changeScope($event)"></nz-segmented>
     <nz-select nzSize="small" nzAllowClear nzPlaceHolder="Event: any" [ngModel]="eventFilter" (ngModelChange)="changeEventFilter($event)"
       [nzDropdownMatchSelectWidth]="false" aria-label="Filter by event">
       @for (name of eventNames; track name) {
         <nz-option [nzValue]="name" [nzLabel]="name"></nz-option>
       }
     </nz-select>
+    <label nz-checkbox [ngModel]="problemsOnly" (ngModelChange)="changeProblemsOnly($event)">Problems only</label>
     <span class="spacer"></span>
     <button nz-button nzSize="small" (click)="refresh()">
       <span nz-icon nzType="reload" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></span>Refresh

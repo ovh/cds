@@ -75,14 +75,17 @@
     }
 
     &.repository {
-        padding-left: 12px;
+        padding-left: 22px;
         text-decoration: none;
 
+        // The same mark as a selected entity: a light blue and a rule along the left edge
         &.active {
-            background-color: #bae7ff;
+            background-color: #e6f7ff;
+            box-shadow: inset 3px 0 0 #1890ff;
 
             :host-context(.night) & {
-                background-color: #11263c;
+                background-color: #112a45;
+                box-shadow: inset 3px 0 0 #177ddc;
             }
         }
 
@@ -93,15 +96,10 @@
     }
 }
 
+// Repositories are indented by their own padding, so that a selected one is marked from the very edge
 .tree-node-content {
     display: flex;
     flex-direction: column;
-    margin-left: 10px;
-    border-left: 2px dotted #f5f5f5;
-
-    :host-context(.night) & {
-        border-color: rgba(255, 255, 255, 0.08);
-    }
 
     nz-alert {
         margin: 10px;

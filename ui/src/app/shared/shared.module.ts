@@ -239,7 +239,6 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
 import { NzSplitterModule } from 'ng-zorro-antd/splitter';
-import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { CardComponent } from 'app/shared/card/card.component';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
@@ -415,7 +414,6 @@ const icons: IconDefinition[] = [
         NzProgressModule,
         NzRadioModule,
         NzResultModule,
-        NzSegmentedModule,
         NzSelectModule,
         NzSpaceModule,
         NzSpinModule,
@@ -626,7 +624,6 @@ const icons: IconDefinition[] = [
         NzProgressModule,
         NzRadioModule,
         NzResultModule,
-        NzSegmentedModule,
         NzSelectModule,
         NzSpaceModule,
         NzSpinModule,

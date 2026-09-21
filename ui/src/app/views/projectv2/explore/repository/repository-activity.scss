@@ -27,6 +27,11 @@ nz-alert.events-error {
     min-width: 140px;
   }
 
+  [nz-checkbox] {
+    margin-left: 4px;
+    font-size: 13px;
+  }
+
   .spacer {
     flex: 1;
   }
@@ -148,12 +153,13 @@ nz-alert.events-error {
   }
 }
 
-// An open line and its details read as one block: the same tint, a blue rule along their left edge, no line between them
+// An open line and its details read as one block, marked like a selected entity: the same light blue,
+// a blue rule along their left edge, no line between them
 .row.open > td {
-  background-color: rgba(24, 144, 255, 0.07);
+  background-color: #e6f7ff;
   border-bottom-color: transparent;
 
-  :host-context(.night) & { background-color: rgba(24, 144, 255, 0.14); }
+  :host-context(.night) & { background-color: #112a45; }
 }
 
 // A border rather than a shadow: it runs the full height of the cell, so the rule has no gap
@@ -161,6 +167,8 @@ nz-alert.events-error {
 .list ::ng-deep tr.details > td {
   border-left: 3px solid #1890ff;
   padding-left: 5px;
+
+  :host-context(.night) & { border-left-color: #177ddc; }
 }
 
 // Where two borders of different colours meet, the corner is split between them: no bottom border on
@@ -170,9 +178,9 @@ nz-alert.events-error {
 }
 
 .list ::ng-deep tr.details > td {
-  background-color: rgba(24, 144, 255, 0.07) !important;
+  background-color: #e6f7ff !important;
 
-  :host-context(.night) & { background-color: rgba(24, 144, 255, 0.14) !important; }
+  :host-context(.night) & { background-color: #112a45 !important; }
 }
 
 .expanded {

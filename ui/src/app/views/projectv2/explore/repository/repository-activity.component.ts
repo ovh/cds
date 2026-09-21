@@ -46,7 +46,6 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
     analyses = new Map<string, RepositoryAnalysis | 'loading' | 'error'>();
     loading: boolean = false;
     distant: boolean = false;
-    readonly scopes = [{ label: 'All', value: 'all' }, { label: 'Problems only', value: 'problems' }];
     readonly icon = toneIcon;
     readonly color = toneColor;
 
@@ -117,8 +116,8 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
             .filter(r => !this.eventFilter || String(r.event.event_name) === this.eventFilter);
     }
 
-    changeScope(scope: string): void {
-        this.problemsOnly = scope === 'problems';
+    changeProblemsOnly(problemsOnly: boolean): void {
+        this.problemsOnly = problemsOnly;
         this.applyFilters();
         this._cd.markForCheck();
     }
