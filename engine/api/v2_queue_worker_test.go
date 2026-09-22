@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http/httptest"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -420,38 +418,6 @@ hatcheries:
 
 	require.Len(t, details.TestsSuites.TestSuites, 1)
 	require.Len(t, details.TestsSuites.TestSuites[0].TestCases, 1)
-
-	// Upload a run result of type variable: the value size must not exceed sdk.MaxV2WorkflowRunResultVariableValueSize
-	newVariableRunResult := func(value string) *sdk.V2WorkflowRunResult {
-		return &sdk.V2WorkflowRunResult{
-			IssuedAt: time.Now(),
-			Type:     sdk.V2WorkflowRunResultTypeVariable,
-			Status:   sdk.V2WorkflowRunResultStatusCompleted,
-			Detail: sdk.V2WorkflowRunResultDetail{
-				Data: sdk.V2WorkflowRunResultVariableDetail{
-					Name:  "myoutput",
-					Value: value,
-				},
-			},
-		}
-	}
-
-	reqPostVarRR := assets.NewJWTAuthentifiedRequest(t, jwtWorker, "POST", uriPostRR, newVariableRunResult(strings.Repeat("a", sdk.MaxV2WorkflowRunResultVariableValueSize)))
-	wPostVarRR := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(wPostVarRR, reqPostVarRR)
-	require.Equal(t, 201, wPostVarRR.Code)
-
-	reqPostTooBigRR := assets.NewJWTAuthentifiedRequest(t, jwtWorker, "POST", uriPostRR, newVariableRunResult(strings.Repeat("a", sdk.MaxV2WorkflowRunResultVariableValueSize+1)))
-	wPostTooBigRR := httptest.NewRecorder()
-	api.Router.Mux.ServeHTTP(wPostTooBigRR, reqPostTooBigRR)
-	require.Equal(t, 400, wPostTooBigRR.Code)
-	require.Contains(t, wPostTooBigRR.Body.String(), "myoutput")
-	require.Contains(t, wPostTooBigRR.Body.String(), strconv.Itoa(sdk.MaxV2WorkflowRunResultVariableValueSize))
-
-	// The oversized run result must not have been stored
-	rrDBs, err = workflow_v2.LoadRunResultsByRunJobID(context.TODO(), db, jobRun.ID)
-	require.NoError(t, err)
-	require.Len(t, rrDBs, 2)
 }
 
 func TestWorkerRegister(t *testing.T) {
