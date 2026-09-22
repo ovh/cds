@@ -290,6 +290,15 @@ func LoadAllItemUnitsByItemIDs(ctx context.Context, m *gorpmapper.Mapper, db gor
 	return allItemUnits, sdk.WithStack(err)
 }
 
+// LoadAllItemUnitsByItemIDIncludingDeleted loads the storage units of an item, including the
+// ones marked for deletion, for read only inspection: a unit on its way out is exactly what
+// explains an item that can no longer be read.
+func LoadAllItemUnitsByItemIDIncludingDeleted(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, itemID string, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItemUnit, error) {
+	query := gorpmapper.NewQuery("SELECT * FROM storage_unit_item WHERE item_id = $1").Args(itemID)
+	allItemUnits, err := getAllItemUnits(ctx, m, db, query, opts...)
+	return allItemUnits, sdk.WithStack(err)
+}
+
 func getAllItemUnits(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, query gorpmapper.Query, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItemUnit, error) {
 	var res []itemUnitDB
 	if err := m.GetAll(ctx, db, query, &res, opts...); err != nil {

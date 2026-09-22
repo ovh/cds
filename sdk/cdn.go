@@ -531,3 +531,67 @@ type CDNDuplicateItemRequest struct {
 	FromJob string `json:"from_job"`
 	ToJob   string `json:"to_job"`
 }
+
+// CDNDebugJob is everything the CDN knows about the logs of one job: what is still waiting in
+// the intake, what was stored, and where. It never carries any log content, only keys, counters
+// and statuses.
+type CDNDebugJob struct {
+	JobID          string             `json:"job_id"`
+	Intake         CDNDebugJobIntake  `json:"intake"`
+	Dequeue        CDNDebugJobDequeue `json:"dequeue"`
+	Items          []CDNDebugJobItem  `json:"items"`
+	ItemsTruncated bool               `json:"items_truncated"`
+	Diagnosis      []string           `json:"diagnosis"`
+	Errors         []string           `json:"errors,omitempty"`
+}
+
+// CDNDebugJobIntake is the state of the keys the intake writes for a job, before anything is
+// stored. The step max size is reported next to the current size because the intake silently
+// drops every non terminated line once the second reaches the first.
+type CDNDebugJobIntake struct {
+	IncomingQueueKey    string `json:"incoming_queue_key"`
+	IncomingQueueExists bool   `json:"incoming_queue_exists"`
+	IncomingQueueLength int    `json:"incoming_queue_length"`
+
+	SizeKey     string `json:"size_key"`
+	SizeExists  bool   `json:"size_exists"`
+	SizeValue   int64  `json:"size_value"`
+	StepMaxSize int64  `json:"step_max_size"`
+
+	HeartbeatKey    string `json:"heartbeat_key"`
+	HeartbeatExists bool   `json:"heartbeat_exists"`
+	HeartbeatOwner  string `json:"heartbeat_owner"`
+}
+
+// CDNDebugJobDequeue is the dequeue state of the instance that answered, not of the whole
+// service: each instance claims its own queues.
+type CDNDebugJobDequeue struct {
+	ClaimedQueues int64 `json:"claimed_queues"`
+	MaxQueues     int64 `json:"max_queues"`
+}
+
+// CDNDebugJobItem is one item stored for the job. BufferLines is the number of lines the log
+// buffer currently holds for it, and is absent when the item is not a log or when the buffer no
+// longer holds it.
+type CDNDebugJobItem struct {
+	ID           string                `json:"id"`
+	APIRefHash   string                `json:"api_ref_hash"`
+	Type         CDNItemType           `json:"type"`
+	Status       string                `json:"status"`
+	Size         int64                 `json:"size"`
+	Created      time.Time             `json:"created"`
+	LastModified time.Time             `json:"last_modified"`
+	StepOrder    int64                 `json:"step_order"`
+	StepName     string                `json:"step_name,omitempty"`
+	ToDelete     bool                  `json:"to_delete"`
+	BufferLines  *int                  `json:"buffer_lines,omitempty"`
+	Units        []CDNDebugJobItemUnit `json:"units"`
+}
+
+type CDNDebugJobItemUnit struct {
+	ID           string    `json:"id"`
+	UnitID       string    `json:"unit_id"`
+	UnitName     string    `json:"unit_name"`
+	ToDelete     bool      `json:"to_delete"`
+	LastModified time.Time `json:"last_modified"`
+}

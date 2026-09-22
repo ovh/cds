@@ -204,6 +204,22 @@ func LoadByRunJobID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecut
 	return getItems(ctx, m, db, query, opts...)
 }
 
+// LoadByJobIdentifier loads the items of a job whatever its generation: the identifier is
+// matched against both api ref fields, the string one and the numeric one. Unlike the loaders
+// above it does NOT filter out the items marked for deletion, and it is limited: it exists for
+// read only inspection, where an item on its way out is precisely what explains missing logs.
+func LoadByJobIdentifier(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, jobIdentifier string, limit int, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT *
+		FROM item
+		WHERE api_ref->>'run_job_id' = $1
+		OR api_ref->>'node_run_job_id' = $1
+		ORDER BY created DESC
+		LIMIT $2
+	`).Args(jobIdentifier, limit)
+	return getItems(ctx, m, db, query, opts...)
+}
+
 // LoadByAPIRefHashAndType load an item by his job id, step order and type
 func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, itemType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`
