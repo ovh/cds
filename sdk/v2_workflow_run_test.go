@@ -72,7 +72,7 @@ func TestV2WorkflowRunResultVariableDetail_CheckValueSize(t *testing.T) {
 	require.Contains(t, err.Error(), "foo")
 	require.Contains(t, err.Error(), strconv.Itoa(MaxV2WorkflowRunResultVariableValueSize))
 
-	// The limit is a number of bytes, not a number of runes: 513 two-bytes runes are 1026 bytes
+	// The limit is a number of bytes, not a number of runes: 2561 two-bytes runes are 5122 bytes
 	multibyte := V2WorkflowRunResultVariableDetail{Name: "foo", Value: strings.Repeat("é", MaxV2WorkflowRunResultVariableValueSize/2+1)}
 	require.Error(t, multibyte.CheckValueSize())
 }
