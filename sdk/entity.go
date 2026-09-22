@@ -46,18 +46,19 @@ type ShortEntity struct {
 }
 
 type Entity struct {
-	ID                  string    `json:"id" db:"id"`
-	ProjectKey          string    `json:"project_key" db:"project_key"`
-	ProjectRepositoryID string    `json:"project_repository_id" db:"project_repository_id"`
-	Type                string    `json:"type" db:"type"`
-	FilePath            string    `json:"file_path" db:"file_path"`
-	Name                string    `json:"name" db:"name"`
-	Commit              string    `json:"commit" db:"commit"`
-	Ref                 string    `json:"ref" db:"ref"`
-	LastUpdate          time.Time `json:"last_update" db:"last_update"`
-	Data                string    `json:"data" db:"data"`
-	UserID              *string   `json:"user_id" db:"user_id"`
-	Head                bool      `json:"head" db:"head"`
+	ID                  string       `json:"id" db:"id"`
+	ProjectKey          string       `json:"project_key" db:"project_key"`
+	ProjectRepositoryID string       `json:"project_repository_id" db:"project_repository_id"`
+	Type                string       `json:"type" db:"type"`
+	FilePath            string       `json:"file_path" db:"file_path"`
+	Name                string       `json:"name" db:"name"`
+	Commit              string       `json:"commit" db:"commit"`
+	Ref                 string       `json:"ref" db:"ref"`
+	LastUpdate          time.Time    `json:"last_update" db:"last_update"`
+	Data                string       `json:"data" db:"data"`
+	DeprecatedUserID    *string      `json:"user_id" db:"user_id"` // Deprecated
+	Head                bool         `json:"head" db:"head"`
+	Initiator           *V2Initiator `json:"initiator,omitempty" db:"initiator"`
 }
 
 type EntityWithObject struct {

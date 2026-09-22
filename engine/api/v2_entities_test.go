@@ -94,6 +94,7 @@ func TestGetEntitiesHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Name:                "model1",
 		Commit:              "123456",
 		Head:                true,

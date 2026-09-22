@@ -54,6 +54,7 @@ func TestGetWorkerModelV2Handler(t *testing.T) {
 	require.NoError(t, err)
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Name:                "model1",
 		Commit:              "123456",
 		Ref:                 "refs/heads/master",
@@ -144,6 +145,7 @@ func TestGetV2WorkerModelsHandler(t *testing.T) {
 	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
 
 	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Name:                "tmpl1",
 		Commit:              "123456",
 		Ref:                 "refs/heads/master",
@@ -162,6 +164,7 @@ spec:
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
 	e2 := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: u.ID, User: u.Initiator()},
 		Name:                "tmpl2",
 		Commit:              "123456",
 		Ref:                 "refs/heads/openstack",

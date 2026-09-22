@@ -33,6 +33,7 @@ func getEntity(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Query
 		log.Error(ctx, "entity %d / %s data corrupted", res.ID, res.Name)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
+	sanitizeLoadedOwner(&res.Entity)
 	return &res.Entity, nil
 }
 
@@ -51,18 +52,43 @@ func getEntities(ctx context.Context, db gorp.SqlExecutor, query gorpmapping.Que
 			log.Error(ctx, "entity %d / %s data corrupted", r.ID, r.Name)
 			continue
 		}
+		sanitizeLoadedOwner(&r.Entity)
 		entities = append(entities, r.Entity)
 	}
 	return entities, nil
 }
 
+// sanitizeLoadedOwner never trusts the stored admin MFA flag and mirrors the owner into user_id
+func sanitizeLoadedOwner(e *sdk.Entity) {
+	if e.Initiator == nil {
+		return
+	}
+	normalizeOwner(e)
+}
+
+// normalizeOwner strips the admin MFA flag, mirrors the owner into user_id and guarantees a user snapshot
+// object for a CDS user, possibly empty, so Username() never dereferences nil on an entity owner.
+func normalizeOwner(e *sdk.Entity) {
+	e.Initiator.IsAdminWithMFA = false
+	if e.Initiator.UserID == "" {
+		e.DeprecatedUserID = nil
+		return
+	}
+	if e.Initiator.User == nil {
+		e.Initiator.User = &sdk.V2InitiatorUser{}
+	}
+	userID := e.Initiator.UserID
+	e.DeprecatedUserID = &userID
+}
+
 func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
+	if e.Initiator == nil {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "entity %s of type %s has no owner", e.Name, e.Type)
+	}
 	if e.ID == "" {
 		e.ID = sdk.UUID()
 	}
-	if e.UserID != nil && *e.UserID == "" {
-		e.UserID = nil
-	}
+	normalizeOwner(e)
 
 	e.LastUpdate = time.Now()
 	dbData := &dbEntity{Entity: *e}
@@ -75,8 +101,9 @@ func Insert(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 
 func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
 	e.LastUpdate = time.Now()
-	if e.UserID != nil && *e.UserID == "" {
-		e.UserID = nil
+	// A nil owner means the row is not migrated yet: it stays so until the migration completes it
+	if e.Initiator != nil {
+		normalizeOwner(e)
 	}
 	dbData := &dbEntity{Entity: *e}
 	if err := gorpmapping.UpdateAndSign(ctx, db, dbData); err != nil {
@@ -86,6 +113,20 @@ func Update(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity)
 	return nil
 }
 
+// UpdateOwner persists only the owner of an entity, mirrored into user_id, and re-signs the row. Unlike
+// Update it writes neither the data blob nor last_update, so giving an owner to a historical row does not
+// make it look freshly written.
+func UpdateOwner(ctx context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
+	if e.Initiator == nil {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "entity %s of type %s has no owner", e.Name, e.Type)
+	}
+	normalizeOwner(e)
+	dbData := &dbEntity{Entity: *e}
+	return gorpmapping.UpdateColumnsAndSign(ctx, db, dbData, func(cm *gorp.ColumnMap) bool {
+		return cm.ColumnName == "initiator" || cm.ColumnName == "user_id"
+	})
+}
+
 func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) error {
 	return gorpmapping.Delete(db, &dbEntity{Entity: *e})
 }
@@ -93,6 +134,13 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, e *sdk.Entity) e
 func LoadByID(ctx context.Context, db gorp.SqlExecutor, entityID string) (*sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`
 		SELECT * from entity WHERE ID = $1`).Args(entityID)
+	return getEntity(ctx, db, query)
+}
+
+// LoadAndLockByID loads an entity and locks its row until the transaction ends. A row already locked by
+// another transaction is not waited for and is treated as not found.
+func LoadAndLockByID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, entityID string) (*sdk.Entity, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM entity WHERE id = $1 FOR UPDATE SKIP LOCKED`).Args(entityID)
 	return getEntity(ctx, db, query)
 }
 
@@ -240,6 +288,15 @@ func LoadAllUnsafe(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, erro
 		entities = append(entities, r.Entity)
 	}
 	return entities, nil
+}
+
+// LoadIDsWithoutInitiator returns the ids of entities whose initiator column is NULL, head entities first.
+func LoadIDsWithoutInitiator(_ context.Context, db gorp.SqlExecutor) ([]string, error) {
+	var ids []string
+	if _, err := db.Select(&ids, "SELECT id FROM entity WHERE initiator IS NULL ORDER BY head DESC, id"); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return ids, nil
 }
 
 func LoadUnmigratedHeadEntities(ctx context.Context, db gorp.SqlExecutor) ([]sdk.Entity, error) {
