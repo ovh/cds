@@ -558,7 +558,7 @@ func (v *V2WorkflowRunResultHelmDetail) GetName() string {
 const V2WorkflowRunResultVariableDetailType = "V2WorkflowRunResultVariableDetail"
 
 // MaxV2WorkflowRunResultVariableValueSize is the maximum size, in bytes, of the value of a run result of type variable.
-const MaxV2WorkflowRunResultVariableValueSize = 1024
+const MaxV2WorkflowRunResultVariableValueSize = 5120
 
 type V2WorkflowRunResultVariableDetail struct {
 	Name  string `json:"name" mapstructure:"name"`
