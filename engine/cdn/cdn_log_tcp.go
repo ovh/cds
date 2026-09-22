@@ -93,6 +93,37 @@ func (s *Service) runTCPLogServer(ctx context.Context) error {
 	return nil
 }
 
+// readBudget makes the read loop pay the global rate limit once per read of data, not once per
+// loop iteration. Without it, every idle wake-up of the ack protocol (a read deadline expiring
+// with nothing to read) would burn 1024 bytes of the process-wide budget: with the default
+// 2MB/s limit, ~4k quiet opted-in connections would consume the whole budget without carrying a
+// single byte — and the stalled reads would delay the acks, trip the clients' dead pipe timers
+// and turn the saturation into a reconnect and replay storm.
+type readBudget struct {
+	wait func(n int) error
+	paid bool
+}
+
+// ensure pays for the next read, unless an earlier payment was never consumed because the read
+// timed out. A failed payment is not a credit: the next call pays again.
+func (r *readBudget) ensure(n int) error {
+	if r.paid {
+		return nil
+	}
+	if err := r.wait(n); err != nil {
+		return err
+	}
+	r.paid = true
+	return nil
+}
+
+// consumed marks the payment used: a read that returned data costs its budget, a timeout does not.
+func (r *readBudget) consumed(n int) {
+	if n > 0 {
+		r.paid = false
+	}
+}
+
 // Handle TCP Connection: Global Rate Limit + Line Rate Limit
 func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 	defer func() {
@@ -117,9 +148,11 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 	b := make([]byte, 1024)
 	currentBuffer := make([]byte, 0)
 	var dropped int64 // bytes discarded from the current oversized message, 0 while accumulating
+	budget := &readBudget{wait: globalRateLimit.WaitN}
 	for {
-		// Can i try to read the next 1024B
-		if err := globalRateLimit.WaitN(1024); err != nil {
+		// Can i try to read the next 1024B. Paid once per read of data: an idle ack wake-up
+		// keeps its credit for the next iteration instead of paying again (see readBudget).
+		if err := budget.ensure(1024); err != nil {
 			log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 			continue
 		}
@@ -131,6 +164,7 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 		}
 
 		n, err := bufReader.Read(b)
+		budget.consumed(n)
 		if err != nil {
 			if acks.active() && isTimeout(err) {
 				acks.flush(ctx, conn)

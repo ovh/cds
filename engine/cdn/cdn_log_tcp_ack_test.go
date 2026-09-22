@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"context"
+	"errors"
 	"net"
 	"testing"
 	"time"
@@ -206,6 +207,50 @@ func ackTestService(t *testing.T, enabled bool) *Service {
 	s := new(Service)
 	s.Cfg.Log.AckProtocolEnabled = enabled
 	return s
+}
+
+// The budget exists so that an idle ack wake-up (read deadline expired, nothing read) does not
+// burn the process-global tcp rate limit: thousands of quiet opted-in connections would starve
+// the real log traffic, and the stalled reads would trip the clients' dead pipe timers into a
+// replay storm. A read that returns data pays exactly once.
+func TestReadBudget_IdleWakeUpsDoNotDrainTheLimiter(t *testing.T) {
+	var payments int
+	budget := &readBudget{wait: func(n int) error { payments++; return nil }}
+
+	// First iteration pays.
+	require.NoError(t, budget.ensure(1024))
+	require.Equal(t, 1, payments)
+
+	// Ten idle wake-ups: the deadline expired, nothing was read, the credit is kept.
+	for i := 0; i < 10; i++ {
+		budget.consumed(0)
+		require.NoError(t, budget.ensure(1024))
+	}
+	require.Equal(t, 1, payments)
+
+	// A read that returns data consumes the credit: the next iteration pays again.
+	budget.consumed(512)
+	require.NoError(t, budget.ensure(1024))
+	require.Equal(t, 2, payments)
+}
+
+// A failed payment must not be treated as a credit, or a limiter error would let the next read
+// through for free.
+func TestReadBudget_FailedPaymentIsNotACredit(t *testing.T) {
+	var payments int
+	failing := true
+	budget := &readBudget{wait: func(n int) error {
+		payments++
+		if failing {
+			return errors.New("rate limiter closed")
+		}
+		return nil
+	}}
+
+	require.Error(t, budget.ensure(1024))
+	failing = false
+	require.NoError(t, budget.ensure(1024))
+	require.Equal(t, 2, payments)
 }
 
 // The two sides of the protocol, over a real socket: the writer of the worker against the ack
