@@ -194,6 +194,9 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
 				log.Warn(ctx, "tcp log message from %v exceeds %d bytes (%d received), message dropped", conn.RemoteAddr(), s.Cfg.Log.StepMaxSize, s.Cfg.Log.StepMaxSize+dropped)
 				dropped = 0
+				// The dropped message reached the CDN: acknowledge it (its number was discarded
+				// with its bytes, see observeDropped) or the client replays it forever.
+				acks.observeDropped()
 				continue
 			}
 

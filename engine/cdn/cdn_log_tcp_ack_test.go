@@ -209,6 +209,30 @@ func ackTestService(t *testing.T, enabled bool) *Service {
 	return s
 }
 
+// A message dropped by the oversized guard is discarded as it streams: its sequence number
+// cannot be read. It still reached the CDN, so it is acknowledged like a rejected line is,
+// otherwise the hole stalls the contiguous ack for the rest of the connection and the client
+// replays the message on every reconnection, only to see it dropped again each time.
+func TestAckState_ObserveDroppedFillsTheHole(t *testing.T) {
+	a := newAckState()
+
+	// Not attributed before the connection proved it numbers its messages: an old client must
+	// not start receiving acks because one of its messages was oversized.
+	a.observeDropped()
+	require.False(t, a.active())
+	require.EqualValues(t, 0, a.contiguous)
+
+	a.observe(1)
+	a.observe(2)
+	a.observeDropped() // the oversized message carried seq 3
+	a.observe(4)
+	require.EqualValues(t, 4, a.contiguous)
+
+	// Nil state (protocol disabled): a no-op, not a panic.
+	var disabled *ackState
+	disabled.observeDropped()
+}
+
 // The budget exists so that an idle ack wake-up (read deadline expired, nothing read) does not
 // burn the process-global tcp rate limit: thousands of quiet opted-in connections would starve
 // the real log traffic, and the stalled reads would trip the clients' dead pipe timers into a

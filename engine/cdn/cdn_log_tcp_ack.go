@@ -123,6 +123,20 @@ func (a *ackState) observe(seq uint64) {
 	}
 }
 
+// observeDropped acknowledges a message the reader discarded without being able to parse its
+// sequence number: an oversized message is thrown away as it streams, before its fields can be
+// read. TCP does not reorder, so on a connection that numbers its messages the discarded one
+// carried the next contiguous number. Acknowledging it is what stops the client from replaying
+// it on every reconnection, only to see it dropped again each time. Before any real number has
+// been seen on the connection nothing is synthesized: the client may not know the protocol at
+// all, and it must not start receiving acks it never asked for.
+func (a *ackState) observeDropped() {
+	if !a.active() {
+		return
+	}
+	a.observe(a.contiguous + 1)
+}
+
 // due reports whether an ack must be written now.
 func (a *ackState) due() bool {
 	if !a.active() || !a.pending || a.contiguous == 0 {
