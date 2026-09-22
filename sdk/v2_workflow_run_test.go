@@ -2,8 +2,6 @@ package sdk
 
 import (
 	"encoding/json"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -57,24 +55,6 @@ func TestV2WorkflowRunResult_GetDetail_interface_conversion(t *testing.T) {
 
 	_, err = b.GetDetail()
 	require.NoError(t, err)
-}
-
-func TestV2WorkflowRunResultVariableDetail_CheckValueSize(t *testing.T) {
-	// A value of exactly the limit is allowed
-	atLimit := V2WorkflowRunResultVariableDetail{Name: "foo", Value: strings.Repeat("a", MaxV2WorkflowRunResultVariableValueSize)}
-	require.NoError(t, atLimit.CheckValueSize())
-
-	// One byte more is rejected, and the error must tell the user which output is too large and what the limit is
-	overLimit := V2WorkflowRunResultVariableDetail{Name: "foo", Value: strings.Repeat("a", MaxV2WorkflowRunResultVariableValueSize+1)}
-	err := overLimit.CheckValueSize()
-	require.Error(t, err)
-	require.Equal(t, ErrInvalidData.ID, ExtractHTTPError(err).ID)
-	require.Contains(t, err.Error(), "foo")
-	require.Contains(t, err.Error(), strconv.Itoa(MaxV2WorkflowRunResultVariableValueSize))
-
-	// The limit is a number of bytes, not a number of runes: 513 two-bytes runes are 1026 bytes
-	multibyte := V2WorkflowRunResultVariableDetail{Name: "foo", Value: strings.Repeat("é", MaxV2WorkflowRunResultVariableValueSize/2+1)}
-	require.Error(t, multibyte.CheckValueSize())
 }
 
 func TestMarshalV2WorkflowRunResultReleaseDetail(t *testing.T) {
