@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"net"
 	"strconv"
 	"testing"
 
@@ -131,4 +132,36 @@ func TestStoreTruncatedLogs(t *testing.T) {
 
 	require.Equal(t, "Bim bam boum\n...truncated\n", buf.String())
 	require.Equal(t, int64(2), lineCount)
+}
+
+func TestReadTCPMessagesDropsOversizedMessage(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	globalRateLimit = NewRateLimiter(ctx, 1024*1024*1024, 1024)
+
+	s := Service{}
+	s.Cfg.Log.StepMaxSize = 1024
+	s.Cfg.Log.StepLinesRateLimit = 1000
+
+	client, server := net.Pipe()
+	var received []string
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		s.readTCPMessages(ctx, server, func(_ context.Context, msg []byte) error {
+			received = append(received, string(msg))
+			return nil
+		})
+	}()
+
+	// An oversized message must be dropped whole, the following one must still be handled
+	_, err := client.Write(append(bytes.Repeat([]byte("x"), 3*1024), 0))
+	require.NoError(t, err)
+	_, err = client.Write(append([]byte("small message"), 0))
+	require.NoError(t, err)
+	require.NoError(t, client.Close())
+	<-done
+
+	require.Equal(t, []string{"small message"}, received)
 }

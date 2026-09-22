@@ -76,12 +76,19 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		_ = conn.Close()
 	}()
 
+	s.readTCPMessages(ctx, conn, s.handleLogMessage)
+}
+
+// readTCPMessages splits the stream on NUL bytes and hands each message to handle; a message
+// past Log.StepMaxSize is dropped up to its delimiter so one client cannot grow memory unbounded.
+func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle func(context.Context, []byte) error) {
 	lineRateLimiter := NewRateLimiter(ctx, float64(s.Cfg.Log.StepLinesRateLimit), 1)
 
 	bufReader := bufio.NewReader(conn)
 
 	b := make([]byte, 1024)
 	currentBuffer := make([]byte, 0)
+	var dropped int64 // bytes discarded from the current oversized message, 0 while accumulating
 	for {
 		// Can i try to read the next 1024B
 		if err := globalRateLimit.WaitN(1024); err != nil {
@@ -98,7 +105,23 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 		// Search for end of line separator
 		for i := 0; i < n; i++ {
 			if b[i] != byte(0) {
+				if dropped > 0 {
+					dropped++
+					continue
+				}
+				if int64(len(currentBuffer)) >= s.Cfg.Log.StepMaxSize {
+					currentBuffer = make([]byte, 0)
+					dropped = 1
+					continue
+				}
 				currentBuffer = append(currentBuffer, b[i])
+				continue
+			}
+
+			if dropped > 0 {
+				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
+				log.Warn(ctx, "tcp log message from %v exceeds %d bytes (%d received), message dropped", conn.RemoteAddr(), s.Cfg.Log.StepMaxSize, s.Cfg.Log.StepMaxSize+dropped)
+				dropped = 0
 				continue
 			}
 
@@ -107,7 +130,7 @@ func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
 				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 				continue
 			}
-			if err := s.handleLogMessage(ctx, currentBuffer); err != nil {
+			if err := handle(ctx, currentBuffer); err != nil {
 				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
 				log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 			}
