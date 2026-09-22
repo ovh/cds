@@ -108,6 +108,7 @@ func (w *CurrentWorker) runJob(ctx context.Context, a *sdk.Action, jobID int64, 
 	}
 
 	defer func() {
+		w.sendLogAccounting(ctx, fmt.Sprintf("job_id=%d", jobID))
 		w.gelfLogger.hook.Flush()
 		log.Info(ctx, "runJob> end of job %s (%d)", a.Name, jobID)
 	}()

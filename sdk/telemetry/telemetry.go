@@ -142,6 +142,7 @@ const (
 	TagPipelineDeep       = "pipeline_deep"
 	TagPipelineID         = "pipeline_id"
 	TagProjectKey         = "project_key"
+	TagReason             = "reason"
 	TagRegion             = "region"
 	TagServiceName        = "service_name"
 	TagServiceType        = "service_type"

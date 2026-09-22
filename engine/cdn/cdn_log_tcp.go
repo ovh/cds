@@ -25,8 +25,30 @@ import (
 
 var globalRateLimit *rateLimiter
 
+// Reasons dimensioning the rejected log lines metric. A log line is either accepted (enqueued
+// in the incoming queue) or rejected with one of those reasons: the sum must match the number
+// of received lines.
+const (
+	rejectReasonUnmarshalError   = "unmarshal_error"
+	rejectReasonSignatureInvalid = "signature_invalid"
+	rejectReasonWorkerNotFound   = "worker_not_found"
+	rejectReasonServiceNotFound  = "service_not_found"
+	rejectReasonMismatch         = "mismatch"
+	rejectReasonStepMaxSize      = "step_max_size"
+	rejectReasonQueueError       = "queue_error"
+	rejectReasonOther            = "other"
+)
+
 type GetWorkerOptions struct {
 	NeedPrivateKey bool
+}
+
+// recordLogRejected counts a log line that will not be enqueued. The reason is recorded as a
+// tag: cdn/tcp/errors alone cannot tell a bad signature from an unknown worker, which are two
+// different incidents with two different fixes.
+func (s *Service) recordLogRejected(ctx context.Context, reason string) {
+	ctx = telemetry.ContextWithTag(ctx, telemetry.TagReason, reason)
+	telemetry.Record(ctx, s.Metrics.tcpServerLogRejectedCount, 1)
 }
 
 // Start TCP Server
@@ -143,18 +165,21 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) error {
 	msg := graylog.Message{}
 	if err := msg.UnmarshalJSON(messageReceived); err != nil {
+		s.recordLogRejected(ctx, rejectReasonUnmarshalError)
 		return sdk.WrapError(err, "unable to unmarshall gelf message: %s", string(messageReceived))
 	}
 
 	// Extract Signature
 	sig, ok := msg.Extra["_"+cdslog.ExtraFieldSignature]
 	if !ok || sig == "" {
+		s.recordLogRejected(ctx, rejectReasonSignatureInvalid)
 		return sdk.WithStack(fmt.Errorf("signature not found on log message: %+v", msg))
 	}
 
 	// Unsafe parse of signature to get datas
 	var signature cdn.Signature
 	if err := jws.UnsafeParse(sig.(string), &signature); err != nil {
+		s.recordLogRejected(ctx, rejectReasonSignatureInvalid)
 		return err
 	}
 
@@ -169,6 +194,7 @@ func (s *Service) handleLogMessage(ctx context.Context, messageReceived []byte) 
 		telemetry.Record(ctx, s.Metrics.tcpServerServiceLogCount, 1)
 		return s.handleServiceLog(ctx, signature, sig, msg)
 	default:
+		s.recordLogRejected(ctx, rejectReasonOther)
 		return sdk.WithStack(sdk.ErrWrongRequest)
 	}
 }
@@ -180,30 +206,22 @@ func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature,
 	var jobID string
 	switch {
 	case unsafeSign.JobID != 0:
-		// Get worker data from cache
-		workerData, err := s.getWorker(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+		workerData, err := s.verifyWorkerLog(ctx, unsafeSign, sig.(string), &signature)
 		if err != nil {
 			return err
 		}
-		// Verify Signature
-		if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
-			return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
-		}
 		if workerData.JobRunID == nil || *workerData.JobRunID != signature.JobID || workerData.ID != unsafeSign.Worker.WorkerID {
+			s.recordLogRejected(ctx, rejectReasonMismatch)
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 		jobID = strconv.Itoa(int(signature.JobID))
 	case unsafeSign.RunJobID != "":
-		// Get worker data from cache
-		workerData, err := s.getWorkerV2(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+		workerData, err := s.verifyWorkerV2Log(ctx, unsafeSign, sig.(string), &signature)
 		if err != nil {
 			return err
 		}
-		// Verify Signatures
-		if err := jws.Verify(workerData.PrivateKey, sig.(string), &signature); err != nil {
-			return sdk.WrapError(err, "worker key: %d", len(workerData.PrivateKey))
-		}
 		if workerData.JobRunID == "" || workerData.JobRunID != signature.RunJobID || workerData.ID != unsafeSign.Worker.WorkerID {
+			s.recordLogRejected(ctx, rejectReasonMismatch)
 			return sdk.WithStack(sdk.ErrForbidden)
 		}
 		jobID = unsafeSign.RunJobID
@@ -221,18 +239,91 @@ func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature,
 	sizeQueueKey := cache.Key(keyJobLogSize, jobID)
 	jobQueue := cache.Key(keyJobLogQueue, jobID)
 
-	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
+	if err := s.sendIntoIncomingQueue(ctx, hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Service) sendIntoIncomingQueue(hm handledMessage, incomingQueue string, sizeKey string) error {
+// verifyWorkerLog is the v1 twin of verifyWorkerV2Log: the key of a v1 worker is cached under its
+// name too, so a stale entry rejects every line of the job until it expires. Same strictly
+// bounded recovery: evict, fetch once, verify once more.
+func (s *Service) verifyWorkerLog(ctx context.Context, unsafeSign cdn.Signature, sig string, signature *cdn.Signature) (sdk.Worker, error) {
+	workerData, err := s.getWorker(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+	if err != nil {
+		s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+		return sdk.Worker{}, err
+	}
+
+	verifyErr := jws.Verify(workerData.PrivateKey, sig, signature)
+	if verifyErr == nil {
+		return workerData, nil
+	}
+
+	refreshedWorkerData, refreshed, err := s.refreshWorkerKey(ctx, unsafeSign.Worker.WorkerName)
+	if err != nil {
+		s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+		return sdk.Worker{}, err
+	}
+	if refreshed {
+		workerData = refreshedWorkerData
+		if verifyErr = jws.Verify(workerData.PrivateKey, sig, signature); verifyErr == nil {
+			return workerData, nil
+		}
+	}
+
+	s.recordLogRejected(ctx, rejectReasonSignatureInvalid)
+	if workerData.ID != unsafeSign.Worker.WorkerID {
+		return sdk.Worker{}, sdk.WrapError(verifyErr, "worker key: %d: signature worker id %s does not match worker %s id %s (name reused?)", len(workerData.PrivateKey), unsafeSign.Worker.WorkerID, workerData.Name, workerData.ID)
+	}
+	return sdk.Worker{}, sdk.WrapError(verifyErr, "worker key: %d", len(workerData.PrivateKey))
+}
+
+// verifyWorkerV2Log verifies the signature of a v2 worker log line against the key of the worker.
+// That key is cached by worker NAME only: when a name is reused, the cached entry still holds the
+// key of the previous worker and every line of the new job is rejected until the entry expires
+// (20 minutes). So on a verification failure the entry is evicted, the key fetched again and the
+// verification retried once. The refresh itself is rate limited per worker, otherwise a job whose
+// every line fails verification would call the API once per line.
+func (s *Service) verifyWorkerV2Log(ctx context.Context, unsafeSign cdn.Signature, sig string, signature *cdn.Signature) (sdk.V2Worker, error) {
+	workerData, err := s.getWorkerV2(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
+	if err != nil {
+		s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+		return sdk.V2Worker{}, err
+	}
+
+	verifyErr := jws.Verify(workerData.PrivateKey, sig, signature)
+	if verifyErr == nil {
+		return workerData, nil
+	}
+
+	refreshedWorkerData, refreshed, err := s.refreshWorkerV2Key(ctx, unsafeSign.Worker.WorkerName)
+	if err != nil {
+		s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+		return sdk.V2Worker{}, err
+	}
+	if refreshed {
+		workerData = refreshedWorkerData
+		if verifyErr = jws.Verify(workerData.PrivateKey, sig, signature); verifyErr == nil {
+			return workerData, nil
+		}
+	}
+
+	s.recordLogRejected(ctx, rejectReasonSignatureInvalid)
+	if workerData.ID != unsafeSign.Worker.WorkerID {
+		return sdk.V2Worker{}, sdk.WrapError(verifyErr, "worker key: %d: signature worker id %s does not match worker %s id %s (name reused?)", len(workerData.PrivateKey), unsafeSign.Worker.WorkerID, workerData.Name, workerData.ID)
+	}
+	return sdk.V2Worker{}, sdk.WrapError(verifyErr, "worker key: %d", len(workerData.PrivateKey))
+}
+
+func (s *Service) sendIntoIncomingQueue(ctx context.Context, hm handledMessage, incomingQueue string, sizeKey string) error {
 	var currentSize int64
 	if _, err := s.Cache.Get(sizeKey, &currentSize); err != nil {
+		s.recordLogRejected(ctx, rejectReasonQueueError)
 		return err
 	}
 	if currentSize >= s.Cfg.Log.StepMaxSize && !hm.IsTerminated {
+		s.recordLogRejected(ctx, rejectReasonStepMaxSize)
 		return nil
 	}
 	if currentSize >= s.Cfg.Log.StepMaxSize && hm.IsTerminated {
@@ -241,8 +332,10 @@ func (s *Service) sendIntoIncomingQueue(hm handledMessage, incomingQueue string,
 	}
 
 	if err := s.Cache.Enqueue(incomingQueue, hm); err != nil {
+		s.recordLogRejected(ctx, rejectReasonQueueError)
 		return err
 	}
+	telemetry.Record(ctx, s.Metrics.tcpServerLogAcceptedCount, 1)
 
 	if hm.IsTerminated {
 		_ = s.Cache.Delete(sizeKey)
@@ -278,6 +371,7 @@ func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature
 		hatcheryName = unsafeSign.HatcheryService.HatcheryName
 		serviceName = unsafeSign.HatcheryService.ServiceName
 	} else {
+		s.recordLogRejected(ctx, rejectReasonSignatureInvalid)
 		return sdk.WrapError(sdk.ErrForbidden, "invalid signature %v", unsafeSign)
 	}
 
@@ -286,10 +380,12 @@ func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature
 	if !ok {
 		// Refresh hatcheries cache
 		if err := s.refreshHatcheriesPK(ctx); err != nil {
+			s.recordLogRejected(ctx, rejectReasonServiceNotFound)
 			return err
 		}
 		cacheData, ok = runCache.Get(fmt.Sprintf("hatchery-key-%s", hatcheryID))
 		if !ok {
+			s.recordLogRejected(ctx, rejectReasonServiceNotFound)
 			return sdk.WrapError(sdk.ErrForbidden, "unable to find hatchery %s/%s", hatcheryID, hatcheryName)
 		}
 	}
@@ -297,6 +393,7 @@ func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature
 
 	// Verify signature
 	if err := jws.Verify(pk, sig.(string), &signature); err != nil {
+		s.recordLogRejected(ctx, rejectReasonSignatureInvalid)
 		return err
 	}
 
@@ -306,12 +403,15 @@ func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature
 		// Get worker + check hatchery ID
 		w, err := s.getWorker(ctx, signature.Service.WorkerName, GetWorkerOptions{NeedPrivateKey: false})
 		if err != nil {
+			s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
 			return err
 		}
 		if w.HatcheryID == nil {
+			s.recordLogRejected(ctx, rejectReasonMismatch)
 			return sdk.WrapError(sdk.ErrWrongRequest, "hatchery %d cannot send service log for worker %s started by %s that is no more linked to an hatchery", signature.Service.HatcheryID, w.ID, w.HatcheryName)
 		}
 		if *w.HatcheryID != signature.Service.HatcheryID {
+			s.recordLogRejected(ctx, rejectReasonMismatch)
 			return sdk.WrapError(sdk.ErrWrongRequest, "cannot send service log (%s) for worker %s from hatchery (expected: %d / actual: %d)", serviceName, w.ID, *w.HatcheryID, signature.Service.HatcheryID)
 		}
 
@@ -333,7 +433,7 @@ func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature
 	sizeQueueKey := cache.Key(keyJobLogSize, key)
 	jobQueue := cache.Key(keyJobLogQueue, key)
 
-	if err := s.sendIntoIncomingQueue(hm, jobQueue, sizeQueueKey); err != nil {
+	if err := s.sendIntoIncomingQueue(ctx, hm, jobQueue, sizeQueueKey); err != nil {
 		return err
 	}
 	return nil

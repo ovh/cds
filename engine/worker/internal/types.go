@@ -170,6 +170,23 @@ func (wk *CurrentWorker) FeatureEnabled(name sdk.FeatureName) bool {
 	return b
 }
 
+// sendLogAccounting reports what the worker gave to the log hook against what the hook managed
+// to keep. It goes to the process logger (stdout), not to the job logs: that stream survives
+// when the pipe to the CDN is the problem, which is exactly the case it documents. jobRef
+// identifies the job (run_job_id for v2, job_id for v1) and is part of the message because the
+// process logger context carries neither it nor the worker name: without them the line cannot
+// be joined with the CDN one for the same job.
+// The counters are absolute and not deltas: the hook is built by Take/V2Take for the job it is
+// taking, so its lifetime is the job's.
+func (wk *CurrentWorker) sendLogAccounting(ctx context.Context, jobRef string) {
+	if wk.gelfLogger == nil || wk.gelfLogger.hook == nil {
+		return
+	}
+	emitted, dropped, writeErrors := wk.gelfLogger.hook.Counters()
+	log.Info(ctx, "log accounting: emitted=%d dropped=%d write_errors=%d %s worker=%s",
+		emitted, dropped, writeErrors, jobRef, wk.Name())
+}
+
 func (wk *CurrentWorker) SendTerminatedStepLog(ctx context.Context, level workerruntime.Level, logLine string) {
 	msg, sign, err := wk.prepareLog(ctx, level, logLine)
 	if err != nil {
