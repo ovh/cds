@@ -3,9 +3,11 @@ package cdn
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/mitchellh/hashstructure"
@@ -13,7 +15,10 @@ import (
 	"github.com/ovh/cds/engine/cdn/storage"
 	cdntest "github.com/ovh/cds/engine/cdn/test"
 	"github.com/ovh/cds/sdk/cdn"
+	"github.com/ovh/cds/sdk/jws"
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/log/hook/graylog"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/test"
@@ -164,4 +169,84 @@ func TestReadTCPMessagesDropsOversizedMessage(t *testing.T) {
 	<-done
 
 	require.Equal(t, []string{"small message"}, received)
+}
+
+// End to end through the real read loop, with a frame built exactly as a worker builds it and
+// the production step size: the oversized message must be discarded whole, the next one must
+// still be delivered, and the warning must name the job rather than only the tcp peer.
+//
+// This is the test that actually proves the tail works. The identification depends on the gelf
+// marshalling putting the extra fields AFTER the multi megabyte full_message, so it can only be
+// trusted when exercised on a real frame that overflows the buffer for real.
+func TestReadTCPMessages_NamesTheSenderOfADroppedOversizedMessage(t *testing.T) {
+	var logs bytes.Buffer
+	logger := logrus.New()
+	logger.SetOutput(&logs)
+	logger.SetLevel(logrus.DebugLevel)
+	log.Factory = log.NewLogrusWrapper(logger)
+	t.Cleanup(func() { log.Factory = log.NewTestingWrapper(t) })
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	t.Cleanup(cancel)
+	globalRateLimit = NewRateLimiter(ctx, 1024*1024*1024, 1024)
+
+	s := Service{}
+	s.Cfg.Log.StepMaxSize = 3000000 // the value used in production
+	s.Cfg.Log.StepLinesRateLimit = 100000
+
+	key, err := jws.NewRandomSymmetricKey(32)
+	require.NoError(t, err)
+	signer, err := jws.NewHMacSigner(key)
+	require.NoError(t, err)
+	token, err := jws.Sign(signer, cdn.Signature{
+		ProjectKey: "THEKEY", WorkflowName: "the-workflow", RunJobID: "the-run-job-id", JobName: "the-job",
+		Worker: &cdn.SignatureWorker{WorkerName: "the-worker", StepName: "the-step"},
+	})
+	require.NoError(t, err)
+
+	marshal := func(full string) []byte {
+		m := graylog.Message{
+			Version: "1.1", Host: "a-host", Short: "short", Full: full,
+			Extra: map[string]interface{}{"_" + cdslog.ExtraFieldSignature: token},
+		}
+		b, err := json.Marshal(&m)
+		require.NoError(t, err)
+		return b
+	}
+
+	// 6MB of content, twice the budget: the signature sits megabytes past the point where the
+	// buffer is thrown away, so only the tail can still carry it.
+	oversized := marshal(strings.Repeat("x", 6*1024*1024))
+	require.Greater(t, len(oversized), 6*1024*1024)
+	small := marshal("a normal line")
+
+	client, server := net.Pipe()
+	var received [][]byte
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		s.readTCPMessages(ctx, server, func(_ context.Context, msg []byte) error {
+			received = append(received, append([]byte{}, msg...))
+			return nil
+		})
+	}()
+
+	_, err = client.Write(append(oversized, 0))
+	require.NoError(t, err)
+	_, err = client.Write(append(small, 0))
+	require.NoError(t, err)
+	require.NoError(t, client.Close())
+	<-done
+
+	require.Len(t, received, 1, "the oversized message must be dropped, the next one delivered")
+	require.Equal(t, small, received[0])
+
+	out := logs.String()
+	require.Contains(t, out, "message dropped")
+	require.Contains(t, out, "project=THEKEY")
+	require.Contains(t, out, "workflow=the-workflow")
+	require.Contains(t, out, "run_job_id=the-run-job-id")
+	require.Contains(t, out, "worker=the-worker")
+	require.Contains(t, out, "step=the-step")
+	require.NotContains(t, out, "unidentified sender")
 }
