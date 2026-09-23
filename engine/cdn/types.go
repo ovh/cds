@@ -61,6 +61,7 @@ type Service struct {
 		ItemToSyncCount           *stats.Int64Measure
 		WSClients                 *stats.Int64Measure
 		WSEvents                  *stats.Int64Measure
+		WSEventsPublished         *stats.Int64Measure
 		ItemToDelete              *stats.Int64Measure
 		ItemUnitToDelete          *stats.Int64Measure
 	}
