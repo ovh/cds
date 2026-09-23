@@ -126,3 +126,15 @@ func NewViewCount(name string, s *stats.Int64Measure, tags []tag.Key) *view.View
 		TagKeys:     tags,
 	}
 }
+
+// NewViewSum creates a new view via aggregation Sum(). Count() counts the records and discards
+// their value, so a measure recorded once per batch with the size of the batch needs this one.
+func NewViewSum(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.Sum(),
+		TagKeys:     tags,
+	}
+}

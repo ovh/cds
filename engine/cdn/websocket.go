@@ -29,7 +29,9 @@ func (s *Service) initWebsocket() error {
 	if err != nil {
 		return sdk.WrapError(err, "unable to subscribe to %s", wbBrokerPubSubKey)
 	}
-	s.WSBroker = websocket.NewBroker()
+	// The CDN handler only walks the clients of this instance and raises a flag, and the event
+	// rate of the log intake is well past what a throttled broker consumes.
+	s.WSBroker = websocket.NewBroker(websocket.WithoutReadThrottling())
 	s.WSBroker.OnMessage(func(m []byte) {
 		telemetry.Record(s.Router.Background, s.Metrics.WSEvents, 1)
 		var e sdk.CDNWSEvent
@@ -103,6 +105,8 @@ func (s *Service) sendWSEvent(ctx context.Context) error {
 	}
 	s.WSEvents = nil
 	s.WSEventsMutex.Unlock()
+
+	telemetry.Record(ctx, s.Metrics.WSEventsPublished, int64(len(es)))
 
 	for _, e := range es {
 		buf, err := json.Marshal(e)

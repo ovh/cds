@@ -56,6 +56,17 @@ func InitRouterMetrics(ctx context.Context, s service.NamedService) error {
 			"cds/websocket_v2_events",
 			"number of websocket v2 events",
 			stats.UnitDimensionless)
+		// The fan-out starts a goroutine per connected client per event, and only the clients
+		// whose filters match do any work. The ratio of the two is what says whether that is
+		// worth narrowing.
+		WebSocketFanoutConsidered = stats.Int64(
+			"cds/websocket_fanout_considered",
+			"number of connected clients a websocket event was dispatched to",
+			stats.UnitDimensionless)
+		WebSocketFanoutMatched = stats.Int64(
+			"cds/websocket_fanout_matched",
+			"number of clients whose filters matched a websocket event",
+			stats.UnitDimensionless)
 		ServerRequestCount = stats.Int64(
 			"cds/http/server/request_count",
 			"Number of HTTP requests started",
@@ -131,6 +142,8 @@ func InitRouterMetrics(ctx context.Context, s service.NamedService) error {
 			telemetry.NewViewLast("cds/http/router/websocket_v2_clients", WebSocketV2Clients, []tag.Key{tagServiceType, tagServiceName}),
 			telemetry.NewViewCount("cds/http/router/websocket_events", WebSocketEvents, []tag.Key{tagServiceType, tagServiceName}),
 			telemetry.NewViewCount("cds/http/router/websocket_v2_events", WebSocketV2Events, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewSum("cds/http/router/websocket_fanout_considered", WebSocketFanoutConsidered, []tag.Key{tagServiceType, tagServiceName}),
+			telemetry.NewViewCount("cds/http/router/websocket_fanout_matched", WebSocketFanoutMatched, []tag.Key{tagServiceType, tagServiceName}),
 			ServerRequestCountView,
 			ServerRequestBytesView,
 			ServerResponseBytesView,
