@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/integration"
@@ -17,9 +18,15 @@ import (
 	"github.com/ovh/cds/engine/api/services/mock_services"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow_v2"
+	"github.com/ovh/cds/engine/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/artifact_manager"
+	"github.com/ovh/cds/sdk/artifact_manager/mock_artifact_manager"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+
+	artifactoryservices "github.com/jfrog/jfrog-client-go/artifactory/services"
+	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 )
 
 func TestJobConditionSuccess(t *testing.T) {
@@ -4887,4 +4894,252 @@ func TestBuildJobIntegrationsContext(t *testing.T) {
 		require.Equal(t, "", result.ArtifactManager.Name)
 		require.Equal(t, "", result.Deployment.Name)
 	})
+}
+
+// The path a search returns must rebuild the path api/storage reports. The signature carries
+// it, and the probe is indexed on it.
+func TestArtifactLocationRoundTrip(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		filePath  string
+		directory string
+		base      string
+	}{
+		{name: "nested", filePath: "/dir/sub/file.tgz", directory: "dir/sub", base: "file.tgz"},
+		{name: "root of the repository", filePath: "/file.tgz", directory: ".", base: "file.tgz"},
+		{name: "docker manifest", filePath: "/img/tag/manifest.json", directory: "img/tag", base: "manifest.json"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			location := artifactLocation("my-repo", tc.filePath)
+			require.Equal(t, "my-repo", location.Repository)
+			require.Equal(t, tc.directory, location.Path)
+			require.Equal(t, tc.base, location.Name)
+			require.Equal(t, tc.filePath, artifactStoragePath(location.Path, location.Name))
+		})
+	}
+}
+
+func TestArtifactKeySeparatesRepositoryFromPath(t *testing.T) {
+	require.NotEqual(t, artifactKey("a", "/b/c"), artifactKey("a/b", "/c"))
+}
+
+// A run holding two artifacts of the same repository, one of them signed by an earlier
+// synchronization.
+func setupSyncRun(t *testing.T) (*API, *test.FakeTransaction, *sdk.V2WorkflowRun, *mock_artifact_manager.MockArtifactManager) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	model := sdk.IntegrationModel{Name: sdk.RandomString(10), ArtifactManager: true}
+	require.NoError(t, integration.InsertModel(db, &model))
+	t.Cleanup(func() {
+		_ = integration.DeleteModel(context.TODO(), db, model.ID)
+	})
+
+	projInteg := sdk.ProjectIntegration{
+		Name:               sdk.RandomString(10),
+		Model:              model,
+		ProjectID:          proj.ID,
+		IntegrationModelID: model.ID,
+		Config: sdk.IntegrationConfig{
+			sdk.ArtifactoryConfigPlatform:   {Value: "artifactory", Type: sdk.IntegrationConfigTypeString},
+			sdk.ArtifactoryConfigURL:        {Value: "https://artifactory.example.com/", Type: sdk.IntegrationConfigTypeString},
+			sdk.ArtifactoryConfigTokenName:  {Value: "my-token", Type: sdk.IntegrationConfigTypeString},
+			sdk.ArtifactoryConfigToken:      {Value: "my-secret", Type: sdk.IntegrationConfigTypePassword},
+			sdk.ArtifactoryConfigProjectKey: {Value: "my-arti-project", Type: sdk.IntegrationConfigTypeString},
+		},
+	}
+	require.NoError(t, integration.InsertIntegration(db, &projInteg))
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: sdk.RandomString(10),
+		WorkflowSha:  "123",
+		WorkflowRef:  "master",
+		RunAttempt:   1,
+		RunNumber:    1,
+		Started:      time.Now(),
+		LastModified: time.Now(),
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		RunEvent:     sdk.V2WorkflowRunEvent{},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Integrations: []string{projInteg.Name},
+		}},
+		Initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+	}
+	require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+	jobRun := sdk.V2WorkflowRunJob{
+		ProjectKey:    proj.Key,
+		WorkflowRunID: wr.ID,
+		RunAttempt:    wr.RunAttempt,
+		JobID:         "job1",
+		Status:        sdk.V2WorkflowRunJobStatusSuccess,
+		ModelType:     "docker",
+		Region:        "default",
+		Initiator:     sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
+
+	newRunResult := func(name, filePath string) sdk.V2WorkflowRunResult {
+		return sdk.V2WorkflowRunResult{
+			ID:                             sdk.UUID(),
+			WorkflowRunID:                  wr.ID,
+			WorkflowRunJobID:               jobRun.ID,
+			RunAttempt:                     wr.RunAttempt,
+			IssuedAt:                       time.Now(),
+			Status:                         sdk.V2WorkflowRunResultStatusCompleted,
+			Type:                           sdk.V2WorkflowRunResultTypeGeneric,
+			ArtifactManagerIntegrationName: &projInteg.Name,
+			ArtifactManagerMetadata: &sdk.V2WorkflowRunResultArtifactManagerMetadata{
+				"repository":      "my-repo",
+				"localRepository": "my-repo-snapshot",
+				"type":            "generic",
+				"name":            name,
+				"path":            filePath,
+			},
+			Detail: sdk.V2WorkflowRunResultDetail{
+				Type: "V2WorkflowRunResultGenericDetail",
+				Data: sdk.V2WorkflowRunResultGenericDetail{Name: name},
+			},
+		}
+	}
+	signedResult := newRunResult("signed.tgz", "/signed/signed.tgz")
+	require.NoError(t, workflow_v2.InsertRunResult(ctx, db, &signedResult))
+	unsignedResult := newRunResult("unsigned.tgz", "/unsigned/unsigned.tgz")
+	require.NoError(t, workflow_v2.InsertRunResult(ctx, db, &unsignedResult))
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+	mockArtifactory := mock_artifact_manager.NewMockArtifactManager(ctrl)
+
+	previousFactory := artifact_manager.DefaultClientFactory
+	artifact_manager.DefaultClientFactory = func(_, _, _ string) (artifact_manager.ArtifactManager, error) {
+		return mockArtifactory, nil
+	}
+	t.Cleanup(func() {
+		artifact_manager.DefaultClientFactory = previousFactory
+	})
+
+	// One description of the repository for the two results
+	mockArtifactory.EXPECT().GetRepository("my-repo-snapshot").
+		Return(&artifactoryservices.RepositoryDetails{PackageType: "generic"}, nil).Times(1)
+	// The build info writes its properties on every result of the run, signed or not, on the
+	// virtual repository
+	mockArtifactory.EXPECT().SetProperties("my-repo", "/signed/signed.tgz", gomock.Any()).Return(nil).Times(1)
+	mockArtifactory.EXPECT().SetProperties("my-repo", "/unsigned/unsigned.tgz", gomock.Any()).Return(nil).Times(1)
+	mockArtifactory.EXPECT().DeleteBuild(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	mockArtifactory.EXPECT().PublishBuildInfo(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	return api, db, &wr, mockArtifactory
+}
+
+// The signature a synchronization writes on an artifact, decoded with the CDS key.
+func expectSignature(t *testing.T, mockArtifactory *mock_artifact_manager.MockArtifactManager, repository, filePath string) *ArtifactSignature {
+	var signed ArtifactSignature
+	mockArtifactory.EXPECT().SetProperties(repository, filePath, gomock.Any()).
+		DoAndReturn(func(_, _ string, props *utils.Properties) error {
+			signatures := props.ToMap()["cds.signature"]
+			require.Len(t, signatures, 1)
+			require.NoError(t, authentication.VerifyJWS(signatures[0], &signed))
+			return nil
+		}).Times(1)
+	return &signed
+}
+
+var errArtifactoryDown = sdk.NewErrorFrom(sdk.ErrUnknownError, "artifactory is having a bad day")
+
+// The synchronization runs inside the worker request, which gives up after 30s, and a release
+// re-synchronizes a run whose artifacts are all signed already. One query resolves the
+// signatures of the whole run, and one more reads what is left to sign.
+func TestSynchronizeRunResultsResolveSignaturesInOneQuery(t *testing.T) {
+	api, db, wr, mockArtifactory := setupSyncRun(t)
+
+	mockArtifactory.EXPECT().SearchItems(gomock.Any(), gomock.Any(), "cds.signature").
+		DoAndReturn(func(_ context.Context, locations []sdk.ArtifactLocation, _ string) (sdk.ArtifactResults, error) {
+			require.ElementsMatch(t, []sdk.ArtifactLocation{
+				{Repository: "my-repo-snapshot", Path: "signed", Name: "signed.tgz"},
+				{Repository: "my-repo-snapshot", Path: "unsigned", Name: "unsigned.tgz"},
+			}, locations, "both artifacts must be asked about in the same query")
+			return sdk.ArtifactResults{
+				{Repo: "my-repo-snapshot", Path: "signed", Name: "signed.tgz"},
+			}, nil
+		}).Times(1)
+
+	mockArtifactory.EXPECT().SearchItems(gomock.Any(), gomock.Any(), "").
+		DoAndReturn(func(_ context.Context, locations []sdk.ArtifactLocation, _ string) (sdk.ArtifactResults, error) {
+			require.Equal(t, []sdk.ArtifactLocation{
+				{Repository: "my-repo-snapshot", Path: "unsigned", Name: "unsigned.tgz"},
+			}, locations, "only the artifact left to sign is read")
+			return sdk.ArtifactResults{
+				{Repo: "my-repo-snapshot", Path: "unsigned", Name: "unsigned.tgz", Type: "file",
+					ActualMD5: "the-md5", ActualSHA1: "the-sha1", SHA256: "the-sha256"},
+			}, nil
+		}).Times(1)
+
+	// neither the properties nor the infos are read one result at a time
+	mockArtifactory.EXPECT().GetProperties(gomock.Any(), gomock.Any()).Times(0)
+	mockArtifactory.EXPECT().GetFileInfo(gomock.Any(), gomock.Any()).Times(0)
+
+	signed := expectSignature(t, mockArtifactory, "my-repo-snapshot", "/unsigned/unsigned.tgz")
+
+	require.NoError(t, api.synchronizeRunResults(context.TODO(), db, wr.ID))
+
+	// The signature vouches for what artifactory stores: the query must feed it the same path
+	// and checksums api/storage would have
+	require.Equal(t, "/unsigned/unsigned.tgz", (*signed)["path"])
+	require.Equal(t, "the-md5", (*signed)["md5"])
+	require.Equal(t, "the-sha1", (*signed)["sha1"])
+	require.Equal(t, "the-sha256", (*signed)["sha256"])
+}
+
+// When artifactory refuses the queries, the loop reads the properties and the infos of each
+// result, as it did before.
+func TestSynchronizeRunResultsFallBackWhenSearchFails(t *testing.T) {
+	api, db, wr, mockArtifactory := setupSyncRun(t)
+
+	mockArtifactory.EXPECT().SearchItems(gomock.Any(), gomock.Any(), "cds.signature").
+		Return(nil, errArtifactoryDown).Times(1)
+	mockArtifactory.EXPECT().SearchItems(gomock.Any(), gomock.Any(), "").
+		Return(nil, errArtifactoryDown).Times(1)
+
+	mockArtifactory.EXPECT().GetProperties("my-repo-snapshot", "/signed/signed.tgz").
+		Return(map[string][]string{"cds.signature": {"already-signed"}}, nil).Times(1)
+	mockArtifactory.EXPECT().GetProperties("my-repo-snapshot", "/unsigned/unsigned.tgz").
+		Return(map[string][]string{}, nil).Times(1)
+
+	mockArtifactory.EXPECT().GetFileInfo("my-repo-snapshot", "/unsigned/unsigned.tgz").
+		Return(sdk.FileInfo{Path: "/unsigned/unsigned.tgz", Checksums: &sdk.FileInfoChecksum{Sha256: "from-storage"}}, nil).Times(1)
+
+	signed := expectSignature(t, mockArtifactory, "my-repo-snapshot", "/unsigned/unsigned.tgz")
+
+	require.NoError(t, api.synchronizeRunResults(context.TODO(), db, wr.ID))
+	require.Equal(t, "from-storage", (*signed)["sha256"])
+}
+
+// The query is never the source of truth: an artifact missing from its answer is read from
+// api/storage, not signed without checksums.
+func TestSynchronizeRunResultsReadInfoOfArtifactMissingFromSearch(t *testing.T) {
+	api, db, wr, mockArtifactory := setupSyncRun(t)
+
+	mockArtifactory.EXPECT().SearchItems(gomock.Any(), gomock.Any(), "cds.signature").
+		Return(sdk.ArtifactResults{{Repo: "my-repo-snapshot", Path: "signed", Name: "signed.tgz"}}, nil).Times(1)
+	mockArtifactory.EXPECT().SearchItems(gomock.Any(), gomock.Any(), "").
+		Return(sdk.ArtifactResults{}, nil).Times(1)
+
+	mockArtifactory.EXPECT().GetFileInfo("my-repo-snapshot", "/unsigned/unsigned.tgz").
+		Return(sdk.FileInfo{Path: "/unsigned/unsigned.tgz", Checksums: &sdk.FileInfoChecksum{Sha256: "from-storage"}}, nil).Times(1)
+
+	signed := expectSignature(t, mockArtifactory, "my-repo-snapshot", "/unsigned/unsigned.tgz")
+
+	require.NoError(t, api.synchronizeRunResults(context.TODO(), db, wr.ID))
+	require.Equal(t, "from-storage", (*signed)["sha256"])
 }

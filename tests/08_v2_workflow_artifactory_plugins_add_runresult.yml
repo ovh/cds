@@ -170,10 +170,12 @@ testcases:
                 curl --fail -X PUT -T ${{ steps.name.outputs.GLOBDEB1 }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.GLOBDEB1 }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"
                 curl --fail -X PUT -T ${{ steps.name.outputs.GLOBDEB2 }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.GLOBDEB2 }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"
             # one glob step registering the two glob-*.deb files above; the timestamp keeps the
-            # pattern from matching artifacts of previous runs in the shared -debian repository
+            # pattern from matching artifacts of previous runs in the shared -debian repository.
+            # The leading "/" is accepted as in a single path: with if-no-files-found: error the
+            # job fails if the pattern is not trimmed before matching.
             - uses: actions/addRunResult
               with:
-                path: pool/glob-${{ steps.name.outputs.GLOBTS }}-*.deb
+                path: /pool/glob-${{ steps.name.outputs.GLOBTS }}-*.deb
                 type: debian
                 if-no-files-found: error
             # A pattern matching nothing, if-no-files-found left to its default: the step warns
