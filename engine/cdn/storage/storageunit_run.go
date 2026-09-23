@@ -172,9 +172,10 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 
 	chanError := make(chan error)
 	pr, pw := io.Pipe()
-	gr := sdk.NewGoRoutines(ctx)
 
-	gr.Exec(ctx, "runningStorageUnits.runItem.read", func(ctx context.Context) {
+	// The GoRoutines of the service, not a new one: NewGoRoutines starts a monitoring goroutine
+	// that lives as long as the context it is given, and this one runs per item synced.
+	x.GoRoutines.Exec(ctx, "runningStorageUnits.runItem.read", func(ctx context.Context) {
 		defer pw.Close()
 		if err := source.Read(rateLimitReader, pw); err != nil {
 			chanError <- err

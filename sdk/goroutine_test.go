@@ -3,6 +3,7 @@ package sdk
 import (
 	"bytes"
 	"context"
+	"runtime"
 	"testing"
 	"time"
 
@@ -76,6 +77,27 @@ func Test_GoroutineTools(t *testing.T) {
 		m.Stop("test_goroutine_run_cancel")
 		<-ctxToCancelled.Done()
 		require.True(t, cancelled)
+	})
+
+	// Each manager carries a monitoring goroutine that only ends with its context, so building one
+	// per unit of work leaks one goroutine per call. Callers share the manager of their service.
+	t.Run("NewGoRoutines costs one goroutine until its context ends", func(t *testing.T) {
+		before := runtime.NumGoroutine()
+
+		ctx, cancel := context.WithCancel(context.TODO())
+		for i := 0; i < 50; i++ {
+			_ = NewGoRoutines(ctx)
+		}
+
+		require.Eventually(t, func() bool {
+			return runtime.NumGoroutine() >= before+50
+		}, 5*time.Second, 10*time.Millisecond, "expected one monitoring goroutine per manager")
+
+		cancel()
+
+		require.Eventually(t, func() bool {
+			return runtime.NumGoroutine() < before+50
+		}, 15*time.Second, 50*time.Millisecond, "monitoring goroutines outlived their context")
 	})
 
 	t.Run("GoRoutineRunWithRestart", func(t *testing.T) {
