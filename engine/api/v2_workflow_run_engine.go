@@ -821,6 +821,78 @@ func (api *API) computeWorkflowRunAnnotations(ctx context.Context, run *sdk.V2Wo
 
 type ArtifactSignature map[string]string
 
+// searchSignedArtifacts asks artifactory which of the locations carry a cds signature. The
+// boolean says whether the answer can be trusted. On false the caller reads the properties
+// of each artifact itself.
+func searchSignedArtifacts(ctx context.Context, artifactClient artifact_manager.ArtifactManager, locations []sdk.ArtifactLocation) (map[string]struct{}, bool) {
+	if len(locations) == 0 {
+		return nil, true
+	}
+
+	results, err := artifactClient.SearchItems(ctx, locations, "cds.signature")
+	if err != nil {
+		ctx := log.ContextWithStackTrace(ctx, err)
+		log.Error(ctx, "unable to search for signed artifacts, reading the properties of each result: %v", err)
+		return nil, false
+	}
+
+	signed := make(map[string]struct{}, len(results))
+	for _, r := range results {
+		signed[artifactKey(r.Repo, artifactStoragePath(r.Path, r.Name))] = struct{}{}
+	}
+	return signed, true
+}
+
+// searchFileInfos reads in one query what the signature carries for each location: its path
+// and its checksums, as api/storage would report them. A location missing from the answer,
+// or every location when the query fails, is left to api/storage.
+func searchFileInfos(ctx context.Context, artifactClient artifact_manager.ArtifactManager, locations []sdk.ArtifactLocation) map[string]sdk.FileInfo {
+	if len(locations) == 0 {
+		return nil
+	}
+
+	results, err := artifactClient.SearchItems(ctx, locations, "")
+	if err != nil {
+		ctx := log.ContextWithStackTrace(ctx, err)
+		log.Error(ctx, "unable to search for artifact infos, reading the info of each result: %v", err)
+		return nil
+	}
+
+	fileInfos := make(map[string]sdk.FileInfo, len(results))
+	for _, r := range results {
+		fi := sdk.FileInfo{Repo: r.Repo, Path: artifactStoragePath(r.Path, r.Name)}
+		// api/storage reports no checksums for a folder
+		if r.Type != "folder" {
+			fi.Checksums = &sdk.FileInfoChecksum{Md5: r.ActualMD5, Sha1: r.ActualSHA1, Sha256: r.SHA256}
+		}
+		fileInfos[artifactKey(r.Repo, fi.Path)] = fi
+	}
+	return fileInfos
+}
+
+func artifactLocation(repository, filePath string) sdk.ArtifactLocation {
+	directory, name := path.Split(strings.TrimPrefix(filePath, "/"))
+	directory = strings.TrimSuffix(directory, "/")
+	if directory == "" {
+		// how artifactory reports an item sitting at the root of a repository
+		directory = "."
+	}
+	return sdk.ArtifactLocation{Repository: repository, Path: directory, Name: name}
+}
+
+// The inverse of artifactLocation: the path as api/storage reports it.
+func artifactStoragePath(directory, name string) string {
+	if directory == "." {
+		return "/" + name
+	}
+	return "/" + directory + "/" + name
+}
+
+func artifactKey(repository, filePath string) string {
+	// neither a repository name nor a path can hold a nul byte
+	return repository + "\x00" + filePath
+}
+
 /*
 synchronizeRunResults : for a runID, this func:
 - get the integration ArtifactManager on the workflow if exist
@@ -881,8 +953,10 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 	}
 
 	runJobIds := make([]string, 0, len(allRunJobs))
+	runJobsByID := make(map[string]sdk.V2WorkflowRunJob, len(allRunJobs))
 	for _, rj := range allRunJobs {
 		runJobIds = append(runJobIds, rj.ID)
+		runJobsByID[rj.ID] = rj
 	}
 
 	runResults, err := workflow_v2.LoadRunResultsByRunIDAttempt(ctx, db, runID, runJobIds, run.RunAttempt)
@@ -935,15 +1009,22 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 		return nil
 	}
 
+	// First pass: resolve where each result lives. The signature probe below wants the
+	// whole list in one query.
+	type syncTarget struct {
+		result      *sdk.V2WorkflowRunResult
+		packageType string
+		localRepo   string
+		filePath    string
+	}
+
+	// One repository is shared by many run results
+	repositoryPackageTypes := make(map[string]string)
+	targets := make([]syncTarget, 0, len(runResults))
+	locations := make([]sdk.ArtifactLocation, 0, len(runResults))
+
 	for i := range runResults {
 		result := &runResults[i]
-
-		jobRun, err := workflow_v2.LoadRunJobByID(ctx, db, result.WorkflowRunJobID)
-		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to load run job by ID %s: %v", result.WorkflowRunJobID, err)
-			continue
-		}
 
 		if result.ArtifactManagerIntegrationName == nil {
 			continue
@@ -958,41 +1039,101 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 			return sdk.Errorf("desynchronized maturity and promotion on run result %s", result.ID)
 		}
 
-		// Set the properties
-		virtualRepository := result.ArtifactManagerMetadata.Get("repository")
 		localRepository := result.ArtifactManagerMetadata.Get("localRepository")
-		name := result.ArtifactManagerMetadata.Get("name")
 
-		repoDetails, err := artifactClient.GetRepository(localRepository)
-		if err != nil {
-			log.Error(ctx, "unable to get repository %q fror result %s: %v", localRepository, result.ID, err)
-			continue
+		packageType, has := repositoryPackageTypes[localRepository]
+		if !has {
+			repoDetails, err := artifactClient.GetRepository(localRepository)
+			if err != nil {
+				log.Error(ctx, "unable to get repository %q fror result %s: %v", localRepository, result.ID, err)
+				continue
+			}
+			packageType = repoDetails.PackageType
+			repositoryPackageTypes[localRepository] = packageType
 		}
 
 		// To get FileInfo for a docker image, we have to check the manifest file
 		filePath := result.ArtifactManagerMetadata.Get("path")
-		if repoDetails.PackageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
+		if packageType == "docker" && !strings.HasSuffix(filePath, "manifest.json") {
 			filePath = path.Join(filePath, "manifest.json")
 		}
+		filePath = "/" + strings.TrimPrefix(filePath, "/")
 
-		fi, err := artifactClient.GetFileInfo(localRepository, filePath)
-		if err != nil {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
-			continue
+		targets = append(targets, syncTarget{
+			result:      result,
+			packageType: packageType,
+			localRepo:   localRepository,
+			filePath:    filePath,
+		})
+		locations = append(locations, artifactLocation(localRepository, filePath))
+	}
+
+	// One query for the signatures of the whole run. A release re-synchronizes a run whose
+	// artifacts are all signed already, and this runs inside the worker request.
+	signedArtifacts, probed := searchSignedArtifacts(ctx, artifactClient, locations)
+
+	var nbSigned, nbReadOneByOne int
+	toSign := make([]syncTarget, 0, len(targets))
+	toSignLocations := make([]sdk.ArtifactLocation, 0, len(targets))
+	for _, target := range targets {
+		result := target.result
+		localRepository := target.localRepo
+		filePath := target.filePath
+
+		var alreadySigned bool
+		if probed {
+			_, alreadySigned = signedArtifacts[artifactKey(localRepository, filePath)]
+		} else {
+			nbReadOneByOne++
+			existingProperties, err := artifactClient.GetProperties(localRepository, filePath)
+			if err != nil && !strings.Contains(err.Error(), "404") {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
+				continue
+			}
+			alreadySigned = sdk.MapHasKeys(existingProperties, "cds.signature")
 		}
 
-		existingProperties, err := artifactClient.GetProperties(localRepository, filePath)
-		if err != nil && !strings.Contains(err.Error(), "404") {
-			ctx := log.ContextWithStackTrace(ctx, err)
-			log.Error(ctx, "unable to get artifact properties from result %s: %v", result.ID, err)
-			continue
-		}
-
-		if sdk.MapHasKeys(existingProperties, "cds.signature") {
+		if alreadySigned {
+			nbSigned++
 			log.Debug(ctx, "artifact is already signed by cds")
 			continue
 		}
+
+		toSign = append(toSign, target)
+		toSignLocations = append(toSignLocations, artifactLocation(localRepository, filePath))
+	}
+
+	// One query for the path and checksums to sign, in place of one api/storage call per artifact
+	fileInfos := searchFileInfos(ctx, artifactClient, toSignLocations)
+
+	var nbInfoReadOneByOne int
+	for _, target := range toSign {
+		result := target.result
+		localRepository := target.localRepo
+		filePath := target.filePath
+
+		jobRun, has := runJobsByID[result.WorkflowRunJobID]
+		if !has {
+			log.Error(ctx, "unable to find run job %s of result %s", result.WorkflowRunJobID, result.ID)
+			continue
+		}
+
+		fi, has := fileInfos[artifactKey(localRepository, filePath)]
+		if !has {
+			nbInfoReadOneByOne++
+			var err error
+			fi, err = artifactClient.GetFileInfo(localRepository, filePath)
+			if err != nil {
+				ctx := log.ContextWithStackTrace(ctx, err)
+				log.Error(ctx, "unable to get artifact info from result %s: %v", result.ID, err)
+				continue
+			}
+		}
+
+		// Set the properties
+		virtualRepository := result.ArtifactManagerMetadata.Get("repository")
+		name := result.ArtifactManagerMetadata.Get("name")
 
 		// Push git properties as artifact properties
 		props := utils.NewProperties()
@@ -1020,7 +1161,7 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 
 		// Prepare artifact signature
 		signedProps["repository"] = virtualRepository
-		signedProps["type"] = repoDetails.PackageType
+		signedProps["type"] = target.packageType
 		signedProps["path"] = fi.Path
 		signedProps["name"] = name
 
@@ -1072,6 +1213,9 @@ func (api *API) synchronizeRunResults(ctx context.Context, db gorp.SqlExecutor, 
 			}
 		}
 	}
+
+	log.Info(ctx, "synchronizeRunResults on run %s: %d artifacts, %d already signed, %d properties read one by one, %d infos read one by one",
+		runID, len(targets), nbSigned, nbReadOneByOne, nbInfoReadOneByOne)
 
 	// Set the Buildinfo
 	buildInfoRequest, err := art.PrepareBuildInfo(ctx, artifactClient, art.BuildInfoRequest{

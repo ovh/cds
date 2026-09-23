@@ -243,4 +243,27 @@ testcases:
   - name: Check that we have 1 run result of type release
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=release --format json"  
     assertions:
-      - result.systemoutjson ShouldHaveLength 1       
+      - result.systemoutjson ShouldHaveLength 1
+  # synchronizeRunResults reads the path and the checksums it signs from one aql query: the
+  # signature on the released chart must carry the sha256 api/storage reports for it
+  - name: Check that the signature of the chart carries its stored checksum
+    script: |-
+      set -e
+      # the result list only gives id, name and type: the path is rebuilt from the name
+      # "helm:mychart:<version>" and the release repository the chart was promoted to
+      name=$({{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=helm --format json | jq -r '.[0].name')
+      version=${name##*:}
+      storage="{{.rt_url}}api/storage/{{.rt_project}}-{{.rt_component}}-helm-release/mychart/mychart-${version}.tgz"
+      echo "storage=${storage}"
+      # curl is not piped, so that a failed call stops the script
+      properties=$(curl --fail -s -u "{{.rt_token_name}}:{{.rt_token}}" "${storage}?properties=cds.signature")
+      signature=$(echo "$properties" | jq -r '.properties["cds.signature"][0]')
+      payload=$(echo -n "$signature" | cut -d. -f2 | tr '_-' '/+')
+      while [ $(( ${#payload} % 4 )) -ne 0 ]; do payload="${payload}="; done
+      signed=$(echo -n "$payload" | base64 -d | jq -r '.data.sha256')
+      info=$(curl --fail -s -u "{{.rt_token_name}}:{{.rt_token}}" "$storage")
+      stored=$(echo "$info" | jq -r '.checksums.sha256')
+      echo "signed=${signed} stored=${stored}"
+      test -n "$stored" && test "$signed" = "$stored"
+    assertions:
+      - result.code ShouldEqual 0

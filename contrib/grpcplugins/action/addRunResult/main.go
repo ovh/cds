@@ -1130,6 +1130,23 @@ func dockerPatternToPath(expression string) string {
 	return strings.Join(patterns, " ")
 }
 
+// trimPatternsLeadingSlash removes the leading "/" of the patterns of an expression, exclusions
+// included. The candidates are repository relative paths without it, and the single path flow
+// accepts a path written either way.
+func trimPatternsLeadingSlash(expression string) string {
+	patterns := strings.FieldsFunc(expression, func(r rune) bool {
+		return r == ' ' || r == '\t' || r == '\n' || r == ','
+	})
+	for i, p := range patterns {
+		if rest, ok := strings.CutPrefix(p, "!"); ok {
+			patterns[i] = "!" + strings.TrimLeft(rest, "/")
+		} else {
+			patterns[i] = strings.TrimLeft(p, "/")
+		}
+	}
+	return strings.Join(patterns, " ")
+}
+
 // globCandidate is an artifact matched by the glob pattern: the path to register and the
 // enumeration item it came from, carrying repo, checksums, size, dates and properties.
 type globCandidate struct {
@@ -1292,7 +1309,7 @@ func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfi
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search returned %d items, above the %d supported: use a more specific pattern", len(res.Results), aqlSearchLimit)
 	}
 
-	g := glob.New(pattern)
+	g := glob.New(trimPatternsLeadingSlash(pattern))
 	seen := make(map[string]struct{}, len(res.Results))
 	enum := globEnumeration{archByPath: map[string]grpcplugins.SearchResult{}}
 	for _, r := range res.Results {
