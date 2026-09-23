@@ -57,4 +57,5 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/admin/backend/{id}/resync/{type}", nil, r.POST(s.postAdminResyncBackendWithDatabaseHandler))
 
 	r.Handle("/admin/debug/job/{jobID}", nil, r.GET(s.getDebugJobHandler))
+	r.Handle("/admin/items/log-coverage", nil, r.POST(s.postItemsLogCoverageHandler))
 }

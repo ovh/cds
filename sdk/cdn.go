@@ -595,3 +595,40 @@ type CDNDebugJobItemUnit struct {
 	ToDelete     bool      `json:"to_delete"`
 	LastModified time.Time `json:"last_modified"`
 }
+
+// CDNJobLogCoverageRequest asks the CDN how many log items it holds for a batch of jobs. The
+// identifiers are accepted as strings for both run versions: a v2 run job uuid and a v1 node run
+// job number are stored the same way in the api ref of an item.
+type CDNJobLogCoverageRequest struct {
+	JobIDs []string `json:"job_ids"`
+}
+
+// CDNJobLogCoverageResponse answers with the number of log items per job. A job the CDN holds
+// nothing for is absent from the map rather than present with a zero: the caller asked about it, so
+// it already knows it looked for it.
+type CDNJobLogCoverageResponse struct {
+	LogItemCountByJobID map[string]int64 `json:"log_item_count_by_job_id"`
+}
+
+// LogCoverageJob is one job of a log coverage report. The project and workflow are only known for
+// a v2 job: a terminated v1 job no longer has a row of its own, and the identifier is what the CDN
+// debug route needs anyway.
+type LogCoverageJob struct {
+	JobID        string    `json:"job_id" cli:"job_id"`
+	RunVersion   string    `json:"run_version" cli:"run_version"`
+	Ended        time.Time `json:"ended" cli:"ended"`
+	ProjectKey   string    `json:"project_key,omitempty" cli:"project_key"`
+	WorkflowName string    `json:"workflow_name,omitempty" cli:"workflow_name"`
+	WorkerName   string    `json:"worker_name,omitempty" cli:"worker_name"`
+}
+
+// LogCoverageReport names the jobs that ran on a worker, terminated inside the window, and for
+// which the CDN holds no log item at all. It is the readable form of the coverage metrics: the
+// gauges say how many, this says which ones.
+type LogCoverageReport struct {
+	Since           time.Time        `json:"since"`
+	Until           time.Time        `json:"until"`
+	JobsChecked     int64            `json:"jobs_checked"`
+	JobsWithoutItem []LogCoverageJob `json:"jobs_without_item"`
+	Truncated       bool             `json:"truncated"`
+}
