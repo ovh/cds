@@ -110,7 +110,8 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 
 	b := make([]byte, 1024)
 	currentBuffer := make([]byte, 0)
-	var dropped int64 // bytes discarded from the current oversized message, 0 while accumulating
+	var dropped int64    // bytes discarded from the current oversized message, 0 while accumulating
+	var tail droppedTail // last bytes of that message, the only part that can name its sender
 	for {
 		// Can i try to read the next 1024B
 		if err := globalRateLimit.WaitN(1024); err != nil {
@@ -129,11 +130,14 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 			if b[i] != byte(0) {
 				if dropped > 0 {
 					dropped++
+					tail.add(b[i])
 					continue
 				}
 				if int64(len(currentBuffer)) >= s.Cfg.Log.StepMaxSize {
 					currentBuffer = make([]byte, 0)
 					dropped = 1
+					tail.reset()
+					tail.add(b[i])
 					continue
 				}
 				currentBuffer = append(currentBuffer, b[i])
@@ -142,8 +146,16 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 
 			if dropped > 0 {
 				telemetry.Record(ctx, s.Metrics.tcpServerErrorsCount, 1)
-				log.Warn(ctx, "tcp log message from %v exceeds %d bytes (%d received), message dropped", conn.RemoteAddr(), s.Cfg.Log.StepMaxSize, s.Cfg.Log.StepMaxSize+dropped)
+				// The remote address is the peer of the tcp connection, which behind a proxy is
+				// the proxy itself: on its own it never identifies the job to fix. The signature
+				// found in the tail does.
+				sender := describeDroppedMessage(tail.bytes())
+				if sender == "" {
+					sender = "unidentified sender"
+				}
+				log.Warn(ctx, "tcp log message from %v exceeds %d bytes (%d received), message dropped [%s]", conn.RemoteAddr(), s.Cfg.Log.StepMaxSize, s.Cfg.Log.StepMaxSize+dropped, sender)
 				dropped = 0
+				tail.reset()
 				continue
 			}
 
