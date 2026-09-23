@@ -97,6 +97,9 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServicesHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
 	r.Handle("/admin/services/call", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminServiceCallHandler, service.OverrideAuth(api.authMaintainerMiddleware)), r.POST(api.postAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminServiceCallHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
+	// Admin log coverage
+	r.Handle("/admin/logs/coverage", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminLogCoverageHandler, service.OverrideAuth(api.authMaintainerMiddleware)))
+
 	// Admin database
 	r.Handle("/admin/database/migration", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/database/migration/delete/{id}", Scope(sdk.AuthConsumerScopeAdmin), r.DELETE(api.deleteAdminDatabaseMigrationHandler, service.OverrideAuth(api.authAdminMiddleware)))
