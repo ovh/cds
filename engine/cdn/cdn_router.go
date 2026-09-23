@@ -55,4 +55,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/admin/database/entity/{entity}/roll", nil, r.POST(s.postAdminDatabaseEntityRoll))
 
 	r.Handle("/admin/backend/{id}/resync/{type}", nil, r.POST(s.postAdminResyncBackendWithDatabaseHandler))
+
+	r.Handle("/admin/debug/job/{jobID}", nil, r.GET(s.getDebugJobHandler))
 }
