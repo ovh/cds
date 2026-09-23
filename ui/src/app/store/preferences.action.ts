@@ -13,6 +13,11 @@ export class SetTheme {
     constructor(public payload: { theme: string }) { }
 }
 
+export class SetSystemTheme {
+    static readonly type = '[Preferences] Set system theme';
+    constructor(public payload: { theme: string }) { }
+}
+
 export class SaveProjectWorkflowRunFilter {
     static readonly type = '[Preferences] Save project\'s workflow run filter';
     constructor(public payload: { projectKey: string, name: string, value: string, sort: string }) { }

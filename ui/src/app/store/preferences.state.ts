@@ -1,13 +1,20 @@
 import { Injectable } from '@angular/core';
-import { Action, createSelector, Selector, State, StateContext } from '@ngxs/store';
+import { Action, createSelector, NgxsOnInit, Selector, State, StateContext } from '@ngxs/store';
 import * as actionPreferences from './preferences.action';
+
+export const THEME_AUTO = 'auto';
+export const THEME_LIGHT = 'light';
+export const THEME_NIGHT = 'night';
 
 export class PreferencesStateModel {
     panel: {
         resizing: boolean;
         sizes: { [key: string]: string };
     };
-    theme: string;
+    // Kept only to migrate a theme forced before the auto mode existed, see ngxsOnInit
+    theme?: string;
+    themeMode: string;
+    systemTheme: string;
     projectRunFilters: {
         [projectKey: string]: Array<{
             name: string;
@@ -32,7 +39,8 @@ export class PreferencesStateModel {
             resizing: false,
             sizes: {}
         },
-        theme: 'light',
+        themeMode: THEME_AUTO,
+        systemTheme: THEME_LIGHT,
         projectRunFilters: {},
         projectTreeExpandState: {},
         projectRefSelectState: {},
@@ -40,8 +48,18 @@ export class PreferencesStateModel {
     }
 })
 @Injectable()
-export class PreferencesState {
+export class PreferencesState implements NgxsOnInit {
     constructor() { }
+
+    ngxsOnInit(ctx: StateContext<PreferencesStateModel>) {
+        const state = ctx.getState();
+        if (state.themeMode) { return; }
+        ctx.setState({
+            ...state,
+            themeMode: state.theme === THEME_NIGHT ? THEME_NIGHT : THEME_AUTO,
+            theme: undefined
+        });
+    }
 
     static panelSize(key: string) {
         return createSelector(
@@ -54,7 +72,14 @@ export class PreferencesState {
 
     @Selector()
     static theme(state: PreferencesStateModel) {
-        return state.theme;
+        const mode = state.themeMode ?? THEME_AUTO;
+        const resolved = mode === THEME_AUTO ? state.systemTheme : mode;
+        return resolved === THEME_NIGHT ? THEME_NIGHT : THEME_LIGHT;
+    }
+
+    @Selector()
+    static themeMode(state: PreferencesStateModel) {
+        return state.themeMode ?? THEME_AUTO;
     }
 
     @Selector()
@@ -196,9 +221,19 @@ export class PreferencesState {
     @Action(actionPreferences.SetTheme)
     setTheme(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SetTheme) {
         const state = ctx.getState();
+        const mode = action.payload.theme;
         ctx.setState({
             ...state,
-            theme: action.payload.theme === 'night' ? 'night' : 'light'
+            themeMode: mode === THEME_NIGHT || mode === THEME_LIGHT ? mode : THEME_AUTO
+        });
+    }
+
+    @Action(actionPreferences.SetSystemTheme)
+    setSystemTheme(ctx: StateContext<PreferencesStateModel>, action: actionPreferences.SetSystemTheme) {
+        const state = ctx.getState();
+        ctx.setState({
+            ...state,
+            systemTheme: action.payload.theme === THEME_NIGHT ? THEME_NIGHT : THEME_LIGHT
         });
     }
 

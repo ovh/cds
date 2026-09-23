@@ -39,7 +39,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     recentView = true;
     currentAuthSummary: AuthSummary;
     themeSubscription: Subscription;
+    themeModeSubscription: Subscription;
     darkActive: boolean;
+    themeMode: string;
+    themeIcon: string;
+    themePopupVisible = false;
     projectsSubscription: Subscription;
     workflowsSubscription: Subscription;
     showNotif = false;
@@ -63,10 +67,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
 
-    changeTheme() {
-        this.darkActive = !this.darkActive;
-        this._cd.markForCheck();
-        this._store.dispatch(new actionPreferences.SetTheme({ theme: this.darkActive ? 'night' : 'light' }));
+    changeTheme(mode: string) {
+        this.themePopupVisible = false;
+        this._store.dispatch(new actionPreferences.SetTheme({ theme: mode }));
     }
 
     ngOnInit() {
@@ -87,6 +90,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         this.themeSubscription = this._store.select(PreferencesState.theme).subscribe(t => {
             this.darkActive = t === 'night';
+            this.themeIcon = this.darkActive ? 'moon' : 'sun';
+            this._cd.markForCheck();
+        });
+
+        this.themeModeSubscription = this._store.select(PreferencesState.themeMode).subscribe(m => {
+            this.themeMode = m;
             this._cd.markForCheck();
         });
 

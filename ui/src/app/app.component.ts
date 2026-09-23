@@ -15,7 +15,7 @@ import format from 'string-format-obj';
 import { AppService } from './app.service';
 import { AuthSummary } from './model/user.model';
 import { NotificationService } from './service/notification/notification.service';
-import { HelpService, MonitoringService } from './service/services.module';
+import { HelpService, MonitoringService, ThemeService } from './service/services.module';
 import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
 import { ToastService } from './shared/toast/ToastService';
 import { AuthenticationState } from './store/authentication.state';
@@ -54,6 +54,8 @@ export class AppComponent implements OnInit, OnDestroy {
     _configService = inject(NzConfigService);
     _eventV2Service = inject(EventV2Service)
     _liveAnnouncer = inject(LiveAnnouncer);
+    // Instantiated here so that the system theme is known before the first theme resolution
+    _themeService = inject(ThemeService);
 
     @ViewChild('templateRootToast') toastTemplate: TemplateRef<any>;
     toastSubs: Subscription;

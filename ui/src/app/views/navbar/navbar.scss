@@ -112,8 +112,21 @@
             background-color: rgba(255, 255, 255, 0.03);
         }
     }
+
+    .theme-trigger {
+        align-items: center;
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 16px;
+
+        &:focus-visible {
+            outline: 2px solid white;
+            outline-offset: -4px;
+        }
+    }
 }
 
-nz-switch {
-    margin-right: 10px;
+::ng-deep .theme-popup .ant-popover-inner-content {
+    padding: 8px;
 }
