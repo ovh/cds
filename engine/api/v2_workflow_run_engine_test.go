@@ -1929,7 +1929,7 @@ spec: |-
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                tmplRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityTmpl))
 
@@ -1947,7 +1947,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -2176,7 +2176,7 @@ spec: |-
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                tmplRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityTmpl))
 
@@ -2194,7 +2194,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -2437,7 +2437,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -2627,7 +2627,7 @@ spec: |-
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                tmplRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityTmpl))
 
@@ -2645,7 +2645,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -2849,7 +2849,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -3080,7 +3080,7 @@ spec: |-
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                tmplRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityTmpl))
 
@@ -3098,7 +3098,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -3279,7 +3279,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -3520,7 +3520,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -3708,7 +3708,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -3964,7 +3964,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -4248,7 +4248,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -4420,7 +4420,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -4583,7 +4583,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 
@@ -4741,7 +4741,7 @@ spec:
 		Commit:              "abcdef",
 		Ref:                 "refs/heads/master",
 		Data:                modelRaw,
-		UserID:              &admin.ID,
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &entityModel))
 

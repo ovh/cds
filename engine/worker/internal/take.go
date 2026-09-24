@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"net"
 	"strconv"
 	"strings"
@@ -64,9 +63,9 @@ func (w *CurrentWorker) Take(ctx context.Context, job sdk.WorkflowNodeJobRun) er
 	// Reset build variables
 	w.currentJob.newVariables = nil
 
-	secretKey := make([]byte, 32)
-	if _, err := base64.StdEncoding.Decode(secretKey, []byte(info.SigningKey)); err != nil {
-		return sdk.WithStack(err)
+	secretKey, err := decodeSigningKey(ctx, info.SigningKey)
+	if err != nil {
+		return err
 	}
 	signer, err := jws.NewHMacSigner(secretKey)
 	if err != nil {

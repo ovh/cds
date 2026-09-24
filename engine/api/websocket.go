@@ -301,6 +301,8 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 	// Randomize the order of client to prevent the old client to always received new events in priority
 	rand.Shuffle(len(clientIDs), func(i, j int) { clientIDs[i], clientIDs[j] = clientIDs[j], clientIDs[i] })
 
+	telemetry.Record(a.Router.Background, WebSocketFanoutConsidered, int64(len(clientIDs)))
+
 	for _, id := range clientIDs {
 		// Copy idx for goroutine
 		clientID := id
@@ -319,6 +321,7 @@ func (a *API) websocketOnMessage(e sdk.Event) {
 			if !found {
 				return
 			}
+			telemetry.Record(a.Router.Background, WebSocketFanoutMatched, 1)
 
 			if needPostCheck {
 				allowed, err := c.eventPostCheck(ctx, a.mustDBWithCtx(ctx), a.Cache, e)

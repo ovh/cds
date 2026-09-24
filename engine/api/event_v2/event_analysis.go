@@ -28,7 +28,7 @@ func PublishAnalysisStart(ctx context.Context, store cache.Store, vcsName, repoN
 	publish(ctx, store, e)
 }
 
-func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis, u *sdk.V2Initiator) {
+func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoName string, a *sdk.ProjectRepositoryAnalysis) {
 	bts, _ := json.Marshal(a)
 	e := sdk.AnalysisEvent{
 		GlobalEventV2: sdk.GlobalEventV2{
@@ -43,8 +43,11 @@ func PublishAnalysisDone(ctx context.Context, store cache.Store, vcsName, repoNa
 		VCSName:    vcsName,
 		Repository: repoName,
 		Status:     a.Status,
-		UserID:     u.UserID,
-		Username:   u.Username(),
+		Username:   a.Data.InitiatorUsername(),
+	}
+	// Initiator is nil when the analysis stopped before the committer was resolved
+	if a.Data.Initiator != nil {
+		e.UserID = a.Data.Initiator.UserID
 	}
 	publish(ctx, store, e)
 }

@@ -150,8 +150,14 @@ testcases:
                 worker export GRADLENAME ${gradlefile}
                 sbtfile=sbt.pomo
                 worker export SBTNAME ${sbtfile}
+                # a freebsd artifact lives under a nested path, as an image build publishes
+                # it. addRunResult is given that same path, relative to the repository.
+                myfile=myart-12.1-RELEASE-amd64-${globts}.iso
+                mypath=images/mymodule/12.1/${globts}/${myfile}
+                worker export MYNAME ${myfile}
+                worker export MYPATH ${mypath}
 
-                touch ${debfile} && touch ${globdeb1} && touch ${globdeb2} && touch ${terrafile} && touch ${pyfile} && touch ${mvnfile} && touch ${gradlefile} && touch ${sbtfile}
+                touch ${debfile} && touch ${globdeb1} && touch ${globdeb2} && touch ${terrafile} && touch ${pyfile} && touch ${mvnfile} && touch ${gradlefile} && touch ${sbtfile} && touch ${myfile}
                 ls -l
             - id: uploadDeb
               run: curl --fail -X PUT -T ${{ steps.name.outputs.DEBNAME }} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-debian/pool/${{ steps.name.outputs.DEBNAME }};deb.distribution=focal;deb.component=main;deb.architecture=amd64"
@@ -207,6 +213,12 @@ testcases:
               with:
                 path: ${{steps.name.outputs.GRADLENAME}}
                 type: gradle
+            - id: uploadFreeBSD
+              run: curl --fail -X PUT -T ${{steps.name.outputs.MYNAME}} -u "${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN_NAME}:${CDS_INTEGRATION_ARTIFACT_MANAGER_TOKEN}" "${CDS_INTEGRATION_ARTIFACT_MANAGER_URL}{{.rt_project}}-{{.rt_component}}-freebsd/${{steps.name.outputs.MYPATH}}"
+            - uses: actions/addRunResult
+              with:
+                path: ${{steps.name.outputs.MYPATH}}
+                type: freebsd
             # three docker images pushed with skopeo into <prefix>-docker, registered by a single
             # glob step. A docker pattern is an image reference: the tag is matched after the ":".
             # The <ts> in the image name keeps the pattern from matching images of previous runs
@@ -329,5 +341,9 @@ testcases:
       - result.systemoutjson ShouldHaveLength 1
   - name: Check that we have 1 run result of type terraformProvider
     script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=sbt --format json"  
+    assertions:
+      - result.systemoutjson ShouldHaveLength 1
+  - name: Check that we have 1 run result of type freebsd
+    script: "{{.cdsctl}} -f {{.cdsctl.config}} experimental workflow result list {{.cds_project}} {{.workflowRunID}} --filter type=freebsd --format json"
     assertions:
       - result.systemoutjson ShouldHaveLength 1

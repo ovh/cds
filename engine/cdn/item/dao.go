@@ -204,6 +204,67 @@ func LoadByRunJobID(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecut
 	return getItems(ctx, m, db, query, opts...)
 }
 
+// LoadByJobIdentifier loads the items of a job whatever its generation: the identifier is
+// matched against both api ref fields, the string one and the numeric one. Unlike the loaders
+// above it does NOT filter out the items marked for deletion, and it is limited: it exists for
+// read only inspection, where an item on its way out is precisely what explains missing logs.
+func LoadByJobIdentifier(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, jobIdentifier string, limit int, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.CDNItem, error) {
+	query := gorpmapper.NewQuery(`
+		SELECT *
+		FROM item
+		WHERE api_ref->>'run_job_id' = $1
+		OR api_ref->>'node_run_job_id' = $1
+		ORDER BY created DESC
+		LIMIT $2
+	`).Args(jobIdentifier, limit)
+	return getItems(ctx, m, db, query, opts...)
+}
+
+// LogItemCountByJob is the number of log items the CDN holds for one job.
+type LogItemCountByJob struct {
+	JobID  string `db:"job_id"`
+	Number int64  `db:"number"`
+}
+
+// CountLogItemsByJobIdentifiers returns, for each of the given job identifiers, the number of log
+// items the CDN holds. It answers for both run versions in one pass: the identifier of a v2 run job
+// and the one of a v1 node run job are two distinct keys of the api ref, and both are indexed.
+//
+// A job the CDN holds nothing for is absent from the result rather than present with a zero: the
+// caller asked about it, so it already knows it looked for it.
+//
+// Items flagged to_delete are counted. The question this answers is whether logs were ever stored
+// for the job, not whether they are still readable, and an item on its way out proves they were.
+func CountLogItemsByJobIdentifiers(db gorp.SqlExecutor, jobIdentifiers []string) (map[string]int64, error) {
+	if len(jobIdentifiers) == 0 {
+		return map[string]int64{}, nil
+	}
+
+	logItemTypes := []string{
+		string(sdk.CDNTypeItemJobStepLog),
+		string(sdk.CDNTypeItemServiceLogV2),
+		string(sdk.CDNTypeItemStepLog),
+		string(sdk.CDNTypeItemServiceLog),
+	}
+
+	var counts []LogItemCountByJob
+	query := `
+	SELECT coalesce(api_ref->>'run_job_id', api_ref->>'node_run_job_id') as "job_id", count(1) as "number"
+	FROM item
+	WHERE type = ANY($2)
+	AND (api_ref->>'run_job_id' = ANY($1) OR api_ref->>'node_run_job_id' = ANY($1))
+	GROUP BY 1`
+	if _, err := db.Select(&counts, query, pq.StringArray(jobIdentifiers), pq.StringArray(logItemTypes)); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	res := make(map[string]int64, len(counts))
+	for _, c := range counts {
+		res[c.JobID] = c.Number
+	}
+	return res, nil
+}
+
 // LoadByAPIRefHashAndType load an item by his job id, step order and type
 func LoadByAPIRefHashAndType(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlExecutor, hash string, itemType sdk.CDNItemType, opts ...gorpmapper.GetOptionFunc) (*sdk.CDNItem, error) {
 	query := gorpmapper.NewQuery(`

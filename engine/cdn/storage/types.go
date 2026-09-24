@@ -234,12 +234,13 @@ type NFSBufferConfiguration struct {
 }
 
 type RunningStorageUnits struct {
-	m        *gorpmapper.Mapper
-	db       *gorp.DbMap
-	cache    cache.Store
-	config   Configuration
-	Buffers  []BufferUnit
-	Storages []StorageUnit
+	m          *gorpmapper.Mapper
+	db         *gorp.DbMap
+	cache      cache.Store
+	config     Configuration
+	GoRoutines *sdk.GoRoutines
+	Buffers    []BufferUnit
+	Storages   []StorageUnit
 }
 
 func (x RunningStorageUnits) HashLocator(loc string) string {

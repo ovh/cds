@@ -87,10 +87,11 @@ func Init(ctx context.Context, m *gorpmapper.Mapper, store cache.Store, db *gorp
 	}
 
 	var result = RunningStorageUnits{
-		m:      m,
-		db:     db,
-		cache:  store,
-		config: config,
+		m:          m,
+		db:         db,
+		cache:      store,
+		config:     config,
+		GoRoutines: gorts,
 	}
 
 	for name, bu := range config.Buffers {

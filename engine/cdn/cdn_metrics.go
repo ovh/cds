@@ -22,6 +22,7 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	tagItemType := telemetry.MustNewKey(telemetry.TagType)
 	tagStatus := telemetry.MustNewKey(telemetry.TagStatus)
 	tagPercentil := telemetry.MustNewKey(telemetry.TagPercentil)
+	tagReason := telemetry.MustNewKey(telemetry.TagReason)
 
 	s.RegisterCommonMetricsView(ctx)
 
@@ -36,6 +37,19 @@ func (s *Service) initMetrics(ctx context.Context) error {
 
 	s.Metrics.tcpServerServiceLogCount = stats.Int64("cdn/tcp/service_log_count", "number of service log received", stats.UnitDimensionless)
 	tcpServerServiceLogCountView := telemetry.NewViewCount(s.Metrics.tcpServerServiceLogCount.Name(), s.Metrics.tcpServerServiceLogCount, []tag.Key{tagServiceName, tagServiceType})
+
+	// Accounting of the log lines: received (tcpServerStepLogCount + tcpServerServiceLogCount)
+	// = accepted + rejected, then accepted = stored once dequeued. Without the reason dimension
+	// on the rejections, a worker sending an unverifiable signature and a worker unknown from
+	// the API are indistinguishable outside of Graylog.
+	s.Metrics.tcpServerLogAcceptedCount = stats.Int64("cdn/tcp/log_accepted_count", "number of log lines enqueued into the incoming queue", stats.UnitDimensionless)
+	tcpServerLogAcceptedCountView := telemetry.NewViewCount(s.Metrics.tcpServerLogAcceptedCount.Name(), s.Metrics.tcpServerLogAcceptedCount, []tag.Key{tagServiceName, tagServiceType})
+
+	s.Metrics.tcpServerLogRejectedCount = stats.Int64("cdn/tcp/log_rejected_count", "number of log lines rejected by reason", stats.UnitDimensionless)
+	tcpServerLogRejectedCountView := telemetry.NewViewCount(s.Metrics.tcpServerLogRejectedCount.Name(), s.Metrics.tcpServerLogRejectedCount, []tag.Key{tagServiceName, tagServiceType, tagReason})
+
+	s.Metrics.logStoredCount = stats.Int64("cdn/buffer/log_stored_count", "number of log lines written into the buffer", stats.UnitDimensionless)
+	logStoredCountView := telemetry.NewViewCount(s.Metrics.logStoredCount.Name(), s.Metrics.logStoredCount, []tag.Key{tagServiceName, tagServiceType})
 
 	s.Metrics.dequeuedJobQueues = stats.Int64("cdn/dequeue/job_queues", "number of job logs queues currently claimed by this instance", stats.UnitDimensionless)
 	dequeuedJobQueuesView := telemetry.NewViewLast(s.Metrics.dequeuedJobQueues.Name(), s.Metrics.dequeuedJobQueues, []tag.Key{tagServiceName, tagServiceType})
@@ -59,13 +73,20 @@ func (s *Service) initMetrics(ctx context.Context) error {
 	itemToSyncCountView := telemetry.NewViewLast(s.Metrics.ItemToSyncCount.Name(), s.Metrics.ItemToSyncCount, []tag.Key{tagStorage, tagItemType})
 
 	s.Metrics.WSClients = stats.Int64("cdn/websocket_clients", "number of  websocket clients", stats.UnitDimensionless)
-	metricsWSClients := telemetry.NewViewLast(s.Metrics.WSClients.Name(), s.Metrics.WSClients, []tag.Key{tagServiceName, tagItemType})
+	metricsWSClients := telemetry.NewViewLast(s.Metrics.WSClients.Name(), s.Metrics.WSClients, []tag.Key{tagServiceName})
 
-	s.Metrics.WSEvents = stats.Int64("cdn/websocket_events", "number of websocket events", stats.UnitDimensionless)
-	metricsWSEvents := telemetry.NewViewCount(s.Metrics.WSEvents.Name(), s.Metrics.WSEvents, []tag.Key{tagServiceName, tagItemType})
+	s.Metrics.WSEvents = stats.Int64("cdn/websocket_events", "number of websocket events read from the broker", stats.UnitDimensionless)
+	metricsWSEvents := telemetry.NewViewCount(s.Metrics.WSEvents.Name(), s.Metrics.WSEvents, []tag.Key{tagServiceName})
 
-	s.Metrics.ItemToDelete = stats.Int64("cdn/items/to_delete", "number of items to delete per type", stats.UnitDimensionless)
-	itemToDeleteView := telemetry.NewViewLast(s.Metrics.ItemToDelete.Name(), s.Metrics.ItemToDelete, []tag.Key{tagItemType})
+	// Published against read: the broker consumes at a bounded rate, so the two only match while
+	// it keeps up. Reading one alone cannot tell a quiet platform from a saturated broker.
+	s.Metrics.WSEventsPublished = stats.Int64("cdn/websocket_events_published", "number of websocket events published to the broker", stats.UnitDimensionless)
+	metricsWSEventsPublished := telemetry.NewViewSum(s.Metrics.WSEventsPublished.Name(), s.Metrics.WSEventsPublished, []tag.Key{tagServiceName})
+
+	// No type dimension: the count behind it is a single total, so the tag only ever carried an
+	// empty value that no query can filter on.
+	s.Metrics.ItemToDelete = stats.Int64("cdn/items/to_delete", "number of items to delete", stats.UnitDimensionless)
+	itemToDeleteView := telemetry.NewViewLast(s.Metrics.ItemToDelete.Name(), s.Metrics.ItemToDelete, nil)
 
 	s.Metrics.ItemUnitToDelete = stats.Int64("cdn/item_units/to_delete", "number of item units to delete per storage and type", stats.UnitDimensionless)
 	itemUnitToDeleteView := telemetry.NewViewLast(s.Metrics.ItemUnitToDelete.Name(), s.Metrics.ItemUnitToDelete, []tag.Key{tagStorage, tagItemType})
@@ -81,6 +102,9 @@ func (s *Service) initMetrics(ctx context.Context) error {
 		tcpServerHitsCountView,
 		tcpServerStepLogCountView,
 		tcpServerServiceLogCountView,
+		tcpServerLogAcceptedCountView,
+		tcpServerLogRejectedCountView,
+		logStoredCountView,
 		dequeuedJobQueuesView,
 		dequeuedMessagesView,
 		itemCompletedByGCCountView,
@@ -89,6 +113,7 @@ func (s *Service) initMetrics(ctx context.Context) error {
 		itemSizeView,
 		metricsWSClients,
 		metricsWSEvents,
+		metricsWSEventsPublished,
 		itemToSyncCountView,
 		itemToDeleteView,
 		itemUnitToDeleteView,

@@ -131,10 +131,6 @@
           }
         }
 
-        <div nz-menu-item>
-          <nz-switch [ngModel]="darkActive" (ngModelChange)="changeTheme()" aria-label="Dark mode"></nz-switch>Dark mode
-        </div>
-
         @if (currentAuthSummary) {
           <div nz-menu-divider></div>
           <a nz-menu-item (click)="clickLogout()" role="button" tabindex="0"
@@ -142,6 +138,21 @@
         }
       </div>
     </nz-dropdown-menu>
+
+    <!-- THEME -->
+    <button class="theme-trigger" nz-popover [nzPopoverContent]="popupTemplateTheme" nzPopoverTrigger="click"
+      nzPopoverPlacement="bottomRight" nzPopoverOverlayClassName="theme-popup" [(nzPopoverVisible)]="themePopupVisible"
+      [attr.aria-label]="'navbar_theme' | translate" [title]="'navbar_theme' | translate">
+      <i nz-icon [nzType]="themeIcon" nzTheme="outline" aria-hidden="true"></i>
+    </button>
+    <ng-template #popupTemplateTheme>
+      <nz-radio-group role="group" [attr.aria-label]="'navbar_theme' | translate" nzSize="small" [ngModel]="themeMode"
+        (ngModelChange)="changeTheme($event)">
+        <label nz-radio-button nzValue="auto">{{ 'navbar_theme_auto' | translate }}</label>
+        <label nz-radio-button nzValue="light">{{ 'navbar_theme_light' | translate }}</label>
+        <label nz-radio-button nzValue="night">{{ 'navbar_theme_dark' | translate }}</label>
+      </nz-radio-group>
+    </ng-template>
 
     <!-- HELP -->
     @if (help?.content?.length > 0) {

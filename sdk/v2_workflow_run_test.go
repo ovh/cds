@@ -121,3 +121,44 @@ func TestJobIntegrationsContext_GetValue(t *testing.T) {
 
 	require.Equal(t, "value_of_token", got)
 }
+
+func TestV2Initiator_IsUnknown(t *testing.T) {
+	var nilInitiator *V2Initiator
+	require.True(t, nilInitiator.IsUnknown())
+	require.True(t, (&V2Initiator{}).IsUnknown())
+	require.True(t, (&V2Initiator{VCS: "github"}).IsUnknown())
+	require.False(t, (&V2Initiator{UserID: "u1"}).IsUnknown())
+	require.False(t, (&V2Initiator{VCS: "github", VCSUsername: "octocat"}).IsUnknown())
+}
+
+func TestV2Initiator_EntityOwner(t *testing.T) {
+	var nilInitiator *V2Initiator
+	require.Nil(t, nilInitiator.EntityOwner())
+
+	src := &V2Initiator{
+		UserID:         "u1",
+		User:           &V2InitiatorUser{Username: "alice", Ring: UserRingAdmin, Email: "alice@example.com"},
+		VCS:            "github",
+		VCSUsername:    "alice-gh",
+		IsAdminWithMFA: true,
+	}
+	owner := src.EntityOwner()
+	require.False(t, owner.IsAdminWithMFA)
+	require.Equal(t, "u1", owner.UserID)
+	require.Equal(t, "github", owner.VCS)
+	require.Equal(t, "alice-gh", owner.VCSUsername)
+	require.Equal(t, "alice", owner.User.Username)
+	require.Equal(t, "alice@example.com", owner.User.Email)
+
+	// The copy must not alias the source
+	owner.User.Username = "bob"
+	require.True(t, src.IsAdminWithMFA)
+	require.Equal(t, "alice", src.User.Username)
+
+	vcsOnly := &V2Initiator{VCS: "github", VCSUsername: "octocat", IsAdminWithMFA: true}
+	owner = vcsOnly.EntityOwner()
+	require.Nil(t, owner.User)
+	require.False(t, owner.IsAdminWithMFA)
+	require.Equal(t, "github", owner.VCS)
+	require.Equal(t, "octocat", owner.VCSUsername)
+}

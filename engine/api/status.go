@@ -96,6 +96,7 @@ var (
 	tagStatus      tag.Key
 	tagServiceName tag.Key
 	tagService     tag.Key
+	tagRunVersion  tag.Key
 	tagsService    []tag.Key
 )
 
@@ -271,12 +272,23 @@ func (api *API) initMetrics(ctx context.Context) error {
 		"number of synchronized run results with error",
 		stats.UnitDimensionless)
 
+	api.Metrics.logCoverageJobsChecked = stats.Int64(
+		"cds/cds-api/cdn_log_coverage_jobs_checked",
+		"number of terminated jobs whose log items were looked up",
+		stats.UnitDimensionless)
+	api.Metrics.logCoverageJobsWithoutItem = stats.Int64(
+		"cds/cds-api/cdn_log_coverage_jobs_without_item",
+		"number of terminated jobs the cdn holds no log item for",
+		stats.UnitDimensionless)
+
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
+	tagRunVersion, _ = tag.NewKey("run_version")
 
 	tagServiceType := telemetry.MustNewKey(telemetry.TagServiceType)
 	tagServiceName := telemetry.MustNewKey(telemetry.TagServiceName)
 	tagsRange := []tag.Key{tagRange, tagStatus}
+	tagsLogCoverage := []tag.Key{tagRange, tagRunVersion}
 	tagsService = []tag.Key{tagServiceName, tagServiceType}
 
 	err := telemetry.RegisterView(ctx,
@@ -302,6 +314,8 @@ func (api *API) initMetrics(ctx context.Context) error {
 		telemetry.NewViewLast("cds/run_results_synchronized", api.Metrics.RunResultSynchronized, tagsService),
 		telemetry.NewViewLast("cds/run_results_to_synchronized", api.Metrics.RunResultToSynchronized, tagsService),
 		telemetry.NewViewLast("cds/run_results_to_synchronized_error", api.Metrics.RunResultSynchronizedError, tagsService),
+		telemetry.NewViewLast("cds/cdn_log_coverage_jobs_checked", api.Metrics.logCoverageJobsChecked, tagsLogCoverage),
+		telemetry.NewViewLast("cds/cdn_log_coverage_jobs_without_item", api.Metrics.logCoverageJobsWithoutItem, tagsLogCoverage),
 	)
 
 	// The pool of the database describes itself: the connections in use, and above all how long the
@@ -328,6 +342,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 
 	api.computeQueueMetrics(ctx)
 	api.computeInventoryMetrics(ctx)
+	api.computeLogCoverageMetrics(ctx)
 }
 
 // computeQueueMetrics refreshes what a scheduling dashboard reads: the queues, which are small hot

@@ -900,21 +900,18 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return err
 			}
 
-			if workflowEntity.UserID != nil {
-				log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s user_id: %s", workflowEntity.ID, workflowEntity.Name, *workflowEntity.UserID)
-			} else {
-				log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s user_id: %v", workflowEntity.ID, workflowEntity.Name, workflowEntity.UserID)
-			}
+			log.Debug(ctx, "postWorkflowRunFromHookV2Handler - workflowEntity: entity_id: %s name: %s owner: %+v", workflowEntity.ID, workflowEntity.Name, workflowEntity.Initiator)
 			log.Debug(ctx, "postWorkflowRunFromHookV2Handler - wk.Repository: %+v", wk.Repository)
 
 			if wk.Repository != nil && wk.Repository.InsecureSkipSignatureVerify {
 				// Use entity owner as user fallback
-				if workflowEntity.UserID == nil {
+				if workflowEntity.Initiator.IsUnknown() {
 					return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown workflow owner. Please analyse your repository.")
 				}
-				runRequest.Initiator = &sdk.V2Initiator{
-					UserID: *workflowEntity.UserID,
-				}
+				runRequest.Initiator = workflowEntity.Initiator
+			}
+			if runRequest.Initiator.IsUnknown() {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "unknown user")
 			}
 
 			var (

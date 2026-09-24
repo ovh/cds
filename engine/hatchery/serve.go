@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/rockbears/log"
 
@@ -356,6 +357,14 @@ func (c *Common) SendServiceLog(ctx context.Context, servicesLogs []cdslog.Messa
 			err = sdk.WrapError(err, "unable to sign service log message")
 			log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 			continue
+		}
+		// Bound the line like the worker does; the cut steps back to a rune start
+		if len(s.Value) > cdslog.MaxLogLineSize {
+			cut := cdslog.MaxLogLineSize
+			for cut > 0 && !utf8.RuneStart(s.Value[cut]) {
+				cut--
+			}
+			s.Value = s.Value[:cut] + "...truncated\n"
 		}
 		lineNumber := c.mapServiceNextLineNumber[s.ServiceKey()]
 		c.mapServiceNextLineNumber[s.ServiceKey()]++

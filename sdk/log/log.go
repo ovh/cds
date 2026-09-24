@@ -47,6 +47,9 @@ const (
 	ExtraFieldTerminated = "Terminated"
 )
 
+// MaxLogLineSize caps one log line sent to the CDN, which drops any bigger TCP message
+const MaxLogLineSize = 15 * 1024 * 1024
+
 var (
 	graylogHook *graylog.Hook
 )

@@ -267,6 +267,9 @@ type Configuration struct {
 		AnalysisTimeout   string `toml:"analysisTimeout" comment:"How long an analysis may stay InProgress before it is failed" json:"analysisTimeout" commented:"true" default:"30m"`
 		AnalysisBatch     int64  `toml:"analysisExpiryBatch" comment:"How many timed out analyses are failed per poller tick" json:"analysisExpiryBatch" commented:"true" default:"200"`
 	} `toml:"entity" comment:"######################\n 'Entity' global configuration \n######################" json:"entity"`
+	LogCoverage struct {
+		Enabled bool `toml:"enabled" comment:"Measure how many terminated jobs the CDN holds no log item for. Reads a window of the run tables and calls the CDN every few minutes." json:"enabled" default:"true"`
+	} `toml:"logCoverage" comment:"######################\n 'Log coverage' metrics configuration \n######################" json:"logCoverage"`
 	Project struct {
 		CreationDisabled           bool   `toml:"creationDisabled" comment:"Disable project creation for CDS non admin users." json:"creationDisabled" default:"false" commented:"true"`
 		InfoCreationDisabled       string `toml:"infoCreationDisabled" comment:"Optional message to display if project creation is disabled." json:"infoCreationDisabled" default:"" commented:"true"`
@@ -357,6 +360,8 @@ type API struct {
 		RunResultToSynchronized    *stats.Int64Measure
 		RunResultSynchronized      *stats.Int64Measure
 		RunResultSynchronizedError *stats.Int64Measure
+		logCoverageJobsChecked     *stats.Int64Measure
+		logCoverageJobsWithoutItem *stats.Int64Measure
 	}
 	workflowRunCraftChan            chan string
 	workflowRunTriggerChan          chan sdk.V2WorkflowRunEnqueue
@@ -777,6 +782,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}})
 	migrate.Add(ctx, sdk.Migration{Name: "MigrationRunWithActions", Release: "0.56.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrationRunWithActions(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
+	migrate.Add(ctx, sdk.Migration{Name: migrate.MigrateEntityInitiatorName, Release: "0.58.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateEntityInitiator(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())

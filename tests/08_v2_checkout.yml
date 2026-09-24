@@ -76,6 +76,15 @@ testcases:
               steps:
                 - id: checkout
                   uses: actions/checkout
+                - id: check-git-config
+                  run: |-
+                    #!/bin/bash -x
+                    set -e
+                    echo "=== git signing config ==="
+                    git config --global --get user.signingkey
+                    test "$(git config --global --get commit.gpgsign)" = "true" || (echo "ERROR: commit.gpgsign not set" && exit 1)
+                    test "$(git config --global --get tag.gpgsign)" = "true" || (echo "ERROR: tag.gpgsign not set" && exit 1)
+                    echo "=== git signing config OK ==="
                 - id: check-env-vars
                   run: |-
                     #!/bin/bash -x
@@ -146,6 +155,8 @@ testcases:
         cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout completed"
         # Check checkout log content 2
         cat {{.cds_workflow}}-1-1-init-checkout && cat {{.cds_workflow}}-1-1-init-checkout | grep "Checkout branch master"
+        # Check git signing config log content
+        cat {{.cds_workflow}}-1-1-init-check-git-config && cat {{.cds_workflow}}-1-1-init-check-git-config | grep "git signing config OK"
         # Check env vars log content
         cat {{.cds_workflow}}-1-1-init-check-env-vars && cat {{.cds_workflow}}-1-1-init-check-env-vars | grep GIT_SERVER_URL
         # Check VCS API call log content

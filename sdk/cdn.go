@@ -531,3 +531,104 @@ type CDNDuplicateItemRequest struct {
 	FromJob string `json:"from_job"`
 	ToJob   string `json:"to_job"`
 }
+
+// CDNDebugJob is everything the CDN knows about the logs of one job: what is still waiting in
+// the intake, what was stored, and where. It never carries any log content, only keys, counters
+// and statuses.
+type CDNDebugJob struct {
+	JobID          string             `json:"job_id"`
+	Intake         CDNDebugJobIntake  `json:"intake"`
+	Dequeue        CDNDebugJobDequeue `json:"dequeue"`
+	Items          []CDNDebugJobItem  `json:"items"`
+	ItemsTruncated bool               `json:"items_truncated"`
+	Diagnosis      []string           `json:"diagnosis"`
+	Errors         []string           `json:"errors,omitempty"`
+}
+
+// CDNDebugJobIntake is the state of the keys the intake writes for a job, before anything is
+// stored. The step max size is reported next to the current size because the intake silently
+// drops every non terminated line once the second reaches the first.
+type CDNDebugJobIntake struct {
+	IncomingQueueKey    string `json:"incoming_queue_key"`
+	IncomingQueueExists bool   `json:"incoming_queue_exists"`
+	IncomingQueueLength int    `json:"incoming_queue_length"`
+
+	SizeKey     string `json:"size_key"`
+	SizeExists  bool   `json:"size_exists"`
+	SizeValue   int64  `json:"size_value"`
+	StepMaxSize int64  `json:"step_max_size"`
+
+	HeartbeatKey    string `json:"heartbeat_key"`
+	HeartbeatExists bool   `json:"heartbeat_exists"`
+	HeartbeatOwner  string `json:"heartbeat_owner"`
+}
+
+// CDNDebugJobDequeue is the dequeue state of the instance that answered, not of the whole
+// service: each instance claims its own queues.
+type CDNDebugJobDequeue struct {
+	ClaimedQueues int64 `json:"claimed_queues"`
+	MaxQueues     int64 `json:"max_queues"`
+}
+
+// CDNDebugJobItem is one item stored for the job. BufferLines is the number of lines the log
+// buffer currently holds for it, and is absent when the item is not a log or when the buffer no
+// longer holds it.
+type CDNDebugJobItem struct {
+	ID           string                `json:"id"`
+	APIRefHash   string                `json:"api_ref_hash"`
+	Type         CDNItemType           `json:"type"`
+	Status       string                `json:"status"`
+	Size         int64                 `json:"size"`
+	Created      time.Time             `json:"created"`
+	LastModified time.Time             `json:"last_modified"`
+	StepOrder    int64                 `json:"step_order"`
+	StepName     string                `json:"step_name,omitempty"`
+	ToDelete     bool                  `json:"to_delete"`
+	BufferLines  *int                  `json:"buffer_lines,omitempty"`
+	Units        []CDNDebugJobItemUnit `json:"units"`
+}
+
+type CDNDebugJobItemUnit struct {
+	ID           string    `json:"id"`
+	UnitID       string    `json:"unit_id"`
+	UnitName     string    `json:"unit_name"`
+	ToDelete     bool      `json:"to_delete"`
+	LastModified time.Time `json:"last_modified"`
+}
+
+// CDNJobLogCoverageRequest asks the CDN how many log items it holds for a batch of jobs. The
+// identifiers are accepted as strings for both run versions: a v2 run job uuid and a v1 node run
+// job number are stored the same way in the api ref of an item.
+type CDNJobLogCoverageRequest struct {
+	JobIDs []string `json:"job_ids"`
+}
+
+// CDNJobLogCoverageResponse answers with the number of log items per job. A job the CDN holds
+// nothing for is absent from the map rather than present with a zero: the caller asked about it, so
+// it already knows it looked for it.
+type CDNJobLogCoverageResponse struct {
+	LogItemCountByJobID map[string]int64 `json:"log_item_count_by_job_id"`
+}
+
+// LogCoverageJob is one job of a log coverage report. The project and workflow are only known for
+// a v2 job: a terminated v1 job no longer has a row of its own, and the identifier is what the CDN
+// debug route needs anyway.
+type LogCoverageJob struct {
+	JobID        string    `json:"job_id" cli:"job_id"`
+	RunVersion   string    `json:"run_version" cli:"run_version"`
+	Ended        time.Time `json:"ended" cli:"ended"`
+	ProjectKey   string    `json:"project_key,omitempty" cli:"project_key"`
+	WorkflowName string    `json:"workflow_name,omitempty" cli:"workflow_name"`
+	WorkerName   string    `json:"worker_name,omitempty" cli:"worker_name"`
+}
+
+// LogCoverageReport names the jobs that ran on a worker, terminated inside the window, and for
+// which the CDN holds no log item at all. It is the readable form of the coverage metrics: the
+// gauges say how many, this says which ones.
+type LogCoverageReport struct {
+	Since           time.Time        `json:"since"`
+	Until           time.Time        `json:"until"`
+	JobsChecked     int64            `json:"jobs_checked"`
+	JobsWithoutItem []LogCoverageJob `json:"jobs_without_item"`
+	Truncated       bool             `json:"truncated"`
+}
