@@ -187,13 +187,20 @@ func Init(ctx context.Context, dbConfig DBConfiguration) (*DBConnectionFactory, 
 		}
 	}
 
+	if f.DBSchema != "public" {
+		if _, err := f.Database.Exec(fmt.Sprintf("SET search_path = %s", f.DBSchema)); err != nil {
+			log.Error(ctx, "unable to set search_path with %s on database: %s", f.DBSchema, err)
+			return nil, sdk.WrapError(err, "unable to set search_path with %s", f.DBSchema)
+		}
+	}
+
 	return f, nil
 }
 
 func (f *DBConnectionFactory) dsn() string {
 	dsn := fmt.Sprintf("user=%s password='%s' dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d", f.DBUser, f.DBPassword, f.DBName, f.DBHost, f.DBPort, f.DBSSLMode, f.DBConnectTimeout)
 	if f.DBSchema != "public" {
-		dsn += fmt.Sprintf(" search_path=%s", f.DBSchema)
+		dsn += fmt.Sprintf(" options='-csearch_path=%s'", f.DBSchema)
 	}
 	return dsn
 }
