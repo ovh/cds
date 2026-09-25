@@ -30,11 +30,14 @@ func (s *Service) postItemsLogCoverageHandler() service.Handler {
 			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "too many job identifiers given: %d, maximum is %d", len(req.JobIDs), maxLogCoverageJobIDs)
 		}
 
-		counts, err := item.CountLogItemsByJobIdentifiers(s.mustDBWithCtx(ctx), req.JobIDs)
+		counts, stepCounts, err := item.CountLogItemsByJobIdentifiers(s.mustDBWithCtx(ctx), req.JobIDs)
 		if err != nil {
 			return err
 		}
 
-		return service.WriteJSON(w, sdk.CDNJobLogCoverageResponse{LogItemCountByJobID: counts}, http.StatusOK)
+		return service.WriteJSON(w, sdk.CDNJobLogCoverageResponse{
+			LogItemCountByJobID:     counts,
+			StepLogItemCountByJobID: stepCounts,
+		}, http.StatusOK)
 	}
 }

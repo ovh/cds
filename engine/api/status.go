@@ -280,6 +280,10 @@ func (api *API) initMetrics(ctx context.Context) error {
 		"cds/cds-api/cdn_log_coverage_jobs_without_item",
 		"number of terminated jobs the cdn holds no log item for",
 		stats.UnitDimensionless)
+	api.Metrics.logCoverageJobsPartial = stats.Int64(
+		"cds/cds-api/cdn_log_coverage_jobs_partial",
+		"number of terminated jobs the cdn holds some log items for, but fewer step log items than steps that ran",
+		stats.UnitDimensionless)
 
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
@@ -316,6 +320,7 @@ func (api *API) initMetrics(ctx context.Context) error {
 		telemetry.NewViewLast("cds/run_results_to_synchronized_error", api.Metrics.RunResultSynchronizedError, tagsService),
 		telemetry.NewViewLast("cds/cdn_log_coverage_jobs_checked", api.Metrics.logCoverageJobsChecked, tagsLogCoverage),
 		telemetry.NewViewLast("cds/cdn_log_coverage_jobs_without_item", api.Metrics.logCoverageJobsWithoutItem, tagsLogCoverage),
+		telemetry.NewViewLast("cds/cdn_log_coverage_jobs_partial", api.Metrics.logCoverageJobsPartial, tagsLogCoverage),
 	)
 
 	// The pool of the database describes itself: the connections in use, and above all how long the
