@@ -1,6 +1,18 @@
-<div class="detail-header" [title]="entity.name + '\n' + (entity.file_path ?? '')">
-  <span class="name">{{entity.name}}</span>
-  <span class="path">{{entity.file_path}}</span>
+<div class="detail-header">
+  <div class="titles" [title]="entity.name + '\n' + (entity.file_path ?? '')">
+    <div class="line">
+      <span class="name">{{entity.name}}</span>
+      <span class="path">{{entity.file_path}}</span>
+      <span class="ref" [title]="'Definition read on ' + ref">
+        <span nz-icon nzType="branches" nzTheme="outline" aria-hidden="true"></span>{{shortRef(ref)}}
+      </span>
+    </div>
+    <!-- The name other definitions refer to this one by, in uses, runs-on, from or a workflow hook -->
+    <div class="line reference" title="The name to use in yaml files">
+      <span class="label">Use as:</span>
+      <span class="fullname" nz-typography nzCopyable [nzContent]="fullName"></span>
+    </div>
+  </div>
   <span class="spacer"></span>
   @if (isWorkflow && content) {
     <button nz-button nzType="primary" nzSize="small" (click)="openRunStartDrawer()">

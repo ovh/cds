@@ -11,7 +11,7 @@ import { Schema } from 'app/model/json-schema.model';
 import { JSONSchema } from 'app/model/schema.model';
 import { ProjectService } from 'app/service/project/project.service';
 import { EntityReference, EntityReferenceUtils } from 'app/shared/entity-reference.utils';
-import { RepositoryContextService } from './repository-context.service';
+import { RepositoryContextService, shortRef } from './repository-context.service';
 import { ProjectV2RunStartComponent, ProjectV2RunStartComponentParams } from '../../run-start/run-start.component';
 
 declare const monaco: any;
@@ -150,6 +150,15 @@ export class ProjectV2RepositoryEntityDetailComponent implements OnChanges, OnDe
 
     get workflowPath(): string {
         return `${this.ctx.repositoryPath}/${this.entity.name}`;
+    }
+
+    /** `project/vcs/repository/name`: how other definitions refer to this one. */
+    get fullName(): string {
+        return `${this.ctx.project.key}/${this.workflowPath}`;
+    }
+
+    shortRef(ref: string): string {
+        return shortRef(ref);
     }
 
     openRunStartDrawer(): void {
