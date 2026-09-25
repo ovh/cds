@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	cdslog "github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/telemetry"
 
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -357,6 +358,12 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		url = c.config.Host + path
 	}
 
+	// The id is minted here, once for the whole call, and sent with every attempt. The API reuses
+	// an incoming one when it is a valid uuid, so the two sides of a call that reached a handler
+	// can be joined on it. A call that never reached one leaves no trace on the server at all —
+	// it is the case worth tracing, and the only place its id can come from is here.
+	requestID := sdk.UUID()
+
 	var savederror error
 	var savedCodeError int
 	var attempts int
@@ -382,6 +389,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 		date := sdk.FormatDateRFC5322(time.Now())
 		req.Header.Set("Date", date)
 		req.Header.Set("X-CDS-RemoteTime", date)
+		req.Header.Set(cdslog.HeaderRequestID, requestID)
 
 		if c.config.Verbose {
 			log.Printf("Stream > context> %s\n", telemetry.DumpContext(ctx))
@@ -460,7 +468,7 @@ func (c *client) Stream(ctx context.Context, httpClient HTTPClient, method strin
 	if savedCodeError == 409 {
 		return nil, nil, savedCodeError, savederror
 	}
-	return nil, nil, savedCodeError, newError(fmt.Errorf("request failed after %d attempts: %v savedCodeError: %d", attempts, savederror, savedCodeError))
+	return nil, nil, savedCodeError, newError(fmt.Errorf("request failed after %d attempts (request_id: %s): %v savedCodeError: %d", attempts, requestID, savederror, savedCodeError))
 }
 
 // UploadMultiPart upload multipart

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"testing"
+	"time"
 
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/rockbears/log"
@@ -18,6 +19,7 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/cdsclient/mock_cdsclient"
 	"github.com/ovh/cds/sdk/jws"
+	cdslog "github.com/ovh/cds/sdk/log"
 )
 
 func signLogForWorker(t *testing.T, key []byte, signature cdn.Signature) string {
@@ -205,4 +207,44 @@ func rejectedCountByReason(t *testing.T, viewName string) map[string]int64 {
 		}
 	}
 	return res
+}
+
+// TestWorkerRejectReason pins the distinction the metric rests on. A 404 is an answer: the worker
+// does not exist, and dropping its line is correct. A lookup that failed is not an answer, and a
+// line dropped on it is a line lost on missing information. The two must not land in the same
+// series, and the error the intake sees is the one getWorker builds, wrapped.
+func TestWorkerRejectReason(t *testing.T) {
+	notFound := sdk.WrapError(
+		sdk.NewError(sdk.ErrNotFound, fmt.Errorf("worker does not exist")),
+		"unable to get worker %s", "loving-worker")
+	require.Equal(t, rejectReasonWorkerNotFound, workerRejectReason(notFound),
+		"the api answered that the worker does not exist")
+
+	lookupFailed := sdk.WrapError(
+		fmt.Errorf(`request failed after 1 attempts: Transport Error: Get "https://api/worker/loving-worker?withKey=true": context deadline exceeded`),
+		"unable to get worker %s", "loving-worker")
+	require.Equal(t, rejectReasonWorkerLookupErr, workerRejectReason(lookupFailed),
+		"the api never answered, which is not the same thing")
+}
+
+// TestWorkerLookupContext pins why the lookup does not derive its deadline from its caller: a
+// derived context can only shorten one. A caller that has already spent its budget would make the
+// lookup fail before its request leaves the process, and the intake reads that as a worker that
+// does not exist.
+func TestWorkerLookupContext(t *testing.T) {
+	spent, cancelSpent := context.WithTimeout(context.Background(), time.Nanosecond)
+	defer cancelSpent()
+	<-spent.Done()
+	require.Error(t, spent.Err(), "the caller budget must be exhausted for this test to mean anything")
+
+	spent = context.WithValue(spent, cdslog.RequestID, "kept")
+
+	ctx, cancel := workerLookupContext(spent)
+	defer cancel()
+
+	require.NoError(t, ctx.Err(), "the lookup must not start already out of time")
+	deadline, ok := ctx.Deadline()
+	require.True(t, ok, "the lookup must stay bounded")
+	require.Greater(t, time.Until(deadline), workerLookupTimeout/2)
+	require.Equal(t, "kept", ctx.Value(cdslog.RequestID), "detaching the deadline must not drop the log context")
 }

@@ -32,6 +32,7 @@ const (
 	rejectReasonUnmarshalError   = "unmarshal_error"
 	rejectReasonSignatureInvalid = "signature_invalid"
 	rejectReasonWorkerNotFound   = "worker_not_found"
+	rejectReasonWorkerLookupErr  = "worker_lookup_error"
 	rejectReasonServiceNotFound  = "service_not_found"
 	rejectReasonMismatch         = "mismatch"
 	rejectReasonStepMaxSize      = "step_max_size"
@@ -257,13 +258,25 @@ func (s *Service) handleWorkerLog(ctx context.Context, unsafeSign cdn.Signature,
 	return nil
 }
 
+// workerRejectReason tells a worker that does not exist apart from a worker the CDN could not
+// find out about. Only the first one is a fact: the API answered, and the answer was no. The
+// second is a decision taken on missing information — the lookup failed and the line is dropped
+// all the same. Counting both as worker_not_found hides that difference from every dashboard,
+// and the two call for opposite fixes.
+func workerRejectReason(err error) string {
+	if sdk.ErrorIs(err, sdk.ErrNotFound) {
+		return rejectReasonWorkerNotFound
+	}
+	return rejectReasonWorkerLookupErr
+}
+
 // verifyWorkerLog is the v1 twin of verifyWorkerV2Log: the key of a v1 worker is cached under its
 // name too, so a stale entry rejects every line of the job until it expires. Same strictly
 // bounded recovery: evict, fetch once, verify once more.
 func (s *Service) verifyWorkerLog(ctx context.Context, unsafeSign cdn.Signature, sig string, signature *cdn.Signature) (sdk.Worker, error) {
 	workerData, err := s.getWorker(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
 	if err != nil {
-		s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+		s.recordLogRejected(ctx, workerRejectReason(err))
 		return sdk.Worker{}, err
 	}
 
@@ -274,7 +287,7 @@ func (s *Service) verifyWorkerLog(ctx context.Context, unsafeSign cdn.Signature,
 
 	refreshedWorkerData, refreshed, err := s.refreshWorkerKey(ctx, unsafeSign.Worker.WorkerName)
 	if err != nil {
-		s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+		s.recordLogRejected(ctx, workerRejectReason(err))
 		return sdk.Worker{}, err
 	}
 	if refreshed {
@@ -300,7 +313,7 @@ func (s *Service) verifyWorkerLog(ctx context.Context, unsafeSign cdn.Signature,
 func (s *Service) verifyWorkerV2Log(ctx context.Context, unsafeSign cdn.Signature, sig string, signature *cdn.Signature) (sdk.V2Worker, error) {
 	workerData, err := s.getWorkerV2(ctx, unsafeSign.Worker.WorkerName, GetWorkerOptions{NeedPrivateKey: true})
 	if err != nil {
-		s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+		s.recordLogRejected(ctx, workerRejectReason(err))
 		return sdk.V2Worker{}, err
 	}
 
@@ -311,7 +324,7 @@ func (s *Service) verifyWorkerV2Log(ctx context.Context, unsafeSign cdn.Signatur
 
 	refreshedWorkerData, refreshed, err := s.refreshWorkerV2Key(ctx, unsafeSign.Worker.WorkerName)
 	if err != nil {
-		s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+		s.recordLogRejected(ctx, workerRejectReason(err))
 		return sdk.V2Worker{}, err
 	}
 	if refreshed {
@@ -415,7 +428,7 @@ func (s *Service) handleServiceLog(ctx context.Context, unsafeSign cdn.Signature
 		// Get worker + check hatchery ID
 		w, err := s.getWorker(ctx, signature.Service.WorkerName, GetWorkerOptions{NeedPrivateKey: false})
 		if err != nil {
-			s.recordLogRejected(ctx, rejectReasonWorkerNotFound)
+			s.recordLogRejected(ctx, workerRejectReason(err))
 			return err
 		}
 		if w.HatcheryID == nil {
