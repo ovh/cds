@@ -29,6 +29,7 @@ type ArtifactManager interface {
 	Move(params services.MoveCopyParams) (successCount, failedCount int, err error)
 	GetRepositoryMaturity(repoName string) (string, error)
 	Search(ctx context.Context, query string) (sdk.ArtifactResults, error)
+	SearchItems(ctx context.Context, locations []sdk.ArtifactLocation, propertyKey string) (sdk.ArtifactResults, error)
 }
 
 type ClientFactoryFunc func(string, string, string) (ArtifactManager, error)

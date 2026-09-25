@@ -16,8 +16,8 @@ func TestXxx(t *testing.T) {
 		"type": "V2WorkflowRunResultStaticFilesDetail",
 		"data": {
 		  "name": "hello",
-		  "artifactory_url": "fsamin-default-static/test-static-files/",
-		  "public_url": "https://rtstatic.ovhcloud.tools/fsamin/default/test-static-files"
+		  "artifactory_url": "my-project-default-static/test-static-files/",
+		  "public_url": "https://static.example.com/my-project/default/test-static-files"
 		}
 	  }`
 
@@ -49,12 +49,12 @@ func TestContainsGlobOnProductionPaths(t *testing.T) {
 		"busybox/1757548800",
 		"sbt.pomo",
 		"cds/model/debian7-container:1",
-		"internal/arsenal-regions/ovh/0.1.0-11.sha.b43d3753.zip",
+		"internal/my-module/myorg/0.1.0-11.sha.b43d3753.zip",
 		"TEST/server.tests-results.xml",
 		"pysgu/0.1/pysgu-0.1.tar.gz",
-		"/cfgmanager-common-interface/1.9.2/cfgmanager_common_interface-1.9.2-py3-none-any.whl",
-		"ovh/thebastion/0.4.0/terraform-provider-thebastion_0.4.0_linux_amd64.zip",
-		"/stash_ovh_net/uservice/paas-sdev/FRAMEWORK/default/master/paas-sdev-snapshot",
+		"/my-python-lib/1.9.2/my_python_lib-1.9.2-py3-none-any.whl",
+		"myorg/myprovider/0.4.0/terraform-provider-myprovider_0.4.0_linux_amd64.zip",
+		"/my-project/my-application/FRAMEWORK/default/master/my-application-snapshot",
 	} {
 		require.False(t, containsGlob(path), "literal path %q must not be read as a pattern", path)
 	}
@@ -94,6 +94,16 @@ func TestStaticPrefix(t *testing.T) {
 	// TestDockerPatternToPath for the rewrite that puts the image folder in the prefix
 	require.Equal(t, "ovhcom", staticPrefix("ovhcom/*:*-1234"))
 	require.Equal(t, "ovhcom", staticPrefix("ovhcom/venom:*"))
+}
+
+// TestTrimPatternsLeadingSlash: a user writes the glob like the single path, often with a
+// leading "/", while the matched candidates never have one. Without the trim nothing matches
+// and addRunResult only warns that no artifact was found.
+func TestTrimPatternsLeadingSlash(t *testing.T) {
+	require.Equal(t, "myorg/myprovider/0.24.0/*.zip", trimPatternsLeadingSlash("/myorg/myprovider/0.24.0/*.zip"))
+	require.Equal(t, "pool/*.deb !pool/*-dbg*", trimPatternsLeadingSlash("/pool/*.deb !/pool/*-dbg*"))
+	require.Equal(t, "pool/*.deb", trimPatternsLeadingSlash("pool/*.deb"))
+	require.Equal(t, "**/*.zip", trimPatternsLeadingSlash("/**/*.zip"))
 }
 
 // TestRepositoryForType locks the mapping between a run result type and the artifactory
@@ -256,7 +266,7 @@ func TestGlobSearchAQL(t *testing.T) {
 // synthetic search results mimicking the layouts audited on real repositories.
 func TestGlobSelection(t *testing.T) {
 	filterCandidates := func(results []grpcplugins.SearchResult, resultType sdk.V2WorkflowRunResultType, pattern string) []string {
-		g := glob.New(pattern)
+		g := glob.New(trimPatternsLeadingSlash(pattern)) // as enumerateGlobMatches does
 		seen := map[string]struct{}{}
 		var out []string
 		for _, r := range results {
@@ -331,6 +341,18 @@ func TestGlobSelection(t *testing.T) {
 	}
 	require.Equal(t, []string{"pool/glob-1789057606-a.deb", "pool/glob-1789057606-b.deb"},
 		filterCandidates(debianRunResults, sdk.V2WorkflowRunResultTypeDebian, "pool/glob-1789057606-*.deb"))
+
+	// a leading "/" is accepted by the single path flow, so a glob written the same way must
+	// match too: the candidates carry no leading "/", the pattern has to lose it
+	terraformResults := []grpcplugins.SearchResult{
+		{Path: "myorg/myprovider/0.24.0", Name: "terraform-provider-myprovider_0.24.0_linux_amd64.zip"},
+		{Path: "myorg/myprovider/0.24.0", Name: "terraform-provider-myprovider_0.24.0_darwin_arm64.zip"},
+		{Path: "myorg/myprovider/0.23.0", Name: "terraform-provider-myprovider_0.23.0_linux_amd64.zip"},
+	}
+	require.Equal(t, []string{"myorg/myprovider/0.24.0/terraform-provider-myprovider_0.24.0_darwin_arm64.zip", "myorg/myprovider/0.24.0/terraform-provider-myprovider_0.24.0_linux_amd64.zip"},
+		filterCandidates(terraformResults, sdk.V2WorkflowRunResultTypeTerraformProvider, "/myorg/myprovider/0.24.0/terraform-provider-myprovider_0.24.0_*.zip"))
+	require.Equal(t, []string{"myorg/myprovider/0.24.0/terraform-provider-myprovider_0.24.0_linux_amd64.zip"},
+		filterCandidates(terraformResults, sdk.V2WorkflowRunResultTypeTerraformProvider, "/myorg/myprovider/0.24.0/*.zip !/myorg/**/*darwin*"))
 
 	// a "*" spans the ":" between image and tag: "/" is the matcher's only separator
 	dockerResults := []grpcplugins.SearchResult{
