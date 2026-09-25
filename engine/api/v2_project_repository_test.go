@@ -129,6 +129,7 @@ func TestLoadDistantHooksByProjectKey(t *testing.T) {
 	otherProj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
 	otherVCS := assets.InsertTestVCSProject(t, db, otherProj.ID, "vcs-github", "github")
 	otherRepo := assets.InsertTestProjectRepository(t, db, otherProj.Key, otherVCS.ID, "ovh/other")
+	owner, _ := assets.InsertLambdaUser(t, db)
 
 	e := sdk.Entity{
 		ID:                  sdk.UUID(),
@@ -139,6 +140,7 @@ func TestLoadDistantHooksByProjectKey(t *testing.T) {
 		Ref:                 "refs/heads/master",
 		Commit:              "123456",
 		Head:                true,
+		Initiator:           &sdk.V2Initiator{UserID: owner.ID, User: owner.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
@@ -233,6 +235,7 @@ func Test_getProjectDistantRepositoryAllHandler(t *testing.T) {
 		Ref:                 "refs/heads/master",
 		Commit:              "123456",
 		Head:                true,
+		Initiator:           &sdk.V2Initiator{UserID: user1.ID, User: user1.Initiator()},
 	}
 	require.NoError(t, entity.Insert(context.TODO(), db, &e))
 
