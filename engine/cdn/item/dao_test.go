@@ -100,16 +100,36 @@ func TestCountLogItemsByJobIdentifiers(t *testing.T) {
 		Worker:     &cdn.SignatureWorker{StepOrder: 0, StepName: sdk.RandomString(5)},
 	}), sdk.CDNTypeItemStepLog, true)
 
+	// A service of the first v2 job, and a second v2 job that only has the log of its service: its
+	// steps lost theirs, which the step count has to show and the total cannot.
+	serviceOnlyJobID := sdk.UUID()
+	for _, id := range []string{runJobID, serviceOnlyJobID} {
+		insert(sdk.NewCDNLogApiRefV2(cdn.Signature{
+			ProjectKey:      projectKey,
+			RunJobID:        id,
+			HatcheryService: &cdn.SignatureHatcheryService{ServiceName: sdk.RandomString(5)},
+		}), sdk.CDNTypeItemServiceLogV2, false)
+	}
+
 	unknownJobID := sdk.UUID()
-	counts, err := item.CountLogItemsByJobIdentifiers(db, []string{runJobID, "4242", unknownJobID})
+	counts, stepCounts, err := item.CountLogItemsByJobIdentifiers(db, []string{runJobID, "4242", serviceOnlyJobID, unknownJobID})
 	require.NoError(t, err)
 
-	require.Equal(t, int64(2), counts[runJobID], "the run result must not be counted as a log")
+	require.Equal(t, int64(3), counts[runJobID], "the run result must not be counted as a log")
 	require.Equal(t, int64(1), counts["4242"], "an item flagged to_delete still proves the logs were stored")
 	_, found := counts[unknownJobID]
 	require.False(t, found, "a job with no item at all must be absent from the result")
 
-	empty, err := item.CountLogItemsByJobIdentifiers(db, nil)
+	require.Equal(t, int64(2), stepCounts[runJobID], "the log of a service is not the log of a step")
+	require.Equal(t, int64(1), stepCounts["4242"])
+	nb, found := stepCounts[serviceOnlyJobID]
+	require.True(t, found, "a job with log items but none for its steps must be present with a zero")
+	require.Equal(t, int64(0), nb)
+	_, found = stepCounts[unknownJobID]
+	require.False(t, found)
+
+	empty, emptySteps, err := item.CountLogItemsByJobIdentifiers(db, nil)
 	require.NoError(t, err)
 	require.Empty(t, empty)
+	require.NotNil(t, emptySteps, "an empty answer still says the step log items were counted")
 }

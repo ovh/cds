@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"testing"
@@ -32,6 +33,7 @@ func TestRecordLogCoverage(t *testing.T) {
 	api := &API{}
 	api.Metrics.logCoverageJobsChecked = stats.Int64("test/log_coverage_jobs_checked", "", stats.UnitDimensionless)
 	api.Metrics.logCoverageJobsWithoutItem = stats.Int64("test/log_coverage_jobs_without_item", "", stats.UnitDimensionless)
+	api.Metrics.logCoverageJobsPartial = stats.Int64("test/log_coverage_jobs_partial", "", stats.UnitDimensionless)
 
 	checked := &view.View{
 		Name:        api.Metrics.logCoverageJobsChecked.Name(),
@@ -45,25 +47,107 @@ func TestRecordLogCoverage(t *testing.T) {
 		Aggregation: view.LastValue(),
 		TagKeys:     []tag.Key{tagRange, tagRunVersion},
 	}
-	require.NoError(t, view.Register(checked, missing))
-	t.Cleanup(func() { view.Unregister(checked, missing) })
+	partial := &view.View{
+		Name:        api.Metrics.logCoverageJobsPartial.Name(),
+		Measure:     api.Metrics.logCoverageJobsPartial,
+		Aggregation: view.LastValue(),
+		TagKeys:     []tag.Key{tagRange, tagRunVersion},
+	}
+	require.NoError(t, view.Register(checked, missing, partial))
+	t.Cleanup(func() { view.Unregister(checked, missing, partial) })
 
 	// Only the 60min window of v2 answered. The 10min window and v1 are left out, as a failed pass
 	// leaves them out.
 	api.recordLogCoverage(context.TODO(), map[string]int64{
 		logCoverageSharedKey("60min", logCoverageRunVersionV2, "checked"): 120,
 		logCoverageSharedKey("60min", logCoverageRunVersionV2, "missing"): 3,
+		logCoverageSharedKey("60min", logCoverageRunVersionV2, "partial"): 2,
 	})
 
 	require.Equal(t, map[string]int64{"60min/v2": 120}, lastValueByRangeAndVersion(t, checked.Name))
 	require.Equal(t, map[string]int64{"60min/v2": 3}, lastValueByRangeAndVersion(t, missing.Name))
+	require.Equal(t, map[string]int64{"60min/v2": 2}, lastValueByRangeAndVersion(t, partial.Name))
 
-	// A job count of zero is a real answer and has to be recorded, unlike a missing one.
+	// A job count of zero is a real answer and has to be recorded, unlike a missing one. Partial loss
+	// is not measured for v1, and a v1 series at zero would claim it was and found none.
 	api.recordLogCoverage(context.TODO(), map[string]int64{
 		logCoverageSharedKey("10min", logCoverageRunVersionV1, "checked"): 0,
 		logCoverageSharedKey("10min", logCoverageRunVersionV1, "missing"): 0,
 	})
 	require.Equal(t, map[string]int64{"60min/v2": 120, "10min/v1": 0}, lastValueByRangeAndVersion(t, checked.Name))
+	require.Equal(t, map[string]int64{"60min/v2": 2}, lastValueByRangeAndVersion(t, partial.Name))
+}
+
+// TestTallyLogCoverage pins what a partial loss is. It is the job the first series cannot see: some
+// of its steps have a log item, so it is not missing, and the others do not. It must not be confused
+// with a missing job, or the two series would count the same loss twice. Service log items must not
+// hide it, or a job with services whose step logs are all gone would look complete. And a step count
+// or a step log item count that is not known must never be read as a loss: a job that never reached
+// a step, a v1 job, or a CDN that predates the step count would otherwise report partial loss on
+// every job of the window.
+func TestTallyLogCoverage(t *testing.T) {
+	v2Job := func(id string, steps int64) sdk.LogCoverageJob {
+		return sdk.LogCoverageJob{JobID: id, RunVersion: logCoverageRunVersionV2, StepCount: steps}
+	}
+	jobs := []sdk.LogCoverageJob{
+		v2Job("complete", 3),
+		v2Job("lost-half", 8),                              // (a) 4 steps of 8 have their item
+		v2Job("no-item", 8),                                // (b) nothing at all: missing, not partial
+		v2Job("services-only", 3),                          // (c) only the items of its services
+		v2Job("no-step-count", 0),                          // (d) never reached a step
+		v2Job("old-cdn", 5),                                // (d) answered by a CDN that does not count the steps
+		v2Job("more-items", 2),                             // more items than steps is not a loss
+		{JobID: "v1", RunVersion: logCoverageRunVersionV1}, // (d) v1 carries no step count
+	}
+	counts := map[string]int64{
+		"complete":      3,
+		"lost-half":     4,
+		"services-only": 2,
+		"no-step-count": 1,
+		"old-cdn":       1,
+		"more-items":    3,
+		"v1":            1,
+	}
+	stepCounts := map[string]int64{
+		"complete":      3,
+		"lost-half":     4,
+		"no-item":       0,
+		"services-only": 0,
+		"no-step-count": 1,
+		"more-items":    3,
+		"v1":            0,
+	}
+
+	res := tallyLogCoverage(jobs, false, counts, stepCounts)
+
+	require.Equal(t, map[string]int64{logCoverageRunVersionV1: 1, logCoverageRunVersionV2: 7}, res.checked)
+	require.Equal(t, map[string]int64{logCoverageRunVersionV1: 0, logCoverageRunVersionV2: 1}, res.missing)
+	require.Equal(t, map[string]int64{logCoverageRunVersionV2: 2}, res.partial, "no v1 key: partial loss is not measured for v1")
+
+	require.Len(t, res.jobs, 1)
+	require.Equal(t, "no-item", res.jobs[0].JobID, "a job with no item at all is missing, and only missing")
+
+	partialIDs := make([]string, 0, len(res.partialJobs))
+	for _, j := range res.partialJobs {
+		partialIDs = append(partialIDs, j.JobID)
+	}
+	require.Equal(t, []string{"lost-half", "services-only"}, partialIDs)
+	require.Equal(t, int64(4), res.partialJobs[0].StepLogItemCount, "the listing says how many steps kept their logs")
+	require.Equal(t, int64(0), res.partialJobs[1].StepLogItemCount)
+
+	// A whole window answered by a CDN that predates the step count reports no partial loss at all.
+	old := tallyLogCoverage(jobs, false, counts, map[string]int64{})
+	require.Equal(t, int64(0), old.partial[logCoverageRunVersionV2])
+	require.Empty(t, old.partialJobs)
+	require.Equal(t, res.missing, old.missing, "the first series does not depend on the step count")
+
+	// What tells a CDN that predates the step count from one that counted nothing is whether the
+	// field is there at all, zero entries included.
+	var fromOld, fromNew sdk.CDNJobLogCoverageResponse
+	require.NoError(t, json.Unmarshal([]byte(`{"log_item_count_by_job_id":{"a":1}}`), &fromOld))
+	require.NoError(t, json.Unmarshal([]byte(`{"log_item_count_by_job_id":{},"step_log_item_count_by_job_id":{}}`), &fromNew))
+	require.Nil(t, fromOld.StepLogItemCountByJobID)
+	require.NotNil(t, fromNew.StepLogItemCountByJobID)
 }
 
 func lastValueByRangeAndVersion(t *testing.T, viewName string) map[string]int64 {
@@ -157,6 +241,19 @@ func TestTerminatedJobsInWindow(t *testing.T) {
 	insertJob(sdk.V2WorkflowRunJobStatusSuccess, "worker-3", now.Add(-5*time.Minute)) // too recent, still inside the grace
 	insertJob(sdk.V2WorkflowRunJobStatusSuccess, "worker-4", now.Add(-2*time.Hour))   // older than the window
 	failed := insertJob(sdk.V2WorkflowRunJobStatusFail, "worker-5", inWindow)         // a failed job still logs
+	noStepStatus := insertJob(sdk.V2WorkflowRunJobStatusFail, "worker-6", inWindow)
+	emptyStepStatus := insertJob(sdk.V2WorkflowRunJobStatusFail, "worker-7", inWindow)
+
+	// The steps that ran are counted out of steps_status, which is text and not always a json object.
+	// Whatever it holds, the listing must not fail: failing would silence the whole window.
+	setStepsStatus := func(id string, value interface{}) {
+		_, err := db.Exec("UPDATE v2_workflow_run_job SET steps_status = $1 WHERE id = $2", value, id)
+		require.NoError(t, err)
+	}
+	setStepsStatus(kept, `{"step-0":{},"step-1":{},"Post-step-0":{}}`)
+	setStepsStatus(failed, `null`) // what an empty map of steps is written as
+	setStepsStatus(noStepStatus, nil)
+	setStepsStatus(emptyStepStatus, "")
 
 	jobs, truncated, err := api.terminatedJobsInWindow(ctx, since, until, logCoverageMaxJobs)
 	require.NoError(t, err)
@@ -168,12 +265,17 @@ func TestTerminatedJobsInWindow(t *testing.T) {
 			found[j.JobID] = j
 		}
 	}
-	require.Len(t, found, 2, "only the jobs that ran on a worker and ended inside the window are counted")
+	require.Len(t, found, 4, "only the jobs that ran on a worker and ended inside the window are counted")
 	require.Contains(t, found, kept)
 	require.Contains(t, found, failed)
 	require.Equal(t, "worker-1", found[kept].WorkerName)
 	require.Equal(t, proj.Key, found[kept].ProjectKey)
 	require.Equal(t, wr.WorkflowName, found[kept].WorkflowName)
+
+	require.Equal(t, int64(3), found[kept].StepCount, "every step that ran counts, a post step included")
+	for _, id := range []string{failed, noStepStatus, emptyStepStatus} {
+		require.Equal(t, int64(0), found[id].StepCount, "a job with no step recorded has an unknown step count, never an error")
+	}
 }
 
 // TestTerminatedJobsInWindowV1 pins the v1 half of the denominator. A terminated v1 job no longer

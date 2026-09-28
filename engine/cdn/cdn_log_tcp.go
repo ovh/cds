@@ -68,6 +68,10 @@ func (s *Service) runTCPLogServer(ctx context.Context) error {
 		<-ctx.Done()
 		log.Info(ctx, "CDN> Shutdown tcp log Server")
 		_ = listener.Close()
+		// Closing the listener only refuses new connections. A reader blocked on an idle
+		// connection would stay there until the process died under it, and its client would
+		// keep writing to a socket nobody reads any more.
+		log.Info(ctx, "CDN> closed %d open log connections", openLogConns.closeAll())
 	})
 
 	// Looking for something to dequeue
@@ -95,7 +99,9 @@ func (s *Service) runTCPLogServer(ctx context.Context) error {
 
 // Handle TCP Connection: Global Rate Limit + Line Rate Limit
 func (s *Service) handleConnection(ctx context.Context, conn net.Conn) {
+	openLogConns.add(conn)
 	defer func() {
+		openLogConns.remove(conn)
 		_ = conn.Close()
 	}()
 
@@ -116,6 +122,12 @@ func (s *Service) readTCPMessages(ctx context.Context, conn net.Conn, handle fun
 	for {
 		// Can i try to read the next 1024B
 		if err := globalRateLimit.WaitN(1024); err != nil {
+			// The limiter carries the context of the service: once that is cancelled it
+			// refuses instantly and for ever, so retrying here would spin, burning a core and
+			// flooding the logs for the whole of the termination grace.
+			if ctx.Err() != nil {
+				return
+			}
 			log.Error(sdk.ContextWithStacktrace(ctx, err), err.Error())
 			continue
 		}

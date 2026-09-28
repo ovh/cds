@@ -220,10 +220,12 @@ func LoadByJobIdentifier(ctx context.Context, m *gorpmapper.Mapper, db gorp.SqlE
 	return getItems(ctx, m, db, query, opts...)
 }
 
-// LogItemCountByJob is the number of log items the CDN holds for one job.
+// LogItemCountByJob is the number of log items the CDN holds for one job, in total and for its steps
+// alone.
 type LogItemCountByJob struct {
-	JobID  string `db:"job_id"`
-	Number int64  `db:"number"`
+	JobID      string `db:"job_id"`
+	Number     int64  `db:"number"`
+	StepNumber int64  `db:"step_number"`
 }
 
 // CountLogItemsByJobIdentifiers returns, for each of the given job identifiers, the number of log
@@ -235,9 +237,14 @@ type LogItemCountByJob struct {
 //
 // Items flagged to_delete are counted. The question this answers is whether logs were ever stored
 // for the job, not whether they are still readable, and an item on its way out proves they were.
-func CountLogItemsByJobIdentifiers(db gorp.SqlExecutor, jobIdentifiers []string) (map[string]int64, error) {
+//
+// The second map counts the step log items alone, with an entry for every job of the first one, zero
+// included. A step that ran has exactly one log item, so this is the count that can be held against
+// the number of steps. The total cannot: the items of the services of a job would stand in for the
+// steps that lost theirs, and a job whose step logs are all gone would look complete.
+func CountLogItemsByJobIdentifiers(db gorp.SqlExecutor, jobIdentifiers []string) (map[string]int64, map[string]int64, error) {
 	if len(jobIdentifiers) == 0 {
-		return map[string]int64{}, nil
+		return map[string]int64{}, map[string]int64{}, nil
 	}
 
 	logItemTypes := []string{
@@ -246,23 +253,30 @@ func CountLogItemsByJobIdentifiers(db gorp.SqlExecutor, jobIdentifiers []string)
 		string(sdk.CDNTypeItemStepLog),
 		string(sdk.CDNTypeItemServiceLog),
 	}
+	stepLogItemTypes := []string{
+		string(sdk.CDNTypeItemJobStepLog),
+		string(sdk.CDNTypeItemStepLog),
+	}
 
 	var counts []LogItemCountByJob
 	query := `
-	SELECT coalesce(api_ref->>'run_job_id', api_ref->>'node_run_job_id') as "job_id", count(1) as "number"
+	SELECT coalesce(api_ref->>'run_job_id', api_ref->>'node_run_job_id') as "job_id", count(1) as "number",
+		count(1) FILTER (WHERE type = ANY($3)) as "step_number"
 	FROM item
 	WHERE type = ANY($2)
 	AND (api_ref->>'run_job_id' = ANY($1) OR api_ref->>'node_run_job_id' = ANY($1))
 	GROUP BY 1`
-	if _, err := db.Select(&counts, query, pq.StringArray(jobIdentifiers), pq.StringArray(logItemTypes)); err != nil {
-		return nil, sdk.WithStack(err)
+	if _, err := db.Select(&counts, query, pq.StringArray(jobIdentifiers), pq.StringArray(logItemTypes), pq.StringArray(stepLogItemTypes)); err != nil {
+		return nil, nil, sdk.WithStack(err)
 	}
 
 	res := make(map[string]int64, len(counts))
+	steps := make(map[string]int64, len(counts))
 	for _, c := range counts {
 		res[c.JobID] = c.Number
+		steps[c.JobID] = c.StepNumber
 	}
-	return res, nil
+	return res, steps, nil
 }
 
 // LoadByAPIRefHashAndType load an item by his job id, step order and type

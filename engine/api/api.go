@@ -362,6 +362,7 @@ type API struct {
 		RunResultSynchronizedError *stats.Int64Measure
 		logCoverageJobsChecked     *stats.Int64Measure
 		logCoverageJobsWithoutItem *stats.Int64Measure
+		logCoverageJobsPartial     *stats.Int64Measure
 	}
 	workflowRunCraftChan            chan string
 	workflowRunTriggerChan          chan sdk.V2WorkflowRunEnqueue

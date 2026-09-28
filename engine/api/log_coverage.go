@@ -31,8 +31,20 @@ import (
 //     only be late, because the CDN creates the item when it dequeues the lines and the dequeue can
 //     fall behind. At the long delay it is a loss. The distance between the two series is the
 //     measure of the lateness.
-//   - partial loss is invisible here. A job with one empty step out of ten counts as covered. That
-//     is what the intake counters of the CDN are for.
+//   - partial loss is measured apart, as a second series that never overlaps the first: a job with
+//     some log items but fewer step log items than steps that ran. The intake counters of the CDN
+//     cannot stand in for it, because lines lost with a connection the worker never saw die do not
+//     reach the intake at all. A step that ran has exactly one log item, created from its first
+//     line, and the service log items are left out of the count so that they cannot make up for the
+//     steps that lost theirs. A step whose lines were only partly lost still has its item, so that
+//     loss stays invisible here.
+//   - partial loss is measured for v2 only. A terminated v1 job no longer has a row, and the only
+//     trace of its steps is the copy kept in the stages of its node run, which has not been shown to
+//     match the step log items one for one. No number is better than a wrong one: the v1 series is
+//     left out.
+//   - a job stopped in the middle of a step may count as partial when the step it was stopped in had
+//     not written its first line yet. That step started, and nothing tells it apart from one whose
+//     lines were lost.
 const (
 	// logCoverageInterval paces the check. The measurement is a window of the past, not a live
 	// value, so it does not have to be refreshed faster than the window moves.
@@ -77,10 +89,13 @@ var logCoverageGraces = []logCoverageGrace{
 
 // logCoverageResult is what one pass over one window found.
 type logCoverageResult struct {
-	checked   map[string]int64
-	missing   map[string]int64
-	jobs      []sdk.LogCoverageJob
-	truncated bool
+	checked map[string]int64
+	missing map[string]int64
+	// partial only has a key for the run versions it is measured for.
+	partial     map[string]int64
+	jobs        []sdk.LogCoverageJob
+	partialJobs []sdk.LogCoverageJob
+	truncated   bool
 }
 
 // computeLogCoverageMetrics refreshes the coverage gauges.
@@ -156,6 +171,9 @@ func (api *API) refreshLogCoverageMetrics(ctx context.Context) {
 		for _, v := range []string{logCoverageRunVersionV1, logCoverageRunVersionV2} {
 			shared[logCoverageSharedKey(g.name, v, "checked")] = res.checked[v]
 			shared[logCoverageSharedKey(g.name, v, "missing")] = res.missing[v]
+			if partial, ok := res.partial[v]; ok {
+				shared[logCoverageSharedKey(g.name, v, "partial")] = partial
+			}
 		}
 	}
 
@@ -196,6 +214,9 @@ func (api *API) recordLogCoverage(ctx context.Context, counts map[string]int64) 
 			}
 			telemetry.Record(ctxTagged, api.Metrics.logCoverageJobsChecked, checked)
 			telemetry.Record(ctxTagged, api.Metrics.logCoverageJobsWithoutItem, missing)
+			if partial, ok := counts[logCoverageSharedKey(g.name, v, "partial")]; ok {
+				telemetry.Record(ctxTagged, api.Metrics.logCoverageJobsPartial, partial)
+			}
 		}
 	}
 }
@@ -208,44 +229,66 @@ func (api *API) collectLogCoverage(ctx context.Context, since, until time.Time, 
 		return nil, err
 	}
 
+	var counts, stepCounts map[string]int64
+	if len(jobs) > 0 {
+		counts, stepCounts, err = api.countCDNLogItemsByJob(ctx, jobs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return tallyLogCoverage(jobs, truncated, counts, stepCounts), nil
+}
+
+// tallyLogCoverage sorts the jobs of a window by what the CDN holds for them. A job with no log item
+// at all is missing. A job with some, but fewer step log items than steps that ran, is partial. The
+// two never overlap: a missing job is not also partial.
+//
+// A job absent from stepCounts is one the CDN could not count the step log items of, which is what
+// a CDN that predates that count answers. It is never partial: taking the absence for a zero would
+// report every job of the window as partial for as long as a deploy lasts.
+func tallyLogCoverage(jobs []sdk.LogCoverageJob, truncated bool, counts, stepCounts map[string]int64) *logCoverageResult {
 	res := &logCoverageResult{
 		checked:   map[string]int64{logCoverageRunVersionV1: 0, logCoverageRunVersionV2: 0},
 		missing:   map[string]int64{logCoverageRunVersionV1: 0, logCoverageRunVersionV2: 0},
+		partial:   map[string]int64{logCoverageRunVersionV2: 0},
 		truncated: truncated,
 	}
 	for _, j := range jobs {
 		res.checked[j.RunVersion]++
-	}
-	if len(jobs) == 0 {
-		return res, nil
-	}
 
-	counts, err := api.countCDNLogItemsByJob(ctx, jobs)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, j := range jobs {
-		if counts[j.JobID] > 0 {
+		if counts[j.JobID] == 0 {
+			res.missing[j.RunVersion]++
+			res.jobs = append(res.jobs, j)
 			continue
 		}
-		res.missing[j.RunVersion]++
-		res.jobs = append(res.jobs, j)
+
+		// The step count is only read for v2, so a v1 job never gets here.
+		stepItems, known := stepCounts[j.JobID]
+		if !known || j.StepCount == 0 || stepItems >= j.StepCount {
+			continue
+		}
+		j.StepLogItemCount = stepItems
+		res.partial[j.RunVersion]++
+		res.partialJobs = append(res.partialJobs, j)
 	}
-	return res, nil
+	return res
 }
 
-// countCDNLogItemsByJob asks the CDN, by batches, how many log items it holds per job.
-func (api *API) countCDNLogItemsByJob(ctx context.Context, jobs []sdk.LogCoverageJob) (map[string]int64, error) {
+// countCDNLogItemsByJob asks the CDN, by batches, how many log items it holds per job, in total and
+// for the steps alone. The second map only has the jobs of the batches the CDN counted the step log
+// items of.
+func (api *API) countCDNLogItemsByJob(ctx context.Context, jobs []sdk.LogCoverageJob) (map[string]int64, map[string]int64, error) {
 	srvs, err := services.LoadAllByType(ctx, api.mustDB(), sdk.TypeCDN)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(srvs) == 0 {
-		return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no cdn service registered")
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrNotFound, "no cdn service registered")
 	}
 
 	counts := make(map[string]int64, len(jobs))
+	stepCounts := make(map[string]int64, len(jobs))
 	for start := 0; start < len(jobs); start += logCoverageBatch {
 		end := start + logCoverageBatch
 		if end > len(jobs) {
@@ -259,13 +302,20 @@ func (api *API) countCDNLogItemsByJob(ctx context.Context, jobs []sdk.LogCoverag
 
 		var resp sdk.CDNJobLogCoverageResponse
 		if _, _, err := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodPost, "/admin/items/log-coverage", req, &resp); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		for id, nb := range resp.LogItemCountByJobID {
 			counts[id] = nb
 		}
+		// Absent from the answer of a CDN that predates the step count. The batches are not all
+		// answered by the same instance, so this is decided batch by batch.
+		if resp.StepLogItemCountByJobID != nil {
+			for _, id := range req.JobIDs {
+				stepCounts[id] = resp.StepLogItemCountByJobID[id]
+			}
+		}
 	}
-	return counts, nil
+	return counts, stepCounts, nil
 }
 
 // terminatedJobsInWindow lists the jobs of both run versions that ran on a worker and terminated
@@ -284,10 +334,17 @@ func (api *API) terminatedJobsInWindow(ctx context.Context, since, until time.Ti
 		ProjectKey   string    `db:"project_key"`
 		WorkflowName string    `db:"workflow_name"`
 		WorkerName   string    `db:"worker_name"`
+		StepCount    int64     `db:"step_count"`
 	}
 	var v2Rows []v2Row
+	// The steps that ran are the keys of steps_status, a json object held as text, counted here
+	// rather than read back. The column is NULL on a job that never reached a step, and the text
+	// "null" when the worker sent an empty map: both are zero, not an error.
 	queryV2 := `
-		SELECT id, ended, coalesce(project_key, '') as project_key, coalesce(workflow_name, '') as workflow_name, worker_name
+		SELECT id, ended, coalesce(project_key, '') as project_key, coalesce(workflow_name, '') as workflow_name, worker_name,
+			case when jsonb_typeof(nullif(steps_status, '')::jsonb) = 'object'
+				then (SELECT count(*) FROM jsonb_object_keys(steps_status::jsonb))
+				else 0 end as step_count
 		FROM v2_workflow_run_job
 		WHERE ended >= $1 AND ended < $2
 		AND status = ANY($3)
@@ -312,6 +369,7 @@ func (api *API) terminatedJobsInWindow(ctx context.Context, since, until time.Ti
 			ProjectKey:   r.ProjectKey,
 			WorkflowName: r.WorkflowName,
 			WorkerName:   r.WorkerName,
+			StepCount:    r.StepCount,
 		})
 	}
 
@@ -359,9 +417,10 @@ func (api *API) terminatedJobsInWindow(ctx context.Context, since, until time.Ti
 	return jobs, truncated, nil
 }
 
-// getAdminLogCoverageHandler answers with the jobs of a window the CDN holds no log item for. It is
-// what makes the coverage metrics actionable: each identifier it returns can be handed to the debug
-// route of the CDN to find out where the lines of that job stopped.
+// getAdminLogCoverageHandler answers with the jobs of a window the CDN holds no log item for, and
+// the ones it holds fewer step log items for than steps ran. It is what makes the coverage metrics
+// actionable: each identifier it returns can be handed to the debug route of the CDN to find out
+// where the lines of that job stopped.
 func (api *API) getAdminLogCoverageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		until := time.Now().Add(-logCoverageGraces[0].delay)
@@ -391,14 +450,19 @@ func (api *API) getAdminLogCoverageHandler() service.Handler {
 		}
 
 		report := sdk.LogCoverageReport{
-			Since:           since,
-			Until:           until,
-			JobsChecked:     res.checked[logCoverageRunVersionV1] + res.checked[logCoverageRunVersionV2],
-			JobsWithoutItem: res.jobs,
-			Truncated:       res.truncated,
+			Since:               since,
+			Until:               until,
+			JobsChecked:         res.checked[logCoverageRunVersionV1] + res.checked[logCoverageRunVersionV2],
+			JobsWithoutItem:     res.jobs,
+			JobsWithPartialLogs: res.partialJobs,
+			Truncated:           res.truncated,
 		}
 		if len(report.JobsWithoutItem) > logCoverageListLimit {
 			report.JobsWithoutItem = report.JobsWithoutItem[:logCoverageListLimit]
+			report.Truncated = true
+		}
+		if len(report.JobsWithPartialLogs) > logCoverageListLimit {
+			report.JobsWithPartialLogs = report.JobsWithPartialLogs[:logCoverageListLimit]
 			report.Truncated = true
 		}
 

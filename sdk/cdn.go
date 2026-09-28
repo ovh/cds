@@ -608,27 +608,36 @@ type CDNJobLogCoverageRequest struct {
 // it already knows it looked for it.
 type CDNJobLogCoverageResponse struct {
 	LogItemCountByJobID map[string]int64 `json:"log_item_count_by_job_id"`
+	// StepLogItemCountByJobID counts the step log items alone, with an entry for every job of
+	// LogItemCountByJobID. The total is not enough to catch a job that lost the logs of some of its
+	// steps: the items of its services are in it too, and stand in for the steps that are missing. A
+	// CDN that predates this field leaves it out, which reads as unknown and never as zero.
+	StepLogItemCountByJobID map[string]int64 `json:"step_log_item_count_by_job_id"`
 }
 
 // LogCoverageJob is one job of a log coverage report. The project and workflow are only known for
 // a v2 job: a terminated v1 job no longer has a row of its own, and the identifier is what the CDN
-// debug route needs anyway.
+// debug route needs anyway. The same goes for the number of steps that ran, which is zero when it is
+// not known: a job with an unknown step count is never reported as partially covered.
 type LogCoverageJob struct {
-	JobID        string    `json:"job_id" cli:"job_id"`
-	RunVersion   string    `json:"run_version" cli:"run_version"`
-	Ended        time.Time `json:"ended" cli:"ended"`
-	ProjectKey   string    `json:"project_key,omitempty" cli:"project_key"`
-	WorkflowName string    `json:"workflow_name,omitempty" cli:"workflow_name"`
-	WorkerName   string    `json:"worker_name,omitempty" cli:"worker_name"`
+	JobID            string    `json:"job_id" cli:"job_id"`
+	RunVersion       string    `json:"run_version" cli:"run_version"`
+	Ended            time.Time `json:"ended" cli:"ended"`
+	ProjectKey       string    `json:"project_key,omitempty" cli:"project_key"`
+	WorkflowName     string    `json:"workflow_name,omitempty" cli:"workflow_name"`
+	WorkerName       string    `json:"worker_name,omitempty" cli:"worker_name"`
+	StepCount        int64     `json:"step_count,omitempty" cli:"step_count"`
+	StepLogItemCount int64     `json:"step_log_item_count" cli:"step_log_item_count"`
 }
 
 // LogCoverageReport names the jobs that ran on a worker, terminated inside the window, and for
-// which the CDN holds no log item at all. It is the readable form of the coverage metrics: the
-// gauges say how many, this says which ones.
+// which the CDN holds no log item at all, or fewer step log items than steps ran. It is the readable
+// form of the coverage metrics: the gauges say how many, this says which ones.
 type LogCoverageReport struct {
-	Since           time.Time        `json:"since"`
-	Until           time.Time        `json:"until"`
-	JobsChecked     int64            `json:"jobs_checked"`
-	JobsWithoutItem []LogCoverageJob `json:"jobs_without_item"`
-	Truncated       bool             `json:"truncated"`
+	Since               time.Time        `json:"since"`
+	Until               time.Time        `json:"until"`
+	JobsChecked         int64            `json:"jobs_checked"`
+	JobsWithoutItem     []LogCoverageJob `json:"jobs_without_item"`
+	JobsWithPartialLogs []LogCoverageJob `json:"jobs_with_partial_logs"`
+	Truncated           bool             `json:"truncated"`
 }
