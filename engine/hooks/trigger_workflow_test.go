@@ -133,3 +133,66 @@ func TestTriggerWorkflow_EntityOwnerIdentifiesTheUser(t *testing.T) {
 		require.Equal(t, "unknown user", hre.WorkflowHooks[0].Error)
 	}
 }
+
+func TestTriggerWorkflow_SkipCIOnlyAppliesToPushAndPullRequest(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	ctx := context.TODO()
+	mock := s.Client.(*mock_cdsclient.MockInterface)
+
+	tests := []struct {
+		eventName   sdk.WorkflowHookEventName
+		hookType    string
+		wantSkipped bool
+	}{
+		{sdk.WorkflowHookEventNamePush, sdk.WorkflowHookTypeRepository, true},
+		{sdk.WorkflowHookEventNamePullRequest, sdk.WorkflowHookTypeRepository, true},
+		{sdk.WorkflowHookEventNameScheduler, sdk.WorkflowHookTypeScheduler, false},
+		{sdk.WorkflowHookEventNameWorkflowRun, sdk.WorkflowHookTypeWorkflowRun, false},
+	}
+	for _, tt := range tests {
+		t.Run(string(tt.eventName), func(t *testing.T) {
+			hre := sdk.HookRepositoryEvent{
+				UUID:           sdk.UUID(),
+				VCSServerName:  "github",
+				RepositoryName: "ovh/cds",
+				EventName:      tt.eventName,
+				SignKey:        "ABCDEF",
+				Initiator:      &sdk.V2Initiator{UserID: "1234567890"},
+				ExtractData: sdk.HookRepositoryEventExtractData{
+					Ref:           "refs/heads/master",
+					Commit:        "123456",
+					CommitMessage: "chore: bump version [skip ci]",
+					Scheduler:     &sdk.HookRepositoryEventExtractedDataScheduler{},
+					WorkflowRun:   &sdk.HookRepositoryEventExtractedDataWorkflowRun{},
+				},
+				WorkflowHooks: []sdk.HookRepositoryEventWorkflow{
+					{
+						Type:                 tt.hookType,
+						Status:               sdk.HookEventWorkflowStatusScheduled,
+						ProjectKey:           "PROJ",
+						VCSIdentifier:        "github",
+						RepositoryIdentifier: "ovh/cds",
+						WorkflowName:         "myworkflow",
+						Ref:                  "refs/heads/master",
+						Commit:               "123456",
+						TargetCommit:         "123456",
+					},
+				},
+			}
+			if !tt.wantSkipped {
+				mock.EXPECT().WorkflowV2RunFromHook(gomock.Any(), "PROJ", "github", "ovh/cds", "myworkflow", gomock.Any(), gomock.Any()).
+					Return(&sdk.V2WorkflowRun{ID: "run-id", RunNumber: 1}, nil).Times(1)
+			}
+
+			require.NoError(t, s.triggerWorkflows(ctx, &hre))
+			if tt.wantSkipped {
+				require.Equal(t, sdk.HookEventWorkflowStatusSkipped, hre.WorkflowHooks[0].Status)
+				require.Equal(t, "commit message does not match commit filter or contains a skip CI directive", hre.WorkflowHooks[0].Error)
+			} else {
+				require.Equal(t, sdk.HookEventWorkflowStatusDone, hre.WorkflowHooks[0].Status)
+			}
+		})
+	}
+}

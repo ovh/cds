@@ -143,8 +143,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				canTriggerWithCommitMessage = true
 			}
 
-			// If manual do not check skip ci
-			if hre.ExtractData.Manual == nil {
+			// Skip CI directives only apply to push and pull-request events
+			if hre.EventName == sdk.WorkflowHookEventNamePush || hre.EventName == sdk.WorkflowHookEventNamePullRequest {
 				for _, skip := range sdk.HookCommitSkipping {
 					if strings.Contains(hre.ExtractData.CommitMessage, skip) {
 						canTriggerWithCommitMessage = false
