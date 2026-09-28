@@ -171,6 +171,99 @@ spec: |-
 	require.Equal(t, 0, len(work.On.Push.Branches))
 }
 
+func TestResolveWorkflowConcurrency(t *testing.T) {
+	tests := []struct {
+		name                  string
+		workflow              string
+		spec                  string
+		expectedConcurrency   string
+		expectedConcurrencies []string
+	}{
+		{
+			name: "concurrency from template",
+			workflow: `name: myworkflow
+from: library/myTemplate`,
+			spec: `  concurrency: tmpl-group
+  jobs:
+    root: {}`,
+			expectedConcurrency: "tmpl-group",
+		},
+		{
+			name: "template concurrency takes precedence",
+			workflow: `name: myworkflow
+from: library/myTemplate
+concurrency: wkf-group`,
+			spec: `  concurrency: tmpl-group
+  jobs:
+    root: {}`,
+			expectedConcurrency: "tmpl-group",
+		},
+		{
+			name: "workflow concurrency kept when template has none",
+			workflow: `name: myworkflow
+from: library/myTemplate
+concurrency: wkf-group`,
+			spec: `  jobs:
+    root: {}`,
+			expectedConcurrency: "wkf-group",
+		},
+		{
+			name: "concurrency from template parameter",
+			workflow: `name: myworkflow
+from: library/myTemplate
+parameters:
+  group: param-group`,
+			spec: `  concurrency: [[ .params.group ]]
+  jobs:
+    root: {}`,
+			expectedConcurrency: "param-group",
+		},
+		{
+			name: "concurrency and concurrencies from template",
+			workflow: `name: myworkflow
+from: library/myTemplate`,
+			spec: `  concurrencies:
+  - name: tmpl-group
+    pool: 2
+  concurrency: tmpl-group
+  jobs:
+    root: {}`,
+			expectedConcurrency:   "tmpl-group",
+			expectedConcurrencies: []string{"tmpl-group"},
+		},
+		{
+			name: "no concurrency",
+			workflow: `name: myworkflow
+from: library/myTemplate`,
+			spec: `  jobs:
+    root: {}`,
+			expectedConcurrency: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpl := "name: myTemplate\nparameters:\n- key: group\nspec: |-\n" + tt.spec
+
+			var work V2Workflow
+			require.NoError(t, yaml.Unmarshal([]byte(tt.workflow), &work))
+
+			var template V2WorkflowTemplate
+			require.NoError(t, yaml.Unmarshal([]byte(tmpl), &template))
+
+			_, err := template.Resolve(context.TODO(), &work, nil)
+			require.NoError(t, err)
+
+			require.Equal(t, tt.expectedConcurrency, work.Concurrency)
+			names := make([]string, 0, len(work.Concurrencies))
+			for _, c := range work.Concurrencies {
+				names = append(names, c.Name)
+			}
+			require.ElementsMatch(t, tt.expectedConcurrencies, names)
+		})
+	}
+}
+
 func TestWorkflowTemplate(t *testing.T) {
 	wk := `name: myworkflow
 from: library/myTemplate
