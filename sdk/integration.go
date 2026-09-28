@@ -523,10 +523,21 @@ type ArtifactResultsSearchPage struct {
 		StartPos int `json:"start_pos"`
 		EndPos   int `json:"end_pos"`
 		Total    int `json:"total"`
+		// Artifactory sets this when it trimmed the result set on its own
+		Notification string `json:"notification"`
 	} `json:"range"`
 }
 
 type ArtifactResults []ArtifactResult
+
+// ArtifactLocation designates one item of a repository. Path is the directory holding the
+// item, without a leading slash, as artifactory reports it. An item at the root of a
+// repository has "." for a path.
+type ArtifactLocation struct {
+	Repository string
+	Path       string
+	Name       string
+}
 
 type ArtifactResult struct {
 	Repo         string         `json:"repo"`
@@ -538,6 +549,10 @@ type ArtifactResult struct {
 	Stats        []ItemStat     `json:"stats,omitempty"`
 	VirtualRepos []string       `json:"virtual_repos,omitempty"`
 	ActualMD5    string         `json:"actual_md5"`
+	ActualSHA1   string         `json:"actual_sha1,omitempty"`
+	SHA256       string         `json:"sha256,omitempty"`
+	// file or folder
+	Type string `json:"type,omitempty"`
 }
 
 func (i *ArtifactResult) String() string {
