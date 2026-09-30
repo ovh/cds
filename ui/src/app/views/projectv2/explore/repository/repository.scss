@@ -1,0 +1,127 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+nz-spin {
+  margin-top: 50px;
+}
+
+nz-alert.error {
+  margin: 20px;
+}
+
+.header {
+  padding: 14px 20px 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  :host-context(.night) & {
+    border-bottom-color: #303030;
+  }
+
+  .title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      // The vcs reads as a prefix of the repository name, not as a title of its own
+      .vcs {
+        font-weight: 400;
+        color: rgba(0, 0, 0, 0.45);
+
+        :host-context(.night) & {
+          color: rgba(255, 255, 255, 0.45);
+        }
+      }
+    }
+
+    nz-tag {
+      margin: 0;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+  }
+
+  .subtitle {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0 4px;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  .count {
+    margin-left: 6px;
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.night) & {
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+
+  .alert-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    border-radius: 50%;
+    background-color: #ff4d4f;
+  }
+
+  ::ng-deep {
+    nz-tabs-nav {
+      margin: 0;
+    }
+
+    // A tab is a link, but reads as a tab: the colour of the tab, not the blue of a hyperlink
+    .ant-tabs-tab a {
+      color: inherit;
+    }
+
+    // The tabs only carry links: their panes stay empty, the router-outlet below shows the content.
+    .ant-tabs-content-holder {
+      display: none;
+    }
+  }
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  > *:not(router-outlet) {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .placeholder {
+    align-self: center;
+    margin-top: 60px;
+  }
+}

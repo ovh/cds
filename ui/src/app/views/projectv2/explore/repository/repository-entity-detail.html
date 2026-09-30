@@ -1,0 +1,39 @@
+<div class="detail-header">
+  <div class="titles" [title]="entity.name + '\n' + (entity.file_path ?? '')">
+    <div class="line">
+      <span class="name">{{entity.name}}</span>
+      <span class="path">{{entity.file_path}}</span>
+      <span class="ref" [title]="'Definition read on ' + ref">
+        <span nz-icon nzType="branches" nzTheme="outline" aria-hidden="true"></span>{{shortRef(ref)}}
+      </span>
+    </div>
+    <!-- The name other definitions refer to this one by, in uses, runs-on, from or a workflow hook -->
+    <div class="line reference" title="The name to use in yaml files">
+      <span class="label">Use as:</span>
+      <span class="fullname" nz-typography nzCopyable [nzContent]="fullName"></span>
+    </div>
+  </div>
+  <span class="spacer"></span>
+  @if (isWorkflow && content) {
+    <button nz-button nzType="primary" nzSize="small" (click)="openRunStartDrawer()">
+      <span nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>Run
+    </button>
+    <a nz-button nzSize="small" [routerLink]="['/project', ctx.project.key, 'run']"
+      [queryParams]="{ workflow: workflowPath, workflow_ref: ref }" title="Display workflow runs">
+      <span nz-icon nzType="unordered-list" nzTheme="outline" aria-hidden="true"></span>Runs
+    </a>
+  }
+</div>
+
+@if (loading && !content) {
+  <nz-spin nzSimple></nz-spin>
+}
+@if (error) {
+  <nz-alert class="error" nzType="error" nzShowIcon nzMessage="Unable to read this entity" [nzDescription]="error"></nz-alert>
+}
+@if (content) {
+  <div class="editor" [class.loading]="loading">
+    <nz-code-editor #editor [ngModel]="content.data" [nzEditorOption]="editorOption"
+      (nzEditorInitialized)="onEditorInit($event)"></nz-code-editor>
+  </div>
+}

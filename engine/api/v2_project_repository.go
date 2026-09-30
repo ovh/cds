@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/repository"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/vcs"
+	"github.com/ovh/cds/engine/api/workflow_v2"
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -32,9 +35,97 @@ func (api *API) getRepositoryByIdentifier(ctx context.Context, vcsID string, rep
 		repo, err = repository.LoadRepositoryByName(ctx, api.mustDB(), vcsID, repositoryIdentifier, opts...)
 	}
 	if err != nil {
+		// A bare not found leaves the caller guessing which resource is missing
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, sdk.NewErrorFrom(err, "repository %s not found on vcs %s", repositoryIdentifier, vcsID)
+		}
 		return nil, err
 	}
 	return repo, nil
+}
+
+// getProjectDistantRepositoryAllHandler returns the repositories listened by a workflow of the project
+// but not declared in it
+func (api *API) getProjectDistantRepositoryAllHandler() ([]service.RbacChecker, service.Handler) {
+	return service.RBAC(api.projectRead),
+		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			vars := mux.Vars(r)
+			pKey := vars["projectKey"]
+
+			// Load distant hooks
+			hooks, err := workflow_v2.LoadDistantHooksByProjectKey(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			vcsProjects, err := vcs.LoadAllVCSByProject(ctx, api.mustDB(), pKey)
+			if err != nil {
+				return err
+			}
+
+			// Retrieve all repositories added on the project
+			declared := make(map[string]struct{})
+			for _, vcsProject := range vcsProjects {
+				repositories, err := repository.LoadAllRepositoriesByVCSProjectID(ctx, api.mustDB(), vcsProject.ID)
+				if err != nil {
+					return err
+				}
+				for _, repo := range repositories {
+					declared[vcsProject.Name+"/"+strings.ToLower(repo.Name)] = struct{}{}
+				}
+			}
+
+			// Filter repositories, keeping the workflows that listen to each one; a workflow with
+			// several hooks on the same repository counts once
+			distant := make(map[string]*sdk.ProjectDistantRepository)
+			listeners := make(map[string]struct{})
+			for _, h := range hooks {
+				vcsName, repoName := h.Data.VCSServer, strings.ToLower(h.Data.RepositoryName)
+				key := vcsName + "/" + repoName
+				if _, has := declared[key]; has {
+					continue
+				}
+				target, has := distant[key]
+				if !has {
+					target = &sdk.ProjectDistantRepository{VCSName: vcsName, Repository: repoName}
+					distant[key] = target
+				}
+				listener := sdk.ProjectDistantRepositoryWorkflow{
+					VCSName:        h.VCSName,
+					RepositoryName: h.RepositoryName,
+					WorkflowName:   h.WorkflowName,
+				}
+				listenerKey := key + "|" + listener.VCSName + "/" + listener.RepositoryName + "/" + listener.WorkflowName
+				if _, has := listeners[listenerKey]; has {
+					continue
+				}
+				listeners[listenerKey] = struct{}{}
+				target.Workflows = append(target.Workflows, listener)
+			}
+
+			results := make([]sdk.ProjectDistantRepository, 0, len(distant))
+			for _, r := range distant {
+				sort.Slice(r.Workflows, func(i, j int) bool {
+					a, b := r.Workflows[i], r.Workflows[j]
+					if a.VCSName != b.VCSName {
+						return a.VCSName < b.VCSName
+					}
+					if a.RepositoryName != b.RepositoryName {
+						return a.RepositoryName < b.RepositoryName
+					}
+					return a.WorkflowName < b.WorkflowName
+				})
+				results = append(results, *r)
+			}
+			sort.Slice(results, func(i, j int) bool {
+				if results[i].VCSName != results[j].VCSName {
+					return results[i].VCSName < results[j].VCSName
+				}
+				return results[i].Repository < results[j].Repository
+			})
+
+			return service.WriteJSON(w, results, http.StatusOK)
+		}
 }
 
 func (api *API) getProjectRepositoryEventHandler() ([]service.RbacChecker, service.Handler) {
@@ -99,8 +190,24 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 				return err
 			}
 
+			var repoName string
 			repo, err := api.getRepositoryByIdentifier(ctx, vcsProject.ID, repositoryIdentifier)
-			if err != nil {
+			switch {
+			case err == nil:
+				repoName = repo.Name
+			case sdk.ErrorIs(err, sdk.ErrNotFound):
+				// Repository only listened by a distant workflow: its events are readable as soon as the
+				// vcs server credentials of the project can read it. The hooks service keys events by
+				// lowercased repository name.
+				vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, pKey, vcsProject.Name)
+				if err != nil {
+					return err
+				}
+				if _, err := vcsClient.RepoByFullname(ctx, repositoryIdentifier); err != nil {
+					return err
+				}
+				repoName = strings.ToLower(repositoryIdentifier)
+			default:
 				return err
 			}
 
@@ -112,7 +219,7 @@ func (api *API) getProjectRepositoryEventsHandler() ([]service.RbacChecker, serv
 			if len(srvs) < 1 {
 				return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to find hook uservice")
 			}
-			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProject.Name, url.PathEscape(repo.Name))
+			path := fmt.Sprintf("/v2/repository/event/%s/%s", vcsProject.Name, url.PathEscape(repoName))
 			var repositoryEvents []sdk.HookRepositoryEvent
 			_, code, errHooks := services.NewClient(srvs).DoJSONRequest(ctx, http.MethodGet, path, nil, &repositoryEvents)
 			if (errHooks != nil || code >= 400) && code != 404 {

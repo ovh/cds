@@ -886,12 +886,12 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				log.Info(ctx, "entity %s loaded with commit HEAD from repository %s", workflowName, repo.ID)
 				workflowEntity, err = entity.LoadHeadEntityByRefTypeName(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName)
 				if err != nil {
-					return sdk.WrapError(err, "unable to get workflow %s for ref %s and commit %s", workflowName, ref, commit)
+					return sdk.NewErrorFrom(err, "unable to get workflow %s for ref %s and commit %s", workflowName, ref, commit)
 				}
 			} else {
 				workflowEntity, err = entity.LoadByRefTypeNameCommit(ctx, api.mustDB(), repo.ID, ref, sdk.EntityTypeWorkflow, workflowName, commit)
 				if err != nil {
-					return sdk.WrapError(err, "unable to get workflow %s for ref %s and commit %s", workflowName, ref, commit)
+					return sdk.NewErrorFrom(err, "unable to get workflow %s for ref %s and commit %s", workflowName, ref, commit)
 				}
 			}
 
@@ -947,7 +947,7 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				trackSudo(ctx, w)
 			}
 			if !hasRole {
-				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger a workflow", theOneWhoTriggers.Username())
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger this workflow", theOneWhoTriggers.Username())
 			}
 
 			originRepo := repo.Name

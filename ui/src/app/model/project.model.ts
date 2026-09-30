@@ -9,6 +9,7 @@ import { Variable } from './variable.model';
 import { Workflow } from './workflow.model';
 import { VariableSet } from './variablesets.model';
 import { VCSProject } from './vcs.model';
+import { Initiator } from './analysis.model';
 
 export class Project {
   key: string;
@@ -75,6 +76,21 @@ export class ProjectRepository {
   clone_url: string;
   created: Date;
   created_by: string;
+  // Listened by a workflow of the project without being declared in it: only its name is known
+  distant?: boolean;
+}
+
+export class ProjectDistantRepository {
+  vcs_name: string;
+  repository: string;
+  // The workflows of the project that listen to it
+  workflows: Array<ProjectDistantRepositoryWorkflow>;
+}
+
+export class ProjectDistantRepositoryWorkflow {
+  vcs_name: string;
+  repository_name: string;
+  workflow_name: string;
 }
 
 export enum WorkflowHookEventName {
@@ -96,6 +112,8 @@ export class RepositoryHookEvent {
   event_name: WorkflowHookEventName;
   event_type: string;
   extracted_data: RepositoryHookEventExtractedData;
+  /** Who the event is attributed to; `username` is what older events carry instead. */
+  initiator: Initiator;
   username: string;
   last_error: string;
   vcs_server_name: string;
@@ -116,6 +134,8 @@ export class RepositoryHookEventAnalysis {
   analyze_id: string;
   status: string;
   project_key: string;
+  /** What the analysis reported, also on a Success that left files out */
+  error?: string;
 }
 
 export enum HookEventWorkflowStatus {
@@ -142,6 +162,10 @@ export class RepositoryHookWorkflow {
   run_id: string;
   run_number: string;
   error: string;
+  /** Set for a scheduler, workflow-run or manual hook: the owner of the workflow, who the run is attributed to. */
+  initiator: Initiator;
+  operation_status?: number;
+  operation_error?: string;
 }
 
 export class StartPurgeResponse {

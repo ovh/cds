@@ -7,19 +7,21 @@ export const StatusAnalyzeSkipped = "Skipped"
 
 export class RepositoryAnalysis {
     id: string;
-    created: Date;
-    last_modified: Date;
+    created: string;
+    last_modified: string;
     project_repository_id: string;
     vcs_project_id: string;
     project_key: string;
     status: string;
-    branch: string;
+    ref: string;
     commit: string;
     data: AnalysisData;
 
 }
 
 export class AnalysisData {
+    /** Set when the analysis was started by a repository event; a manual analysis has none. */
+    hook_event_uuid: string;
     operation_uuid: string;
     commit_check: boolean;
     sign_key_id: string;

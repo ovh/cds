@@ -1,5 +1,6 @@
 <div class="actions">
-	<div title="Start a Workflow" appClickable (click)="openRunStartDrawer()">
+	<div title="Start a Workflow" role="button" tabindex="0" (click)="openRunStartDrawer()" (keydown.enter)="openRunStartDrawer()"
+		(keydown.space)="$event.preventDefault(); openRunStartDrawer()">
 		<span nz-icon nzType="play-circle" [nzTheme]="isNight ? 'fill' : 'outline'" aria-hidden="true"></span>
 		Start a Workflow
 	</div>
@@ -7,7 +8,8 @@
 		<span nz-icon nzType="unordered-list" nzTheme="outline" aria-hidden="true"></span>
 		Show Workflow Runs
 	</a>
-	<div title="Add a Repository" appClickable (click)="openRepositoryAddDrawer()">
+	<div title="Add a Repository" role="button" tabindex="0" (click)="openRepositoryAddDrawer()" (keydown.enter)="openRepositoryAddDrawer()"
+		(keydown.space)="$event.preventDefault(); openRepositoryAddDrawer()">
 		<span nz-icon nzType="plus-circle" [nzTheme]="isNight ? 'fill' : 'outline'" aria-hidden="true"></span>
 		Add a Repository
 	</div>

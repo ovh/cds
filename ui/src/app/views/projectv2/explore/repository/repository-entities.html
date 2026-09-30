@@ -1,0 +1,59 @@
+@if (entities === null) {
+  <nz-spin nzSimple></nz-spin>
+}
+
+@if (entities?.length === 0) {
+  <div class="empty">
+    <nz-empty [nzNotFoundContent]="'No ' + typeLabel.toLowerCase() + ' on ' + shortRef(ctx.ref)" [nzNotFoundFooter]="emptyFooter"></nz-empty>
+    <ng-template #emptyFooter>
+      <p class="hint">
+        @if (ctx.lastAnalysis(ctx.ref); as analysis) {
+          @if (analysis.status === 'Error') {
+            The last analysis of this ref failed{{analysis.data?.error ? ': ' + analysis.data.error : ''}}.
+          } @else {
+            The last analysis of this ref found no {{typeLabel.toLowerCase()}}.
+          }
+        } @else {
+          This ref has not been analyzed yet.
+        }
+      </p>
+      <button nz-button nzType="primary" (click)="analyzeRef()">
+        <span nz-icon nzType="sync" nzTheme="outline" aria-hidden="true"></span>Analyze {{shortRef(ctx.ref)}}
+      </button>
+      <button nz-button (click)="seeAnalyses()">See analyses</button>
+      @if (ctx.defaultRef() !== ctx.ref) {
+        <button nz-button (click)="switchToDefaultRef()">Switch to {{shortRef(ctx.defaultRef())}}</button>
+      }
+    </ng-template>
+  </div>
+}
+
+@if (entities?.length) {
+  <nz-splitter (nzResizeEnd)="onResizeEnd($event)">
+  <nz-splitter-panel [nzDefaultSize]="listSize" nzMin="220" nzMax="50%">
+  <div class="list" [class.loading]="loading">
+    <nz-input-wrapper nzAllowClear>
+      <span nzInputPrefix nz-icon nzType="search" nzTheme="outline" aria-hidden="true"></span>
+      <input nz-input nzSize="small" [placeholder]="'Filter ' + typeLabel.toLowerCase() + '…'" [ngModel]="filter" (ngModelChange)="changeFilter($event)"
+        [attr.aria-label]="'Filter ' + typeLabel.toLowerCase()" />
+    </nz-input-wrapper>
+    <div class="items">
+      @for (entity of filtered; track entity.name) {
+        <a class="item" [routerLink]="linkTo(entity)" queryParamsHandling="preserve" routerLinkActive="active" [title]="entity.name + '\n' + (entity.file_path ?? '')">
+          <span class="name">{{entity.name}}</span>
+          <span class="path">{{entity.file_path}}</span>
+        </a>
+      }
+      @if (filtered.length === 0) {
+        <p class="none">No {{typeLabel.toLowerCase()}} matches "{{filter}}"</p>
+      }
+    </div>
+  </div>
+  </nz-splitter-panel>
+  <nz-splitter-panel>
+    @if (selected) {
+      <app-projectv2-repository-entity-detail [entity]="selected" [ref]="ctx.ref$ | async"></app-projectv2-repository-entity-detail>
+    }
+  </nz-splitter-panel>
+  </nz-splitter>
+}

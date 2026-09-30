@@ -194,10 +194,11 @@ func (api *API) getProjectEntitiesHandler() ([]service.RbacChecker, service.Hand
 			result := make([]sdk.ShortEntity, 0, len(entities))
 			for _, e := range entities {
 				result = append(result, sdk.ShortEntity{
-					ID:   e.ID,
-					Name: e.Name,
-					Type: e.Type,
-					Ref:  e.Ref,
+					ID:       e.ID,
+					Name:     e.Name,
+					Type:     e.Type,
+					Ref:      e.Ref,
+					FilePath: e.FilePath,
 				})
 			}
 			return service.WriteJSON(w, result, http.StatusOK)

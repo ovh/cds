@@ -30,6 +30,10 @@ func (api *API) getVCSByIdentifier(ctx context.Context, projectKey string, vcsId
 		vcsProject, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projectKey, vcsIdentifier, opts...)
 	}
 	if err != nil {
+		// A bare not found leaves the caller guessing which resource is missing
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return nil, sdk.NewErrorFrom(err, "vcs %s not found on project %s", vcsIdentifier, projectKey)
+		}
 		return nil, err
 	}
 	return vcsProject, nil

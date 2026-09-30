@@ -179,7 +179,7 @@ func (ef *EntityFinder) searchEntity(ctx context.Context, db gorp.SqlExecutor, s
 			return nil, "", err
 		}
 		if !can {
-			return nil, fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+			return nil, fmt.Sprintf("user %s does not have the %s permission on project %s, required to use %s", ef.initiator.Username(), sdk.ProjectRoleRead, projKey, name), nil
 		}
 	}
 
@@ -377,7 +377,7 @@ func (ef *EntityFinder) searchAction(ctx context.Context, db gorp.SqlExecutor, s
 					return nil, "", err
 				}
 				if !can {
-					return nil, fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+					return nil, fmt.Sprintf("user %s does not have the %s permission on project %s, required to use %s", ef.initiator.Username(), sdk.ProjectRoleRead, actionEntity.ProjectKey, name), nil
 				}
 			}
 			localAct.CompleteName = fmt.Sprintf("%s/%s/%s/%s@%s", localAct.ProjectKey, ef.currentVCS.Name, ef.currentRepo.Name, localAct.Name, ef.currentRef)
@@ -427,7 +427,7 @@ func (ef *EntityFinder) searchWorkerModel(ctx context.Context, db gorp.SqlExecut
 					return nil, "", err
 				}
 				if !can {
-					return nil, fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+					return nil, fmt.Sprintf("user %s does not have the %s permission on project %s, required to use %s", ef.initiator.Username(), sdk.ProjectRoleRead, wmEntity.ProjectKey, name), nil
 				}
 			}
 
@@ -468,7 +468,7 @@ func (ef *EntityFinder) searchWorkflowTemplate(ctx context.Context, db gorp.SqlE
 					return nil, "", err
 				}
 				if !can {
-					return nil, fmt.Sprintf("user %s do not have the permission to access %s", ef.initiator.Username(), name), nil
+					return nil, fmt.Sprintf("user %s does not have the %s permission on project %s, required to use %s", ef.initiator.Username(), sdk.ProjectRoleRead, wtEntity.ProjectKey, name), nil
 				}
 			}
 			localEntity.Entity = *wtEntity

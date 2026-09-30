@@ -1,0 +1,78 @@
+@if (!ready && !error) {
+  <nz-spin nzTip="Loading repository"></nz-spin>
+}
+@if (error) {
+  <nz-alert class="error" nzType="error" nzShowIcon nzMessage="Unable to load repository" [nzDescription]="errorMessage(error)"></nz-alert>
+}
+
+@if (ready && (ctx.repository$ | async); as repository) {
+  <div class="header">
+    <div class="title">
+      <h1 [title]="ctx.vcsName + ' / ' + repository.name"><span class="vcs">{{ctx.vcsName}} /</span> {{repository.name}}</h1>
+      @if (repository.distant) {
+        <nz-tag nzColor="blue" nz-tooltip nzTooltipTitle="Listened by a workflow of this project, not part of it">listened only</nz-tag>
+      } @else {
+        <app-repository-ref-select size="small" [branches]="ctx.branches$ | async" [tags]="ctx.tags$ | async"
+          [ngModel]="ctx.ref$ | async" (ngModelChange)="changeRef($event)"></app-repository-ref-select>
+      }
+      <span class="spacer"></span>
+      @if (repository.distant && canManage) {
+        <!-- Events unreadable means the vcs credentials of the project cannot see the repository: adding it would fail -->
+        <span nz-tooltip [nzTooltipTitle]="(ctx.eventsError$ | async) ? 'User ' + (ctx.vcs$ | async)?.auth?.username + ' cannot read this repository on ' + ctx.vcsName : null">
+          <button nz-button nzType="primary" [disabled]="(ctx.eventsError$ | async) !== null" (click)="openRepositoryAddDrawer()">
+            <span nz-icon nzType="plus" nzTheme="outline" aria-hidden="true"></span>Add to project
+          </button>
+        </span>
+      }
+      @if (!repository.distant) {
+        <button nz-button nzType="primary" (click)="openRunStartDrawer()">
+          <span nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>Start a workflow
+        </button>
+        <button nz-button (click)="openTriggerAnalysisDrawer()">
+          <span nz-icon nzType="sync" nzTheme="outline" aria-hidden="true"></span>Trigger analysis
+        </button>
+      }
+    </div>
+    <div class="subtitle">
+      @if (repository.distant) {
+        @if (ctx.listenedBy$ | async; as listenedBy) {
+          @if (listenedBy.length) {
+            Listened by
+            @for (w of listenedBy; track w.vcs_name + '/' + w.repository_name + '/' + w.workflow_name; let last = $last) {
+              <a [routerLink]="['/project', ctx.project.key, 'explore', 'vcs', w.vcs_name, 'repository', w.repository_name, 'workflow', w.workflow_name]"
+                [title]="'Open workflow ' + w.workflow_name">{{w.repository_name}} / {{w.workflow_name}}</a>@if (!last) { · }
+            }
+          } @else {
+            No workflow of this project listens to this repository
+          }
+        }
+      } @else {
+        @if (ctx.ref$ | async; as ref) {
+          @if (ctx.lastAnalysis(ref); as analysis) {
+            <nz-badge [nzStatus]="analysisBadge(analysis)" role="img" [attr.aria-label]="'Status: ' + analysis.status"></nz-badge>
+            Last analysis on {{shortRef(ref)}}: {{analysis.status}} ·
+            <app-date-from-now [value]="analysis.created"></app-date-from-now>
+            @if (analysis.data?.error) {
+              · {{analysis.data.error}}
+            }
+          } @else {
+            No analysis yet on {{shortRef(ref)}}
+          }
+        }
+      }
+    </div>
+    <nz-tabs nzLinkRouter [nzLinkExact]="false" nzSize="small">
+      @for (tab of tabs; track tab.path) {
+        <nz-tab>
+          <a *nzTabLink nz-tab-link [routerLink]="[tab.path]" queryParamsHandling="preserve">{{tab.label}}@if (tab.count !== null && tab.count !== undefined) { <span class="count">{{tab.count}}</span> }@if (tab.alert) { <span class="alert-dot" role="img" aria-label="The last event is in error"></span> }</a>
+        </nz-tab>
+      }
+    </nz-tabs>
+  </div>
+  <div class="content">
+    <router-outlet (activate)="childActive = true" (deactivate)="childActive = false"></router-outlet>
+    @if (!childActive && tabs.length) {
+      <nz-empty class="placeholder" nzNotFoundContent="Pick a tab to browse this repository"></nz-empty>
+    }
+  </div>
+}

@@ -177,7 +177,6 @@ import {
     LinkOutline,
     LockOutline,
     MailOutline,
-    MenuFoldOutline,
     MinusOutline,
     MoonOutline,
     MoreOutline,
@@ -241,6 +240,7 @@ import { RequirementsValueComponent } from 'app/shared/requirements/value/requir
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzStepsModule } from 'ng-zorro-antd/steps';
+import { NzSplitterModule } from 'ng-zorro-antd/splitter';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { CardComponent } from 'app/shared/card/card.component';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
@@ -421,6 +421,7 @@ const icons: IconDefinition[] = [
         NzSelectModule,
         NzSpaceModule,
         NzSpinModule,
+        NzSplitterModule,
         NzStepsModule,
         NzSwitchModule,
         NzTableModule,
@@ -630,6 +631,7 @@ const icons: IconDefinition[] = [
         NzSelectModule,
         NzSpaceModule,
         NzSpinModule,
+        NzSplitterModule,
         NzStepsModule,
         NzSwitchModule,
         NzTableModule,

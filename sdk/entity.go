@@ -39,10 +39,11 @@ type EntityFullName struct {
 }
 
 type ShortEntity struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Ref  string `json:"ref"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Ref      string `json:"ref"`
+	FilePath string `json:"file_path"`
 }
 
 type Entity struct {

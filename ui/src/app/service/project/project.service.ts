@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { ProjectIntegration } from 'app/model/integration.model';
 import { Schema } from 'app/model/json-schema.model';
 import { Key } from 'app/model/keys.model';
-import { LoadOpts, Project, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
+import { LoadOpts, Project, ProjectDistantRepository, ProjectRepository, RepositoryHookEvent } from 'app/model/project.model';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, shareReplay } from 'rxjs/operators';
 import { RepositoryAnalysis } from "../../model/analysis.model";
@@ -112,6 +112,10 @@ export class ProjectService {
 
     getVCSRepositories(key: string, vcsName: string): Observable<Array<ProjectRepository>> {
         return this._http.get<Array<ProjectRepository>>(`/v2/project/${key}/vcs/${vcsName}/repository`);
+    }
+
+    getDistantRepositories(key: string): Observable<Array<ProjectDistantRepository>> {
+        return this._http.get<Array<ProjectDistantRepository>>(`/v2/project/${key}/distantrepository`);
     }
 
     listVCSRepositoryAnalysis(key: string, vcsName: string, repoName: string): Observable<Array<RepositoryAnalysis>> {

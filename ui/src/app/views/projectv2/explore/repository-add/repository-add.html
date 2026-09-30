@@ -3,7 +3,7 @@
     <nz-form-label [nzSpan]="6" nzFor="vcs">VCS</nz-form-label>
     <nz-form-control [nzSpan]="14">
       <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a VCS" formControlName="vcs" id="vcs"
-        (ngModelChange)="vcsChange($event)" (ngModelChange)="vcsChange($event)">
+        (ngModelChange)="vcsChange($event)">
         @for (v of vcss; track v) {
           <nz-option [nzValue]="v.name" [nzLabel]="v.name"></nz-option>
         }

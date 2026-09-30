@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { Project } from "app/model/project.model";
 import { AutoUnsubscribe } from "app/shared/decorator/autoUnsubscribe";
@@ -17,7 +17,7 @@ import { ProjectV2RepositoryAddComponent, ProjectV2RepositoryAddComponentParams 
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 @AutoUnsubscribe()
-export class ProjectV2ExploreOverviewComponent implements OnInit {
+export class ProjectV2ExploreOverviewComponent implements OnInit, OnDestroy {
 
 	project: Project;
 	themeSubscription: Subscription;

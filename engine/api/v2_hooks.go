@@ -129,7 +129,7 @@ func (api *API) postHookEventRetrieveSignKeyHandler() ([]service.RbacChecker, se
 
 			vcsProjectWithSecret, err := vcs.LoadVCSByProject(ctx, api.mustDB(), hookRetrieveSignKey.ProjectKey, hookRetrieveSignKey.VCSServerName, gorpmapping.GetOptions.WithDecryption)
 			if err != nil {
-				return err
+				return sdk.NewErrorFrom(err, "unable to get vcs %s on project %s", hookRetrieveSignKey.VCSServerName, hookRetrieveSignKey.ProjectKey)
 			}
 
 			vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, hookRetrieveSignKey.ProjectKey, hookRetrieveSignKey.VCSServerName)

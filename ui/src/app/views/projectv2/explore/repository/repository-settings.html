@@ -1,0 +1,29 @@
+@if (ctx.repository$ | async; as repository) {
+  <nz-alert nzType="info" nzShowIcon [nzMessage]="robotMsg"></nz-alert>
+  <ng-template #robotMsg>
+    Make sure that user <b>{{(ctx.vcs$ | async)?.auth?.username}}</b> can read this repository on {{ctx.vcsName}}: CDS reads its
+    <code>.cds</code> folder and clones it in jobs with that user.
+  </ng-template>
+
+  <nz-descriptions nzBordered nzSize="small" [nzColumn]="1">
+    <nz-descriptions-item nzTitle="ID"><span nz-typography nzCopyable [nzContent]="repository.id"></span></nz-descriptions-item>
+    <nz-descriptions-item nzTitle="Name">{{repository.name}}</nz-descriptions-item>
+    <nz-descriptions-item nzTitle="VCS">{{ctx.vcsName}}</nz-descriptions-item>
+    <nz-descriptions-item nzTitle="Clone URL"><span nz-typography nzCopyable [nzContent]="repository.clone_url"></span></nz-descriptions-item>
+    <nz-descriptions-item nzTitle="Added">{{repository.created | date:'medium'}} by {{repository.created_by}}</nz-descriptions-item>
+    @if (ctx.defaultRef(); as ref) {
+      <nz-descriptions-item nzTitle="Default branch"><code>{{ref}}</code></nz-descriptions-item>
+    }
+  </nz-descriptions>
+
+  @if (canManage) {
+    <div class="danger">
+      <div>
+        <b>Remove this repository from {{ctx.project.key}}.</b>
+        Its entities leave the project and its events stop triggering workflows here.
+      </div>
+      <button nz-button nzDanger [nzLoading]="removing" nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove this repository?"
+        nzOkText="Remove" nzOkDanger nzPopconfirmPlacement="topRight" (nzOnConfirm)="removeRepositoryFromProject()">Remove</button>
+    </div>
+  }
+}

@@ -29,6 +29,20 @@ type ProjectRepository struct {
 	CloneURL     string    `json:"clone_url" db:"clone_url"`
 }
 
+// ProjectDistantRepository is a repository listened by a workflow of the project but not declared in it.
+type ProjectDistantRepository struct {
+	VCSName    string                             `json:"vcs_name" cli:"vcs_name"`
+	Repository string                             `json:"repository" cli:"repository"`
+	Workflows  []ProjectDistantRepositoryWorkflow `json:"workflows" cli:"-"`
+}
+
+// ProjectDistantRepositoryWorkflow locates a workflow of the project that listens to a distant repository.
+type ProjectDistantRepositoryWorkflow struct {
+	VCSName        string `json:"vcs_name"`
+	RepositoryName string `json:"repository_name"`
+	WorkflowName   string `json:"workflow_name"`
+}
+
 type ProjectRepositoryAnalysis struct {
 	ID                  string                `json:"id" db:"id" cli:"id"`
 	Created             time.Time             `json:"created" db:"created" cli:"created"`

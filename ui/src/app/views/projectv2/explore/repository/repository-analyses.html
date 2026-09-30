@@ -1,0 +1,106 @@
+@if (rows === null) {
+  <nz-spin nzSimple></nz-spin>
+} @else {
+  <div class="toolbar">
+    <nz-select nzSize="small" nzAllowClear nzPlaceHolder="Ref: all" [ngModel]="refFilter" (ngModelChange)="changeRefFilter($event)"
+      [nzDropdownMatchSelectWidth]="false" aria-label="Filter by ref">
+      @for (ref of refs; track ref) {
+        <nz-option [nzValue]="ref" [nzLabel]="shortRef(ref)"></nz-option>
+      }
+    </nz-select>
+    <nz-select nzSize="small" nzAllowClear nzPlaceHolder="Status: all" [ngModel]="statusFilter" (ngModelChange)="changeStatusFilter($event)"
+      [nzDropdownMatchSelectWidth]="false" aria-label="Filter by status">
+      <nz-option nzValue="Success" nzLabel="Success"></nz-option>
+      <nz-option nzValue="Error" nzLabel="Error"></nz-option>
+      <nz-option nzValue="Skipped" nzLabel="Skipped"></nz-option>
+      <nz-option nzValue="InProgress" nzLabel="In progress"></nz-option>
+    </nz-select>
+    <span class="spacer"></span>
+    <button nz-button nzSize="small" (click)="refresh()">
+      <span nz-icon nzType="reload" [nzSpin]="loading" nzTheme="outline" aria-hidden="true"></span>Refresh
+    </button>
+  </div>
+
+  <div class="list">
+    <nz-table #table [nzData]="filtered" nzSize="small" nzTableLayout="fixed" [nzFrontPagination]="false" [nzShowPagination]="false" [nzLoading]="loading"
+      [nzNoResult]="noResult">
+      <thead>
+        <tr>
+          <th nzWidth="28px"></th>
+          <th nzWidth="36px"></th>
+          <th>Ref</th>
+          <th>Outcome</th>
+          <th nzWidth="170px">Triggered by</th>
+          <th nzWidth="110px" nzAlign="right">When</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of table.data; track row.analysis.id) {
+          <tr class="row" [class.open]="isExpanded(row)" [id]="'analysis-' + row.analysis.id" tabindex="0" [attr.aria-expanded]="isExpanded(row)" (click)="toggle(row)" (keydown.enter)="toggle(row)">
+            <td class="caret"><span nz-icon [nzType]="isExpanded(row) ? 'down' : 'right'" nzTheme="outline" aria-hidden="true"></span></td>
+            <td class="status">
+              <span nz-icon [nzType]="icon(row.outcome)" [nzSpin]="row.outcome === 'processing'" nzTheme="outline"
+                class="level {{row.outcome}}" role="img" [attr.aria-label]="row.analysis.status"></span>
+            </td>
+            <td class="ref">
+              <span class="name">{{row.analysis.ref}}</span>
+              @if (row.analysis.commit) { <span class="commit">{{row.analysis.commit | slice:0:7}}</span> }
+            </td>
+            <td class="outcome">
+              <nz-tag [nzColor]="color(row.outcome)">{{row.label}}</nz-tag>
+              @if (row.detail) { <div class="detail" [title]="row.detail">{{row.detail}}</div> }
+            </td>
+            <td class="user">{{row.requestedBy || '–'}}@if (row.manual) { <nz-tag class="manual" nz-tooltip nzTooltipTitle="Asked for by hand, not by a repository event">manual</nz-tag> }</td>
+            <td class="when"><app-date-from-now [value]="row.analysis.created"></app-date-from-now></td>
+          </tr>
+          <tr class="details" [nzExpand]="isExpanded(row)">
+            <!-- A collapsed expand row stays in the DOM, hidden: its content is only built once opened -->
+            @if (isExpanded(row)) {
+            <div class="expanded">
+              <div class="main">
+              @if (row.analysis.data?.error) {
+                <p class="full-error">{{row.analysis.data.error}}</p>
+              }
+              <dl class="ids">
+                <dt>Analysis</dt>
+                <dd><span nz-typography nzCopyable [nzContent]="row.analysis.id"></span></dd>
+                <dt>Commit</dt>
+                <dd><span nz-typography nzCopyable [nzContent]="row.analysis.commit"></span></dd>
+                @if (row.analysis.data?.hook_event_uuid) {
+                  <dt>Event</dt>
+                  <dd><span nz-typography nzCopyable [nzContent]="row.analysis.data.hook_event_uuid"></span></dd>
+                }
+              </dl>
+              @if (row.analysis.data?.hook_event_uuid) {
+                <a class="event-link" [routerLink]="activityLink" [queryParams]="{ event: row.analysis.data.hook_event_uuid }" queryParamsHandling="merge">See event</a>
+              }
+              </div>
+              <div class="files">
+                @if (row.registered === 0) {
+                  <p class="none">No file was processed.</p>
+                } @else {
+                  <div class="files-title">{{row.analysis.status === 'Error' ? 'Files not processed' : 'Files'}}</div>
+                }
+                @for (file of filesToShow(row); track file.path + file.file_name) {
+                  <div class="file">
+                    <nz-badge [nzStatus]="fileBadge(file)"></nz-badge>
+                    @if (fileLink(file); as link) {
+                      <a [routerLink]="link" [queryParams]="{ ref: row.analysis.ref }">{{file.path}}{{file.file_name}}</a>
+                    } @else {
+                      <span>{{file.path}}{{file.file_name}}</span>
+                    }
+                    @if (fileLabel(file)) { <small>{{fileLabel(file)}}</small> }
+                  </div>
+                }
+              </div>
+            </div>
+            }
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+    <ng-template #noResult>
+      <nz-empty nzNotFoundImage="simple" [nzNotFoundContent]="rows.length ? 'No analysis matches these filters' : 'No analysis of this repository yet'"></nz-empty>
+    </ng-template>
+  </div>
+}
