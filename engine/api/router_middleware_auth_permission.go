@@ -140,7 +140,7 @@ func (api *API) checkProjectAdvancedPermissionsWithOpts(ctx context.Context, w h
 		if jobRunID != nil {
 			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
 			if err != nil {
-				return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %q", *jobRunID)
+				return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %d", *jobRunID)
 			}
 
 			if nodeJobRun.ProjectID == proj.ID && requiredPerm <= sdk.PermissionReadExecute {
@@ -258,12 +258,12 @@ func (api *API) checkWorkflowPermissionsWithOpts(opts CheckWorkflowPermissionsOp
 			if jobRunID != nil {
 				nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
 				if err != nil {
-					return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %q", *jobRunID)
+					return sdk.WrapError(sdk.ErrForbidden, "can't load node job run with id %d", *jobRunID)
 				}
 
 				nodeRun, err := workflow.LoadNodeRunByID(ctx, api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{})
 				if err != nil {
-					return sdk.WrapError(sdk.ErrForbidden, "can't load node run with id %q", nodeJobRun.WorkflowNodeRunID)
+					return sdk.WrapError(sdk.ErrForbidden, "can't load node run with id %d", nodeJobRun.WorkflowNodeRunID)
 				}
 
 				daoTarget := workflow.LoadOptions{Minimal: true}.GetWorkflowDAO()

@@ -734,7 +734,7 @@ func (api *API) getProjectAccessHandler() service.Handler {
 
 			nodeJobRun, err := workflow.LoadNodeJobRun(ctx, api.mustDB(), api.Cache, *jobRunID)
 			if err != nil {
-				return sdk.WrapError(sdk.ErrUnauthorized, "can't load node job run with id %q", *jobRunID)
+				return sdk.WrapError(sdk.ErrUnauthorized, "can't load node job run with id %d", *jobRunID)
 			}
 
 			if nodeJobRun.ProjectID == proj.ID {
