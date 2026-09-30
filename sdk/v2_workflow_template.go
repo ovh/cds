@@ -102,6 +102,7 @@ func (wt V2WorkflowTemplate) GetName() string {
 func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow, vars TemplateVariableSets) (string, error) {
 	type innerWorkflow struct {
 		Concurrencies []WorkflowConcurrency    `json:"concurrencies,omitempty"`
+		Concurrency   string                   `json:"concurrency,omitempty"`
 		Semver        *WorkflowSemver          `json:"semver,omitempty"`
 		Stages        map[string]WorkflowStage `json:"stages,omitempty"`
 		Gates         map[string]V2JobGate     `json:"gates,omitempty"`
@@ -191,6 +192,9 @@ func (wt V2WorkflowTemplate) Resolve(_ context.Context, w *V2Workflow, vars Temp
 	}
 	if len(in.Concurrencies) > 0 {
 		w.Concurrencies = in.Concurrencies
+	}
+	if in.Concurrency != "" {
+		w.Concurrency = in.Concurrency
 	}
 	if in.Semver != nil {
 		w.Semver = in.Semver
