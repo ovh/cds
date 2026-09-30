@@ -13,6 +13,11 @@ const (
 	NoCommit = "0000000000000000000000000000000000000000"
 )
 
+// isRefDeletion reports a push that deletes a branch or tag: every supported VCS sends a zero target commit.
+func isRefDeletion(data sdk.HookRepositoryEventExtractData) bool {
+	return data.CDSEventName == sdk.WorkflowHookEventNamePush && data.Commit == NoCommit
+}
+
 // sortedUniquePaths sorts paths and drops duplicates in place. Webhook payloads list a file
 // once per commit touching it; sorting also matches the order produced by git diff --name-status.
 func sortedUniquePaths(paths []string) []string {
