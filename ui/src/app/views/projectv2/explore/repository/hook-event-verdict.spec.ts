@@ -161,6 +161,54 @@ describe('hookEventVerdict', () => {
         expect(v.steps[2].description).toContain('Not applicable');
     });
 
+    it('warns when the analysis of a project declaring a listened repository failed', () => {
+        const v = hookEventVerdict(event({ status: 'Error', last_error: 'repository analysis failed' }), PROJECT, true);
+        expect(v.level).toBe('warning');
+        expect(v.label).toBe('Analysis failed in another project');
+        expect(v.steps[0].status).toBe('success');
+        expect(v.steps[2].status).toBe('warning');
+        expect(v.steps[2].description).toContain('An analysis failed in a project declaring it.');
+        expect(v.steps[3].description).toBe('None evaluated');
+    });
+
+    it('notes on the analysis step of a declared repository that another project failed its analysis', () => {
+        const v = hookEventVerdict(event({ status: 'Error', last_error: '1 of 2 repository analyses failed',
+            analyses: [{ analyze_id: 'a1', status: 'Success', project_key: PROJECT }],
+            workflows: [workflow('local', HookEventWorkflowStatus.Done, { run_number: '3' })] }), PROJECT, false);
+        expect(v.level).toBe('success');
+        expect(v.steps[0].status).toBe('success');
+        expect(v.steps[2].status).toBe('success');
+        expect(v.steps[2].description).toContain('an analysis failed in another project');
+    });
+
+    it('warns, without blaming the reception, on an older event carrying the raw error of another project', () => {
+        const v = hookEventVerdict(event({ status: 'Error', last_error: 'unable to retrieve files, (gh_api_error) Not Found' }), PROJECT, true);
+        expect(v.level).toBe('warning');
+        expect(v.label).toBe('Failed in another project');
+        expect(v.detail).toBe('unable to retrieve files, (gh_api_error) Not Found');
+        expect(v.steps[0].status).toBe('success');
+        expect(v.steps[2].status).toBe('warning');
+        expect(v.steps[2].description).toContain('A project declaring it reported: unable to retrieve files');
+        expect(v.steps[3].description).toContain('may have been stopped');
+        expect(v.hint).toContain('.cds directory');
+    });
+
+    it('lets the workflows of a listened repository tell the outcome when another project failed', () => {
+        const v = hookEventVerdict(event({ status: 'Error', last_error: 'all repository analyses failed',
+            workflows: [workflow('distant1', HookEventWorkflowStatus.Done, { run_number: '12' })] }), PROJECT, true);
+        expect(v.level).toBe('success');
+        expect(v.label).toBe('1 workflow triggered');
+        expect(v.steps[0].status).toBe('success');
+        expect(v.steps[2].status).toBe('warning');
+    });
+
+    it('still blames the author of an event on a listened repository', () => {
+        const v = hookEventVerdict(event({ status: 'Skipped', last_error: 'User with key 4603FA40B0D5B3F7 not found' }), PROJECT, true);
+        expect(v.level).toBe('error');
+        expect(v.steps[1].status).toBe('error');
+        expect(v.steps[2].status).toBe('none');
+    });
+
     it('describes the event with its kind, ref and short commit', () => {
         const v = hookEventVerdict(event({ event_type: 'opened', event_name: WorkflowHookEventName.WorkflowHookEventNamePullRequest }), PROJECT, false);
         expect(v.steps[0].description).toBe('pull-request (opened) on refs/heads/master · 3f11f6f');

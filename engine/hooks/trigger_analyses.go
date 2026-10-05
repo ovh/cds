@@ -2,6 +2,8 @@ package hooks
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/rockbears/log"
@@ -104,21 +106,6 @@ func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookReposit
 		return nil
 	}
 
-	for _, a := range hre.Analyses {
-		if a.Status == sdk.RepositoryAnalysisStatusError {
-			hre.Status = sdk.HookEventStatusError
-			hre.LastError = a.Error
-			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
-				return err
-			}
-			break
-		}
-	}
-
-	if hre.IsTerminated() {
-		return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID)
-	}
-
 	hre.Status = sdk.HookEventStatusWorkflowHooks
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 		return err
@@ -158,7 +145,6 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 
 	// Check analysis status and/or run it
 	allEnded := true
-	allInError := len(hre.Analyses) > 0
 	for i := range hre.Analyses {
 		a := &hre.Analyses[i]
 		if a.Status == "" {
@@ -201,28 +187,9 @@ func (s *Service) triggerAnalyses(ctx context.Context, hre *sdk.HookRepositoryEv
 		if a.Status == sdk.RepositoryAnalysisStatusInProgress {
 			allEnded = false
 		}
-		if a.Status != sdk.RepositoryAnalysisStatusError {
-			allInError = false
-		}
 	}
 
-	// If all analysis are in errors
-	if allInError {
-		if len(hre.Analyses) == 1 {
-			hre.LastError = hre.Analyses[0].Error
-		} else {
-			hre.LastError = "All Repository analyses failed: " + hre.Analyses[0].Error
-		}
-		hre.Status = sdk.HookEventStatusError
-		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
-			return err
-		}
-		if err := s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID); err != nil {
-			return err
-		}
-		return nil
-	}
-
+	// A failed analysis only blocks the workflows of its own project: workflow hooks are still evaluated
 	if !allEnded {
 		return nil
 	}
@@ -262,4 +229,59 @@ func (s *Service) runAnalysis(ctx context.Context, hre *sdk.HookRepositoryEvent,
 	analysis.Status = resp.Status
 	analysis.AnalyzeID = resp.AnalysisID
 	return nil
+}
+
+// analysisError returns the error to report on an event whose repository analyses failed, empty if none did;
+// the event is shared by all projects, so it names neither the project nor its error, kept on each analysis.
+func analysisError(hre *sdk.HookRepositoryEvent) string {
+	var failed int
+	for _, a := range hre.Analyses {
+		if a.Status == sdk.RepositoryAnalysisStatusError {
+			failed++
+		}
+	}
+	switch {
+	case failed == 0:
+		return ""
+	case len(hre.Analyses) == 1:
+		return "repository analysis failed"
+	case failed == len(hre.Analyses):
+		return "all repository analyses failed"
+	default:
+		return fmt.Sprintf("%d of %d repository analyses failed", failed, len(hre.Analyses))
+	}
+}
+
+// skipHooksOfFailedAnalyses skips the hooks of workflows defined in the event repository by a project whose
+// analysis failed; workflows defined in other repositories (distant) are not concerned.
+func skipHooksOfFailedAnalyses(hre *sdk.HookRepositoryEvent) {
+	failed := make(map[string]string)
+	for _, a := range hre.Analyses {
+		if a.Status == sdk.RepositoryAnalysisStatusError {
+			failed[a.ProjectKey] = a.Error
+		}
+	}
+	if len(failed) == 0 {
+		return
+	}
+	for i := range hre.WorkflowHooks {
+		wh := &hre.WorkflowHooks[i]
+		analysisErr, has := failed[wh.ProjectKey]
+		if !has || wh.Status != sdk.HookEventWorkflowStatusScheduled {
+			continue
+		}
+		if !strings.EqualFold(wh.VCSIdentifier, hre.VCSServerName) || !strings.EqualFold(wh.RepositoryIdentifier, hre.RepositoryName) {
+			continue
+		}
+		wh.Status = sdk.HookEventWorkflowStatusSkipped
+		wh.Error = "repository analysis failed: " + analysisErr
+	}
+}
+
+// endWithAnalysisError marks as failed an event processed to its end while one of its analyses failed.
+func endWithAnalysisError(hre *sdk.HookRepositoryEvent) {
+	if err := analysisError(hre); err != "" {
+		hre.Status = sdk.HookEventStatusError
+		hre.LastError = err
+	}
 }

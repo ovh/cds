@@ -258,6 +258,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		hre.LastError = "All workflow hooks failed: " + lastError
 	} else {
 		hre.Status = sdk.HookEventStatusDone
+		endWithAnalysisError(hre)
 	}
 
 	if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
