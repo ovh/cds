@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/ovh/cds/engine/vcs/transport"
 )
 
 // forgejoHTTPClient is a simple HTTP client for the Forgejo API.
@@ -26,7 +28,7 @@ func newForgejoHTTPClient(baseURL, username, token string) *forgejoHTTPClient {
 		baseURL:    strings.TrimRight(baseURL, "/") + "/api/v1",
 		username:   username,
 		token:      token,
-		httpClient: &http.Client{Timeout: 60 * time.Second},
+		httpClient: &http.Client{Timeout: 60 * time.Second, Transport: transport.Pooled()},
 	}
 }
 
