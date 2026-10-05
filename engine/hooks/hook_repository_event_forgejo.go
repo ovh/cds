@@ -34,7 +34,7 @@ func (s *Service) extractDataFromForgejoPushEvent(ctx context.Context, body []by
 	if !extractedData.CDSEventType.IsValidForEventName(extractedData.CDSEventName) {
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)
 	}
-	if request.HeadCommit.Verification != nil {
+	if request.HeadCommit != nil && request.HeadCommit.Verification != nil {
 		extractedData.CommitVerified = request.HeadCommit.Verification.Verified
 		keyID, err := gpg.GetKeyIdFromSignature(request.HeadCommit.Verification.Signature)
 		if err != nil {

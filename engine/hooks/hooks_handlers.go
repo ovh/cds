@@ -356,6 +356,10 @@ func (s *Service) repositoryHooksHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+		if isRefDeletion(extractData) {
+			log.Info(ctx, "skipping ref deletion event on %s/%s ref %s", vcsName, repoName, extractData.Ref)
+			return service.WriteJSON(w, nil, http.StatusNoContent)
+		}
 
 		exec, err := s.handleRepositoryEvent(ctx, vcsName, strings.ToLower(repoName), extractData, body)
 		if err != nil {
@@ -426,6 +430,10 @@ func (s *Service) repositoryWebHookHandler() service.Handler {
 		repoName, extractedData, err := s.extractDataFromPayload(ctx, r.Header, vcsServerType, body, eventName, eventType)
 		if err != nil {
 			return err
+		}
+		if isRefDeletion(extractedData) {
+			log.Info(ctx, "skipping ref deletion event on %s/%s ref %s", vcsServerName, repoName, extractedData.Ref)
+			return service.WriteJSON(w, nil, http.StatusNoContent)
 		}
 		extractedData.HookProjectKey = projKey
 
