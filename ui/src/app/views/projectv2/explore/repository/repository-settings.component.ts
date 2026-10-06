@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { lastValueFrom } from 'rxjs';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import { ProjectService } from 'app/service/project/project.service';
 import { apiErrorMessage, RepositoryContextService } from './repository-context.service';
 
 /** What the project knows of the repository, and the one action that changes it: removing it. */
@@ -21,7 +19,6 @@ export class ProjectV2RepositorySettingsComponent implements OnDestroy {
 
     private _cd = inject(ChangeDetectorRef);
     private _router = inject(Router);
-    private _projectService = inject(ProjectService);
     private _messageService = inject(NzMessageService);
 
     ngOnDestroy(): void { } // Should be set to use @AutoUnsubscribe with AOT
@@ -35,7 +32,7 @@ export class ProjectV2RepositorySettingsComponent implements OnDestroy {
         this.removing = true;
         this._cd.markForCheck();
         try {
-            await lastValueFrom(this._projectService.deleteVCSRepository(this.ctx.project.key, this.ctx.vcsName, this.ctx.repoName));
+            await this.ctx.removeFromProject();
             this._messageService.success('Repository has been removed');
             this._router.navigate(['/project', this.ctx.project.key, 'explore']);
         } catch (e) {

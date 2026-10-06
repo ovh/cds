@@ -44,6 +44,7 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
     /** True once everything the header shows is known, so that it appears in one go. */
     ready: boolean = false;
     childActive: boolean = false;
+    removing: boolean = false;
     error: any;
 
     routeSub: Subscription;
@@ -65,11 +66,11 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         });
 
         // Subscribe in case of repository change (from sidebar)
-        this.readySub = combineLatest([this.ctx.repository$, this.ctx.ref$, this.ctx.listenedBy$]).subscribe(([repository, ref, listenedBy]) => {
-            this.ready = !!repository && (repository.distant ? listenedBy !== null : ref !== null);
+        this.readySub = combineLatest([this.ctx.repository$, this.ctx.ref$, this.ctx.listenedBy$, this.ctx.vcsError$]).subscribe(([repository, ref, listenedBy, vcsError]) => {
+            this.ready = !!repository && (repository.distant ? listenedBy !== null : ref !== null || vcsError !== null);
             this._cd.markForCheck();
         });
-        this.tabsSub = combineLatest([this.ctx.repository$, this.ctx.entities$, this.ctx.events$]).subscribe(([repository]) => {
+        this.tabsSub = combineLatest([this.ctx.repository$, this.ctx.entities$, this.ctx.events$, this.ctx.vcsError$]).subscribe(([repository]) => {
             this.tabs = this.tabsFor(repository);
             this.openDefaultTab();
             this._cd.markForCheck();
@@ -93,7 +94,7 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         return apiErrorMessage(e);
     }
 
-    /** The tabs a repository offers; a listened one has no entities, only its activity. */
+    /** The tabs a repository offers; a listened one has no entities, only its activity, nor has one the vcs cannot read. */
     private tabsFor(repository: ProjectRepository): Array<RepositoryTab> {
         if (!repository) {
             return [];
@@ -102,11 +103,13 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         if (repository.distant) {
             return [activity];
         }
-        const entityTabs: Array<RepositoryTab> = ENTITY_TYPE_ORDER
-            .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: entityTypeLabel(type), count: this.ctx.entityCount(type) }))
-            // Jobs are seldom defined: their tab only shows up when the ref has some
-            .filter(tab => tab.count > 0 || tab.path !== EntityTypeUtil.toURLParam(EntityType.Job));
-        const tabs: Array<RepositoryTab> = [activity, { path: 'analyses', label: 'Analyses' }, ...entityTabs];
+        const tabs: Array<RepositoryTab> = [activity, { path: 'analyses', label: 'Analyses' }];
+        if (!this.ctx.vcsError$.value) {
+            tabs.push(...ENTITY_TYPE_ORDER
+                .map(type => ({ path: EntityTypeUtil.toURLParam(type), label: entityTypeLabel(type), count: this.ctx.entityCount(type) }))
+                // Jobs are seldom defined: their tab only shows up when the ref has some
+                .filter(tab => tab.count > 0 || tab.path !== EntityTypeUtil.toURLParam(EntityType.Job)));
+        }
         if (this.ctx.project?.permissions?.writable) {
             tabs.push({ path: 'settings', label: 'Settings' });
         }
@@ -123,9 +126,16 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
         return hookEventVerdict(last, this.ctx.project?.key, repository.distant).level === 'error';
     }
 
-    /** Without a tab in the url, the first one opens, the url being replaced rather than stacked. */
+    /**
+     * Without a tab in the url, the first one opens, the url being replaced rather than stacked; so does it
+     * when the vcs cannot read the repository and the url names an entity tab, which could never load.
+     */
     private openDefaultTab(): void {
-        if (this._route.firstChild || this.tabs.length === 0) {
+        if (this.tabs.length === 0) {
+            return;
+        }
+        const current = this._route.firstChild?.snapshot.url[0]?.path;
+        if (current && (!this.ctx.vcsError$.value || this.tabs.some(t => t.path === current))) {
             return;
         }
         this._router.navigate([this.tabs[0].path], { relativeTo: this._route, replaceUrl: true, queryParamsHandling: 'preserve' });
@@ -139,6 +149,21 @@ export class ProjectV2RepositoryComponent implements OnInit, OnDestroy {
 
     get canManage(): boolean {
         return this.ctx.project?.permissions?.writable ?? false;
+    }
+
+    /** The repository leaves the project; its page has nothing left to show, the overview takes over. */
+    async removeRepositoryFromProject() {
+        this.removing = true;
+        this._cd.markForCheck();
+        try {
+            await this.ctx.removeFromProject();
+            this._messageService.success('Repository has been removed');
+            this._router.navigate(['/project', this.ctx.project.key, 'explore']);
+        } catch (e) {
+            this._messageService.error(`Unable to remove repository: ${this.errorMessage(e)}`, { nzDuration: 2000 });
+        }
+        this.removing = false;
+        this._cd.markForCheck();
     }
 
     /** Adds the listened repository to the project, the drawer opening on it. */

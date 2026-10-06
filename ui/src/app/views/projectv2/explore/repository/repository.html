@@ -11,7 +11,7 @@
       <h1 [title]="ctx.vcsName + ' / ' + repository.name"><span class="vcs">{{ctx.vcsName}} /</span> {{repository.name}}</h1>
       @if (repository.distant) {
         <nz-tag nzColor="blue" nz-tooltip nzTooltipTitle="Listened by a workflow of this project, not part of it">listened only</nz-tag>
-      } @else {
+      } @else if ((ctx.vcsError$ | async) === null) {
         <app-repository-ref-select size="small" [branches]="ctx.branches$ | async" [tags]="ctx.tags$ | async"
           [ngModel]="ctx.ref$ | async" (ngModelChange)="changeRef($event)"></app-repository-ref-select>
       }
@@ -24,7 +24,7 @@
           </button>
         </span>
       }
-      @if (!repository.distant) {
+      @if (!repository.distant && (ctx.vcsError$ | async) === null) {
         <button nz-button nzType="primary" (click)="openRunStartDrawer()">
           <span nz-icon nzType="caret-right" nzTheme="fill" aria-hidden="true"></span>Start a workflow
         </button>
@@ -33,6 +33,18 @@
         </button>
       }
     </div>
+    @if (ctx.vcsError$ | async; as vcsError) {
+      <nz-alert class="vcs-error" nzType="warning" nzShowIcon [nzMessage]="'CDS cannot read this repository on ' + ctx.vcsName"
+        [nzDescription]="vcsErrorTpl" [nzAction]="canManage ? vcsErrorActionTpl : null"></nz-alert>
+      <ng-template #vcsErrorTpl>
+        It may have been deleted or renamed, or user <b>{{(ctx.vcs$ | async)?.auth?.username}}</b> lost access to it: its refs and entities cannot be shown.
+        {{errorMessage(vcsError)}}
+      </ng-template>
+      <ng-template #vcsErrorActionTpl>
+        <button nz-button nzSize="small" nzDanger [nzLoading]="removing" nz-popconfirm nzPopconfirmTitle="Are you sure you want to remove this repository?"
+          nzOkText="Remove" nzOkDanger nzPopconfirmPlacement="bottomRight" (nzOnConfirm)="removeRepositoryFromProject()">Remove from project</button>
+      </ng-template>
+    }
     <div class="subtitle">
       @if (repository.distant) {
         @if (ctx.listenedBy$ | async; as listenedBy) {

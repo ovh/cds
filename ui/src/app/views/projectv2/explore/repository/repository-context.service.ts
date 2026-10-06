@@ -47,6 +47,8 @@ export class RepositoryContextService implements OnDestroy {
     readonly entities$ = new BehaviorSubject<Map<EntityType, Array<Entity>>>(null);
     /** Why the events could not be read, when they could not; the page shows it instead of failing. */
     readonly eventsError$ = new BehaviorSubject<any>(null);
+    /** Why the vcs could not list the refs of a declared repository (deleted, renamed, access lost); the page then has neither refs nor entities. */
+    readonly vcsError$ = new BehaviorSubject<any>(null);
     /** For a listened repository, the workflows of the project that listen to it; null until read. */
     readonly listenedBy$ = new BehaviorSubject<Array<ProjectDistantRepositoryWorkflow>>(null);
 
@@ -109,6 +111,7 @@ export class RepositoryContextService implements OnDestroy {
         this.analyses$.next(null);
         this.events$.next(null);
         this.eventsError$.next(null);
+        this.vcsError$.next(null);
         this.listenedBy$.next(null);
 
         const key = this._project.key;
@@ -143,9 +146,16 @@ export class RepositoryContextService implements OnDestroy {
             this.listenedBy$.next(listened?.workflows ?? []);
             return;
         }
-        const [branches, tags, analyses] = await Promise.all([
-            lastValueFrom(this._projectService.getVCSRepositoryBranches(key, vcsName, repoName, 50)),
-            lastValueFrom(this._projectService.getVCSRepositoryTags(key, vcsName, repoName)),
+        // Refs come from the vcs: a repository it can no longer read keeps its page, so that it can be removed
+        let vcsError: any = null;
+        const [[branches, tags], analyses] = await Promise.all([
+            Promise.all([
+                lastValueFrom(this._projectService.getVCSRepositoryBranches(key, vcsName, repoName, 50)),
+                lastValueFrom(this._projectService.getVCSRepositoryTags(key, vcsName, repoName))
+            ]).catch((e): [Array<Branch>, Array<Tag>] => {
+                vcsError = e;
+                return [[], []];
+            }),
             lastValueFrom(this._projectService.listVCSRepositoryAnalysis(key, vcsName, repoName)),
             events
         ]);
@@ -155,13 +165,17 @@ export class RepositoryContextService implements OnDestroy {
         this.branches$.next(branches ?? []);
         this.tags$.next(tags ?? []);
         this.analyses$.next(analyses ?? []);
+        if (vcsError) {
+            this.vcsError$.next(vcsError);
+            return;
+        }
         this.ref$.next(this.resolveRef(refFromUrl));
         await this.readEntities(loadId);
     }
 
     /** Applies the ref the url carries, falling back to the remembered one, then to the default branch. */
     private async selectRef(refFromUrl: string): Promise<void> {
-        if (!this.repository$.value || this.repository$.value.distant) {
+        if (!this.repository$.value || this.repository$.value.distant || this.vcsError$.value) {
             return;
         }
         const ref = this.resolveRef(refFromUrl);
@@ -201,6 +215,11 @@ export class RepositoryContextService implements OnDestroy {
             state[this.repositoryPath] = ref;
         }
         this._store.dispatch(new actionPreferences.SaveProjectRefSelectState({ projectKey: this._project.key, state }));
+    }
+
+    /** Removes the repository from the project; its entities go with it. */
+    async removeFromProject(): Promise<void> {
+        await lastValueFrom(this._projectService.deleteVCSRepository(this._project.key, this._vcsName, this._repoName));
     }
 
     reloadEvents(): Promise<void> {
@@ -251,7 +270,9 @@ export class RepositoryContextService implements OnDestroy {
                 this.reloadEvents();
                 if (!this.repository$.value.distant) {
                     this.reloadAnalyses();
-                    this.reloadEntities();
+                    if (!this.vcsError$.value) {
+                        this.reloadEntities();
+                    }
                 }
                 break;
             case EventV2Type.EventRunCrafted:
