@@ -149,3 +149,59 @@ func TestLoadVariableSetWithItems(t *testing.T) {
 	require.Equal(t, sdk.PasswordPlaceholder, nGet.Items[1].Value)
 
 }
+
+// A project reader granted item roles on a variable set must see and edit its items without being able to create or delete variable sets.
+func TestGetVariableSetWithoutManageVariableSet(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	user1, pass := assets.InsertLambdaUser(t, db)
+
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *user1)
+
+	vs := sdk.ProjectVariableSet{
+		ProjectKey: proj.Key,
+		Name:       sdk.RandomString(10),
+	}
+	require.NoError(t, project.InsertVariableSet(context.TODO(), db, &vs))
+
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleManageItem, proj.Key, vs.Name, *user1)
+	assets.InsertRBAcVariableSet(t, db, sdk.VariableSetRoleUse, proj.Key, vs.Name, *user1)
+
+	itt := sdk.ProjectVariableSetItem{
+		ProjectVariableSetID: vs.ID,
+		Name:                 sdk.RandomString(10),
+		Type:                 sdk.ProjectVariableTypeString,
+		Value:                "myValue",
+	}
+	require.NoError(t, project.InsertVariableSetItemText(context.TODO(), db, &itt))
+
+	varsVS := map[string]string{
+		"projectKey":      proj.Key,
+		"variableSetName": vs.Name,
+	}
+	uriGet := api.Router.GetRouteV2("GET", api.getProjectVariableSetHandler, varsVS)
+	test.NotEmpty(t, uriGet)
+	wGet := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wGet, assets.NewAuthentifiedRequest(t, user1, pass, "GET", uriGet, nil))
+	require.Equal(t, 200, wGet.Code)
+
+	var nGet sdk.ProjectVariableSet
+	require.NoError(t, json.Unmarshal(wGet.Body.Bytes(), &nGet))
+	require.Equal(t, 1, len(nGet.Items))
+	require.Equal(t, itt.Value, nGet.Items[0].Value)
+
+	uriDelete := api.Router.GetRouteV2("DELETE", api.deleteProjectVariableSetHandler, varsVS)
+	test.NotEmpty(t, uriDelete)
+	wDelete := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wDelete, assets.NewAuthentifiedRequest(t, user1, pass, "DELETE", uriDelete, nil))
+	require.Equal(t, 403, wDelete.Code)
+
+	uriPost := api.Router.GetRouteV2("POST", api.postProjectVariableSetHandler, map[string]string{"projectKey": proj.Key})
+	test.NotEmpty(t, uriPost)
+	reqPost := assets.NewAuthentifiedRequest(t, user1, pass, "POST", uriPost, sdk.ProjectVariableSet{Name: sdk.RandomString(10)})
+	reqPost.Header.Set("Content-Type", "application/json")
+	wPost := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wPost, reqPost)
+	require.Equal(t, 403, wPost.Code)
+}
