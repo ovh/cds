@@ -6,4 +6,7 @@ description: "OVH Arsenal Delete Alternative Plugin"
 inputs:
   alternative_name:
     type: string
-    description: alternative name to delete, defaults to alternative from deployment integration if not set
+    description: alternative name to delete, required with workflows v2, defaults to alternative from deployment integration if not set with workflows v1
+  token:
+    type: string
+    description: arsenal deployment token, required with workflows v2, workflows v1 use the token from deployment integration
