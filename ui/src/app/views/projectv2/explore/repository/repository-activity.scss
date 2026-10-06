@@ -124,6 +124,11 @@ nz-alert.events-error {
 
       :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
     }
+
+    // Linked to the vcs, they keep the colors of the row and only show it on hover
+    a.name, a.commit {
+      &:hover { text-decoration: underline; }
+    }
   }
 
   .outcome {
@@ -330,6 +335,12 @@ nz-alert.events-error {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+
+        .by {
+          color: rgba(0, 0, 0, 0.45);
+
+          :host-context(.night) & { color: rgba(255, 255, 255, 0.45); }
+        }
       }
     }
   }

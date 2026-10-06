@@ -148,6 +148,9 @@ export enum HookEventWorkflowStatus {
 export class RepositoryHookEventExtractedData {
   ref: string;
   commit: string;
+  pullrequest_id?: number;
+  pullrequest_ref_from?: string;
+  pullrequest_ref_to?: string;
   cds_event_name: WorkflowHookEventName;
   cds_event_type: string;
 }
