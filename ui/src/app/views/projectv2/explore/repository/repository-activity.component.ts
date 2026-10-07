@@ -10,6 +10,7 @@ import { apiErrorMessage, RepositoryContextService } from './repository-context.
 import { cleanErrorMessage, eventAuthor, HookEventVerdict, hookEventVerdict } from './hook-event-verdict';
 import { AnalysisSummaryPart, analysisSummary } from './analysis-outcome';
 import { Tone, toneColor, toneIcon } from './palette';
+import { VCSWebLinks, vcsWebLinks } from './vcs-links';
 
 /** One event of the repository, with what the page says about it. */
 interface ActivityRow {
@@ -46,11 +47,14 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
     analyses = new Map<string, RepositoryAnalysis | 'loading' | 'error'>();
     loading: boolean = false;
     distant: boolean = false;
+    /** Web pages of the repository on its vcs; null when its type is unknown. */
+    links: VCSWebLinks = null;
     readonly icon = toneIcon;
     readonly color = toneColor;
 
     eventsSub: Subscription;
     repositorySub: Subscription;
+    vcsSub: Subscription;
     querySub: Subscription;
 
     /** The event the url asks to open, until it is shown. */
@@ -66,6 +70,10 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.repositorySub = this.ctx.repository$.subscribe(repository => {
             this.distant = !!repository?.distant;
+        });
+        this.vcsSub = this.ctx.vcs$.subscribe(vcs => {
+            this.links = vcsWebLinks(vcs, this.ctx.repoName);
+            this._cd.markForCheck();
         });
         this.eventsSub = this.ctx.events$.subscribe(events => {
             this.buildRows(events);

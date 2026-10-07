@@ -53,8 +53,19 @@
             </td>
             <td class="kind">{{row.event.event_name}}@if (row.event.event_type) { <small>({{row.event.event_type}})</small> }</td>
             <td class="ref">
-              <span class="name">{{row.event.extracted_data?.ref}}</span>
-              @if (row.event.extracted_data?.commit) { <span class="commit">{{row.event.extracted_data.commit | slice:0:7}}</span> }
+              <!-- Links open the vcs without toggling the row -->
+              @if (links?.ref(row.event.extracted_data?.ref); as refUrl) {
+                <a class="name" [href]="refUrl" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">{{row.event.extracted_data.ref}}</a>
+              } @else {
+                <span class="name">{{row.event.extracted_data?.ref}}</span>
+              }
+              @if (row.event.extracted_data?.commit; as commit) {
+                @if (links?.commit(commit); as commitUrl) {
+                  <a class="commit" [href]="commitUrl" target="_blank" rel="noopener noreferrer" [title]="commit" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">{{commit | slice:0:7}}</a>
+                } @else {
+                  <span class="commit">{{commit | slice:0:7}}</span>
+                }
+              }
             </td>
             <td class="outcome">
               <nz-tag [nzColor]="color(row.verdict.level)">{{row.verdict.label}}</nz-tag>
@@ -118,6 +129,39 @@
                   <nz-alert nzType="warning" nzShowIcon nzMessage="How to fix" [nzDescription]="row.verdict.hint"></nz-alert>
                 }
                 <dl class="ids">
+                  @if (row.event.extracted_data?.commit; as commit) {
+                    <dt>Commit</dt>
+                    <dd>
+                      @if (links?.commit(commit); as commitUrl) {
+                        <a [href]="commitUrl" target="_blank" rel="noopener noreferrer" [title]="'Open commit on ' + ctx.vcsName">{{commit}}</a>
+                      } @else {
+                        <span nz-typography nzCopyable [nzContent]="commit"></span>
+                      }
+                    </dd>
+                  }
+                  @if (row.event.extracted_data?.ref; as ref) {
+                    <dt>Ref</dt>
+                    <dd>
+                      @if (links?.ref(ref); as refUrl) {
+                        <a [href]="refUrl" target="_blank" rel="noopener noreferrer" [title]="'Open ' + ref + ' on ' + ctx.vcsName">{{ref}}</a>
+                      } @else {
+                        {{ref}}
+                      }
+                    </dd>
+                  }
+                  @if (row.event.extracted_data?.pullrequest_id; as prId) {
+                    <dt>Pull request</dt>
+                    <dd>
+                      @if (links?.pullRequest(prId); as prUrl) {
+                        <a [href]="prUrl" target="_blank" rel="noopener noreferrer" [title]="'Open pull request on ' + ctx.vcsName">#{{prId}}</a>
+                      } @else {
+                        #{{prId}}
+                      }
+                      @if (row.event.extracted_data.pullrequest_ref_from) {
+                        <span class="by"> {{row.event.extracted_data.pullrequest_ref_from}} → {{row.event.extracted_data.pullrequest_ref_to}}</span>
+                      }
+                    </dd>
+                  }
                   <dt>Event</dt>
                   <dd><span nz-typography nzCopyable [nzContent]="row.event.uuid"></span></dd>
                   @if (row.analysisId) {
