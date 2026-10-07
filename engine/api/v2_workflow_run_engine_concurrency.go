@@ -266,7 +266,7 @@ func canRunWithConcurrency(ctx context.Context, concurrencyDef sdk.V2RunConcurre
 		}
 	} else {
 		// Manage cancel-in-progress
-		objectsToCancelled, err := retrieveConcurrencyObjectToCancelled(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, currentConcurrencyObject, ruleToApply, nbRunJobBuilding, concurrencyUnlockedCount[concurrencyDef.Name])
+		objectsToCancelled, err := retrieveConcurrencyObjectToCancelled(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, currentConcurrencyObject, ruleToApply, nbRunJobBuilding, nbRunJobBlocked, concurrencyUnlockedCount[concurrencyDef.Name])
 		if err != nil {
 			return false, err
 		}
@@ -382,8 +382,9 @@ func retrieveRunObjectsToUnLocked(ctx context.Context, db *gorp.DbMap, projKey, 
 	return toUnlocked, nil, nil
 }
 
-func retrieveConcurrencyObjectToCancelled(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow string, currentRunObject workflow_v2.ConcurrencyObject, ruleToApply *sdk.V2RunConcurrency, nbBuilding, currentOnSameRule int64) ([]workflow_v2.ConcurrencyObject, error) {
-	nbToCancelled := nbBuilding + currentOnSameRule - ruleToApply.Pool + 1
+func retrieveConcurrencyObjectToCancelled(ctx context.Context, db gorp.SqlExecutor, projKey, vcs, repo, workflow string, currentRunObject workflow_v2.ConcurrencyObject, ruleToApply *sdk.V2RunConcurrency, nbBuilding, nbBlocked, currentOnSameRule int64) ([]workflow_v2.ConcurrencyObject, error) {
+	// Blocked objects already wait for a cancellation: they hold a place in the pool and are superseded by the current one
+	nbToCancelled := nbBuilding + nbBlocked + currentOnSameRule - ruleToApply.Pool + 1
 	toCancel := make([]workflow_v2.ConcurrencyObject, 0)
 
 	if nbToCancelled <= 0 {
