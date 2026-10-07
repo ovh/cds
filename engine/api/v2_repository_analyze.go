@@ -1817,6 +1817,9 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 				}
 
 				// Check concurrency
+				if j.Concurrency != "" && j.Concurrency == x.Concurrency {
+					err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s job %s: a job cannot use the concurrency of its own workflow (%s)", x.Name, jobID, j.Concurrency))
+				}
 				if j.Concurrency != "" {
 					found := false
 					for _, c := range x.Concurrencies {

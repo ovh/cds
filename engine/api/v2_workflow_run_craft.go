@@ -390,26 +390,13 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		})
 	}
 	ap := sdk.NewActionParser(mapContexts, sdk.DefaultFuncs)
-	for i := range run.WorkflowData.Workflow.Concurrencies {
-		c := &run.WorkflowData.Workflow.Concurrencies[i]
-		if strings.Contains(c.Name, "${{") {
-			interpolatedString, err := ap.InterpolateToString(ctx, c.Name)
-			if err != nil {
-				return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
-					WorkflowRunID: run.ID,
-					IssuedAt:      time.Now(),
-					Level:         sdk.WorkflowRunInfoLevelError,
-					Message:       "unable to read run context. Please contact an administrator",
-				})
-			}
-			c.Name = interpolatedString
-		}
-		if c.Order == "" {
-			c.Order = sdk.ConcurrencyOrderOldestFirst
-		}
-		if c.Pool == 0 {
-			c.Pool = 1
-		}
+	if err := normalizeConcurrencies(ctx, ap, run.WorkflowData.Workflow.Concurrencies); err != nil {
+		return stopRun(ctx, api.mustDB(), api.Cache, run, nil, sdk.V2WorkflowRunInfo{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       err.Error(),
+		})
 	}
 	// Compute workflow concurrency
 	if strings.Contains(run.WorkflowData.Workflow.Concurrency, "${{") {
@@ -891,6 +878,27 @@ func searchActions(ctx context.Context, db *gorp.DbMap, store cache.Store, wref 
 		}
 	}
 	return nil, nil
+}
+
+// normalizeConcurrencies interpolates the rule names with the run context and applies the default order and pool
+func normalizeConcurrencies(ctx context.Context, ap *sdk.ActionParser, concurrencies []sdk.WorkflowConcurrency) error {
+	for i := range concurrencies {
+		c := &concurrencies[i]
+		if strings.Contains(c.Name, "${{") {
+			name, err := ap.InterpolateToString(ctx, c.Name)
+			if err != nil {
+				return sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to interpolate concurrency name %q: %v", c.Name, err)
+			}
+			c.Name = name
+		}
+		if c.Order == "" {
+			c.Order = sdk.ConcurrencyOrderOldestFirst
+		}
+		if c.Pool <= 0 {
+			c.Pool = 1
+		}
+	}
+	return nil
 }
 
 func stopRun(ctx context.Context, db *gorp.DbMap, store cache.Store, run *sdk.V2WorkflowRun, initiator *sdk.V2Initiator, messages ...sdk.V2WorkflowRunInfo) error {

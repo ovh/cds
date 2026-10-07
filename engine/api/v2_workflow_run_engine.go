@@ -2118,7 +2118,20 @@ loop:
 			run.WorkflowData.Workflow.Annotations[k] = v
 		}
 	}
-	// Set new concurrencies on workflow
+	// Set new concurrencies on workflow, normalized like the ones defined by the workflow itself
+	bts, _ := json.Marshal(run.Contexts)
+	var mapContexts map[string]interface{}
+	if err := json.Unmarshal(bts, &mapContexts); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	if err := normalizeConcurrencies(ctx, sdk.NewActionParser(mapContexts, sdk.DefaultFuncs), newConcurrencies); err != nil {
+		return []sdk.V2WorkflowRunInfo{{
+			WorkflowRunID: run.ID,
+			IssuedAt:      time.Now(),
+			Level:         sdk.WorkflowRunInfoLevelError,
+			Message:       fmt.Sprintf("job %s: %v", jobID, err),
+		}}, nil
+	}
 	for _, c := range newConcurrencies {
 		found := false
 		for _, existingC := range run.WorkflowData.Workflow.Concurrencies {
