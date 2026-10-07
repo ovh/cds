@@ -1362,3 +1362,53 @@ func TestManageJobConcurrency_WaitsOnlyForCancellationOnSameConcurrency(t *testi
 	require.NoError(t, err)
 	assert.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, lintJob.Status, "lint job doesn't depend on the cancelled workflow")
 }
+
+// A blocked run superseded by a newer one is cancelled by the arrival of the newer one, through the engine queue.
+func TestConcurrencyCancelInProgress_SupersededBlockedRunIsCancelled(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.workflowRunTriggerChan = make(chan sdk.V2WorkflowRunEnqueue, 10)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+	initiator := &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator(), IsAdminWithMFA: true}
+	concurrency := cancelInProgressConcurrency(sdk.V2RunConcurrencyScopeWorkflow, "mycc")
+
+	runA := insertRunWithConcurrency(t, db, *proj, *vcsServer, *repo, initiator, 1, sdk.V2WorkflowRunStatusBuilding, concurrency)
+	runB := insertRunWithConcurrency(t, db, *proj, *vcsServer, *repo, initiator, 2, sdk.V2WorkflowRunStatusBlocked, concurrency)
+	runC := insertRunWithConcurrency(t, db, *proj, *vcsServer, *repo, initiator, 3, sdk.V2WorkflowRunStatusCrafting, concurrency)
+
+	// Arrival of C, as done when crafting it
+	toCancel := make(map[string]workflow_v2.ConcurrencyObject)
+	_, err := manageWorkflowConcurrency(context.TODO(), db.DbMap, &runC, map[string]int64{}, toCancel)
+	require.NoError(t, err)
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	require.NoError(t, api.cancelRunObjects(context.TODO(), tx, toCancel))
+	require.NoError(t, tx.Commit())
+
+	// Both A and B are sent to the engine for cancellation
+	cancelled := make(map[string]sdk.V2WorkflowRunEnqueue)
+	for i := 0; i < 2; i++ {
+		select {
+		case e := <-api.workflowRunTriggerChan:
+			cancelled[e.RunID] = e
+		case <-time.After(5 * time.Second):
+			t.Fatal("expected two runs enqueued for cancellation")
+		}
+	}
+	require.Contains(t, cancelled, runA.ID)
+	require.Contains(t, cancelled, runB.ID)
+	require.Equal(t, sdk.V2WorkflowRunStatusCancelled, cancelled[runB.ID].Status)
+
+	// The engine pass on the blocked run terminates it instead of trying to unlock it
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), cancelled[runB.ID]))
+	runBDB, err := workflow_v2.LoadRunByID(context.TODO(), db, runB.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.V2WorkflowRunStatusCancelled, runBDB.Status)
+	infos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, runB.ID)
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
+	assert.Contains(t, infos[0].Message, "Workflow cancelled due to concurrency")
+}

@@ -48,6 +48,8 @@ type prepareJobData struct {
 	allVariableSets []sdk.ProjectVariableSet
 }
 
+// TriggerBlockedWorkflowRuns re-enqueues building runs with no job left running, so a lost engine notification
+// doesn't leave them stuck. Runs with a job blocked by a concurrency are legitimately waiting and are skipped.
 func (api *API) TriggerBlockedWorkflowRuns(ctx context.Context) {
 	tickTrigger := time.NewTicker(1 * time.Minute)
 
@@ -115,10 +117,14 @@ func (api *API) V2WorkflowRunEngineDequeue(ctx context.Context) {
 	}
 }
 
+// workflowRunV2Trigger runs one engine pass on a run: unlock a blocked run, re-enqueue retrying jobs or apply a
+// forced termination, else compute the jobs that can start, resolve and lock their concurrencies, create and
+// persist the run jobs, then let endWorkflowV2Trigger notify and re-enqueue.
 func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	ctx, next := telemetry.Span(ctx, "api.workflowRunV2Trigger")
 	defer next()
 
+	// One engine pass at a time per run; a concurrent pass is sent back to the queue
 	_, next = telemetry.Span(ctx, "api.workflowRunV2Trigger.lock")
 	lockKey := cache.Key("api:workflow:engine", wrEnqueue.RunID)
 	b, err := api.Cache.Lock(lockKey, 5*time.Minute, 0, 1)
@@ -201,7 +207,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
-	// Manage workflow blocked
+	// A run blocked by its concurrency is only released here; its jobs are handled once it is building
 	if wrEnqueue.Status == "" && run.Status == sdk.V2WorkflowRunStatusBlocked && run.Concurrency != nil {
 		return api.workflowRunV2TriggerUnlocking(ctx, run, wrEnqueue)
 	}
@@ -403,7 +409,8 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 	}
 
-	// Try to Lock concurrency
+	// One concurrency decision at a time across the API: the pool counts come from the database and would race
+	// otherwise. A locked concurrency sends this pass back to the queue.
 	concurrencyLocked := make(map[string]struct{})
 	for _, concu := range concurrenciesDef {
 		concurrencyKey := getConcurrencyUniqueKey(concu, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
@@ -559,6 +566,8 @@ func getConcurrencyUniqueKey(concu sdk.V2RunConcurrency, projKey, vcs, repo, wor
 	return concurrencyKey
 }
 
+// endWorkflowV2Trigger is the common exit of an engine pass: it hands the slots of the ended jobs and run to the
+// next blocked objects, publishes the events and the outgoing hook event on run end, and re-enqueues when asked.
 func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun, allrunJobsMap map[string]sdk.V2WorkflowRunJob, updatedRunJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult, wrEnqueue sdk.V2WorkflowRunEnqueue, reEnqueue bool) {
 	conccurencyTriggered := make(map[string]struct{})
 	for _, rj := range updatedRunJobs {
@@ -1824,7 +1833,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		}
 	}
 
-	// Browse blocked job release then if we can
+	// Jobs of this run blocked by a concurrency: release the ones that got a slot, cancel the superseded ones
 	for _, rj := range existingRunJobs {
 		if rj.Concurrency == nil || rj.Status != sdk.StatusBlocked {
 			continue
@@ -3090,7 +3099,8 @@ func (api *API) enqueueWorkflowRun(ctx context.Context, request sdk.V2WorkflowRu
 	}
 }
 
-// Call to unlock a workflow run
+// workflowRunV2TriggerUnlocking releases a run blocked by its concurrency once it gets a slot, then re-enqueues it.
+// It never cancels: a superseded run is cancelled by the arrival of the newer one.
 func (api *API) workflowRunV2TriggerUnlocking(ctx context.Context, run *sdk.V2WorkflowRun, wrEnqueue sdk.V2WorkflowRunEnqueue) error {
 	concurrencyKey := getConcurrencyUniqueKey(*run.Concurrency, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName)
 	lockKey := cache.Key("api:workflow:concurrency:enqueue", concurrencyKey)
@@ -3106,17 +3116,9 @@ func (api *API) workflowRunV2TriggerUnlocking(ctx context.Context, run *sdk.V2Wo
 	}
 	defer api.Cache.Unlock(lockKey)
 
-	toUnlock, toCancel, err := retrieveRunObjectsToUnLocked(ctx, api.mustDB(), run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, *run.Concurrency)
+	toUnlock, _, err := retrieveRunObjectsToUnLocked(ctx, api.mustDB(), run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, *run.Concurrency)
 	if err != nil {
 		return err
-	}
-
-	for _, c := range toCancel {
-		if c.ID == run.ID {
-			// update run to force cancellation
-			run.Status = sdk.V2WorkflowRunStatusCancelled
-			break
-		}
 	}
 
 	found := false

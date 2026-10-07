@@ -650,6 +650,7 @@ func LoadCratingWorkflowRunIDs(db gorp.SqlExecutor) ([]string, error) {
 	return ids, nil
 }
 
+// LoadBuildingRunWithEndedJobs returns building runs without any building or concurrency-blocked job
 func LoadBuildingRunWithEndedJobs(ctx context.Context, db gorp.SqlExecutor, opts ...gorpmapper.GetAllOptionFunc) ([]sdk.V2WorkflowRun, error) {
 	query := gorpmapping.NewQuery(`
   SELECT v2_workflow_run.*
