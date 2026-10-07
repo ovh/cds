@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"text/template"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/contrib/integrations/arsenal"
 
 	"github.com/ovh/cds/sdk"
@@ -33,8 +35,60 @@ func (e *arsenalDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) 
 	}, nil
 }
 
+// Stream is called by workflows v2, which don't pass integration variables to plugins: the Arsenal host comes from
+// the job deployment integration, the deployment token and the alternative name come from the inputs.
 func (p *arsenalDeploymentPlugin) Stream(q *actionplugin.ActionQuery, stream actionplugin.ActionPlugin_StreamServer) error {
-	return sdk.ErrNotImplemented
+	ctx := context.Background()
+	p.StreamServer = stream
+
+	res := &actionplugin.StreamResult{
+		Status: sdk.StatusSuccess,
+	}
+	if err := p.deleteAlternativeV2(ctx, q); err != nil {
+		res.Status = sdk.StatusFail
+		res.Details = err.Error()
+	}
+	return stream.Send(res)
+}
+
+func (p *arsenalDeploymentPlugin) deleteAlternativeV2(ctx context.Context, q *actionplugin.ActionQuery) error {
+	var (
+		deploymentToken = getStringOption(q, "token")
+		alternativeName = getStringOption(q, "alternative_name")
+	)
+	if deploymentToken == "" {
+		return errors.New("missing arsenal deployment token")
+	}
+	if alternativeName == "" {
+		return errors.New("missing alternative name")
+	}
+
+	jobContext, err := grpcplugins.GetJobContext(ctx, &p.Common)
+	if err != nil {
+		return err
+	}
+	if jobContext.Integrations == nil || jobContext.Integrations.Deployment.Name == "" {
+		return errors.New("unable to retrieve a deployment integration")
+	}
+	integration := jobContext.Integrations.Deployment
+	arsenalHost := integration.Get("host")
+	if arsenalHost == "" {
+		return errors.New("missing arsenal host")
+	}
+
+	arsenalClient := arsenal.NewClient(arsenal.Conf{
+		Host:            arsenalHost,
+		DeploymentToken: deploymentToken,
+		GWServiceName:   integration.Get("gw.service"),
+		GWTokenSource:   integration.Get("gw.source"),
+		GWTokenSecret:   integration.Get("gw.token"),
+	})
+	grpcplugins.Logf(&p.Common, "Deleting alternative %q\n", alternativeName)
+	if err := arsenalClient.DeleteAlternative(alternativeName); err != nil {
+		return fmt.Errorf("failed to delete alternative: %w", err)
+	}
+	grpcplugins.Logf(&p.Common, "Alternative %q deleted\n", alternativeName)
+	return nil
 }
 
 func (e *arsenalDeploymentPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
