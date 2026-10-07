@@ -319,20 +319,11 @@ func retrieveRunObjectsToUnLocked(ctx context.Context, db *gorp.DbMap, projKey, 
 		if err != nil {
 			return nil, nil, err
 		}
-		runObjectsToUnlock := make([]workflow_v2.ConcurrencyObject, 0)
-		runObjectsToCancel := make([]workflow_v2.ConcurrencyObject, 0)
-		nbToUnlocked := ruleToApply.Pool - nbBuilding
-
-		// All can be unlocked
-		if nbToUnlocked >= int64(len(concurrencyRunObjects)) {
-			runObjectsToUnlock = append(runObjectsToUnlock, concurrencyRunObjects...)
-		} else {
-			runObjectsToUnlock = append(runObjectsToUnlock, concurrencyRunObjects[:nbToUnlocked]...)
-			for i := nbToUnlocked; i < int64(len(concurrencyRunObjects)); i++ {
-				runObjectsToCancel = append(runObjectsToCancel, concurrencyRunObjects[i])
-			}
-		}
-		return runObjectsToUnlock, runObjectsToCancel, nil
+		// Blocked objects are sorted newest first: the pool newest ones wait for their turn, the older ones
+		// are superseded. Only the free slots are unlocked.
+		nbToKeep := min(ruleToApply.Pool, int64(len(concurrencyRunObjects)))
+		nbToUnlock := max(0, min(nbToKeep, ruleToApply.Pool-nbBuilding))
+		return concurrencyRunObjects[:nbToUnlock], concurrencyRunObjects[nbToKeep:], nil
 	}
 
 	// No cancel in progress
