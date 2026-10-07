@@ -149,7 +149,7 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 		runJob.Concurrency = &concurrencyDef
 
 		// Retrieve current building and blocked job to check if we can enqueue this one
-		canRun, err := canRunWithConcurrency(ctx, concurrencyDef, db, run, workflow_v2.ConcurrencyObject{ID: runJob.ID, Type: workflow_v2.ConcurrencyObjectTypeJob}, concurrencyUnlockedCount, toCancelled)
+		canRun, cancelled, err := canRunWithConcurrency(ctx, concurrencyDef, db, run, workflow_v2.ConcurrencyObject{ID: runJob.ID, Type: workflow_v2.ConcurrencyObjectTypeJob}, concurrencyUnlockedCount, toCancelled)
 		if err != nil {
 			return nil, err
 		}
@@ -178,7 +178,7 @@ func manageJobConcurrency(ctx context.Context, db *gorp.DbMap, run sdk.V2Workflo
 			}, nil
 		}
 
-		for _, runObj := range toCancelled {
+		for _, runObj := range cancelled {
 			if runObj.Type == workflow_v2.ConcurrencyObjectTypeWorkflow {
 				runJob.Status = sdk.V2WorkflowRunJobStatusBlocked
 				return &sdk.V2WorkflowRunJobInfo{
@@ -199,7 +199,7 @@ func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2W
 	if run.Concurrency != nil {
 
 		// Retrieve current building and blocked job to check if we can enqueue this one
-		canRun, err := canRunWithConcurrency(ctx, *run.Concurrency, db, *run, workflow_v2.ConcurrencyObject{ID: run.ID, Type: workflow_v2.ConcurrencyObjectTypeWorkflow}, concurrencyUnlockedCount, toCancel)
+		canRun, cancelled, err := canRunWithConcurrency(ctx, *run.Concurrency, db, *run, workflow_v2.ConcurrencyObject{ID: run.ID, Type: workflow_v2.ConcurrencyObjectTypeWorkflow}, concurrencyUnlockedCount, toCancel)
 		if err != nil {
 			return nil, err
 		}
@@ -225,7 +225,7 @@ func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2W
 			}, nil
 		}
 
-		for _, runObj := range toCancel {
+		for _, runObj := range cancelled {
 			if runObj.Type == workflow_v2.ConcurrencyObjectTypeWorkflow {
 				run.Status = sdk.V2WorkflowRunStatusBlocked
 				return &sdk.V2WorkflowRunInfo{
@@ -241,7 +241,8 @@ func manageWorkflowConcurrency(ctx context.Context, db *gorp.DbMap, run *sdk.V2W
 	return nil, nil
 }
 
-func canRunWithConcurrency(ctx context.Context, concurrencyDef sdk.V2RunConcurrency, db *gorp.DbMap, run sdk.V2WorkflowRun, currentConcurrencyObject workflow_v2.ConcurrencyObject, concurrencyUnlockedCount map[string]int64, toCancelled map[string]workflow_v2.ConcurrencyObject) (bool, error) {
+// canRunWithConcurrency also returns the objects it cancelled on this concurrency; toCancelled gathers them for the whole trigger.
+func canRunWithConcurrency(ctx context.Context, concurrencyDef sdk.V2RunConcurrency, db *gorp.DbMap, run sdk.V2WorkflowRun, currentConcurrencyObject workflow_v2.ConcurrencyObject, concurrencyUnlockedCount map[string]int64, toCancelled map[string]workflow_v2.ConcurrencyObject) (bool, []workflow_v2.ConcurrencyObject, error) {
 	var ruleToApply *sdk.V2RunConcurrency
 	var nbRunJobBuilding, nbRunJobBlocked int64
 	var err error
@@ -251,24 +252,25 @@ func canRunWithConcurrency(ctx context.Context, concurrencyDef sdk.V2RunConcurre
 		ruleToApply, nbRunJobBuilding, nbRunJobBlocked, err = checkWorkflowScopedConcurrency(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, concurrencyDef.WorkflowConcurrency)
 	}
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	poolIsFull := nbRunJobBlocked+nbRunJobBuilding+concurrencyUnlockedCount[concurrencyDef.Name] >= ruleToApply.Pool
 
+	var objectsToCancelled []workflow_v2.ConcurrencyObject
 	if !ruleToApply.CancelInProgress {
 		if poolIsFull {
-			return false, nil
+			return false, nil, nil
 		} else {
 			if ruleToApply.Order == sdk.ConcurrencyOrderOldestFirst && nbRunJobBlocked > 0 {
-				return false, nil
+				return false, nil, nil
 			}
 		}
 	} else {
 		// Manage cancel-in-progress
-		objectsToCancelled, err := retrieveConcurrencyObjectToCancelled(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, currentConcurrencyObject, ruleToApply, nbRunJobBuilding, nbRunJobBlocked, concurrencyUnlockedCount[concurrencyDef.Name])
+		objectsToCancelled, err = retrieveConcurrencyObjectToCancelled(ctx, db, run.ProjectKey, run.VCSServer, run.Repository, run.WorkflowName, currentConcurrencyObject, ruleToApply, nbRunJobBuilding, nbRunJobBlocked, concurrencyUnlockedCount[concurrencyDef.Name])
 		if err != nil {
-			return false, err
+			return false, nil, err
 		}
 		for _, obj := range objectsToCancelled {
 			toCancelled[obj.ID] = obj
@@ -277,10 +279,10 @@ func canRunWithConcurrency(ctx context.Context, concurrencyDef sdk.V2RunConcurre
 
 	_, has := toCancelled[currentConcurrencyObject.ID]
 	if has {
-		return false, nil
+		return false, objectsToCancelled, nil
 	}
 	concurrencyUnlockedCount[concurrencyDef.Name]++
-	return true, nil
+	return true, objectsToCancelled, nil
 }
 
 // Retrieve the next rj to unblocked.
