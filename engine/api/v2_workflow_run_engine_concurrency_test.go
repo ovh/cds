@@ -5,10 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/rbac"
+	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow_v2"
+	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -958,4 +962,289 @@ func TestRetrieveRunJobToUnlocked_CancelInProgress(t *testing.T) {
 
 	require.Equal(t, jobRun1.ID, toCancel[0].ID)
 
+}
+
+// A run failed by the engine in the middle of its execution must release the concurrency held by its
+// blocked jobs, otherwise the oldest_first queue stays stuck on a job that will never be unlocked.
+func TestFailedRunReleasesBlockedJobConcurrency(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	_, err := db.Exec("DELETE FROM rbac")
+	require.NoError(t, err)
+	_, err = db.Exec("DELETE FROM region")
+	require.NoError(t, err)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	reg := sdk.Region{Name: "build"}
+	require.NoError(t, region.Insert(context.TODO(), db, &reg))
+	api.Config.Workflow.JobDefaultRegion = reg.Name
+	require.NoError(t, rbac.Insert(context.TODO(), db, &sdk.RBAC{
+		Name: sdk.RandomString(10),
+		RegionProjects: []sdk.RBACRegionProject{{
+			RegionID:        reg.ID,
+			RBACProjectKeys: []string{proj.Key},
+			Role:            sdk.RegionRoleExecute,
+		}},
+	}))
+
+	concurrency := sdk.V2RunConcurrency{
+		WorkflowConcurrency: sdk.WorkflowConcurrency{
+			Name:  "mycc",
+			Order: sdk.ConcurrencyOrderOldestFirst,
+			Pool:  1,
+		},
+		Scope: sdk.V2RunConcurrencyScopeWorkflow,
+	}
+	initiator := &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator(), IsAdminWithMFA: true}
+
+	newRun := func(runNumber int64) sdk.V2WorkflowRun {
+		return sdk.V2WorkflowRun{
+			ProjectKey:   proj.Key,
+			VCSServerID:  vcsServer.ID,
+			VCSServer:    vcsServer.Name,
+			RepositoryID: repo.ID,
+			Repository:   repo.Name,
+			WorkflowName: "myworkflow",
+			WorkflowSha:  "abcdef",
+			WorkflowRef:  "refs/heads/master",
+			RunNumber:    runNumber,
+			Status:       sdk.V2WorkflowRunStatusBuilding,
+			Initiator:    initiator,
+			WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+				Name:          "myworkflow",
+				Concurrencies: []sdk.WorkflowConcurrency{concurrency.WorkflowConcurrency},
+				Jobs: map[string]sdk.V2Job{
+					"build": {
+						Steps: []sdk.ActionStep{{Run: "echo build"}},
+					},
+					"test": {
+						Steps: []sdk.ActionStep{{Run: "echo test"}},
+					},
+					"deploy": {
+						Concurrency: concurrency.Name,
+						Steps:       []sdk.ActionStep{{Run: "echo deploy"}},
+					},
+					// Matrix computed from an output that build doesn't produce: only checked once publish can be enqueued, after build
+					"publish": {
+						Needs: []string{"build"},
+						Strategy: &sdk.V2JobStrategy{
+							Matrix: map[string]interface{}{"region": "${{ needs.build.outputs.regions }}"},
+						},
+						Steps: []sdk.ActionStep{{Run: "echo publish"}},
+					},
+				},
+			}},
+		}
+	}
+
+	// Another run holds the concurrency
+	holder := newRun(1)
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &holder))
+	holderJob := sdk.V2WorkflowRunJob{
+		JobID:         "deploy",
+		WorkflowRunID: holder.ID,
+		ProjectKey:    holder.ProjectKey,
+		VCSServer:     holder.VCSServer,
+		Repository:    holder.Repository,
+		WorkflowName:  holder.WorkflowName,
+		RunNumber:     holder.RunNumber,
+		RunAttempt:    holder.RunAttempt,
+		Status:        sdk.V2WorkflowRunJobStatusBuilding,
+		Job:           holder.WorkflowData.Workflow.Jobs["deploy"],
+		Concurrency:   &concurrency,
+		Initiator:     *initiator,
+	}
+	require.NoError(t, workflow_v2.InsertRunJob(context.TODO(), db, &holderJob))
+
+	wr := newRun(2)
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
+
+	// First trigger: build is enqueued, deploy is blocked by the holder, publish waits for build
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: wr.ID, Initiator: *initiator}))
+
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunStatusBuilding, wrDB.Status, "first trigger must not fail the run")
+
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
+	require.NoError(t, err)
+	jobsByID := make(map[string]sdk.V2WorkflowRunJob)
+	for _, rj := range runJobs {
+		jobsByID[rj.JobID] = rj
+	}
+	require.Len(t, jobsByID, 3)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, jobsByID["build"].Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, jobsByID["test"].Status)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusBlocked, jobsByID["deploy"].Status)
+
+	// test is taken by a worker
+	testJob := jobsByID["test"]
+	testJob.Status = sdk.V2WorkflowRunJobStatusBuilding
+	testJob.StepsStatus = sdk.JobStepsStatus{
+		"step-0": {Conclusion: sdk.V2WorkflowRunJobStatusSuccess, Outcome: sdk.V2WorkflowRunJobStatusSuccess, Started: time.Now(), Ended: time.Now()},
+		"step-1": {Conclusion: sdk.V2WorkflowRunJobStatusBuilding, Outcome: sdk.V2WorkflowRunJobStatusBuilding, Started: time.Now()},
+	}
+	require.NoError(t, workflow_v2.UpdateJobRun(context.TODO(), db, &testJob))
+
+	// build ends: the next trigger enqueues publish and fails the run
+	buildJob := jobsByID["build"]
+	buildJob.Status = sdk.V2WorkflowRunJobStatusSuccess
+	require.NoError(t, workflow_v2.UpdateJobRun(context.TODO(), db, &buildJob))
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: wr.ID, Initiator: *initiator}))
+
+	wrDB, err = workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunStatusFail, wrDB.Status, "second trigger must fail the run")
+
+	runInfos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Len(t, runInfos, 1)
+	require.Contains(t, runInfos[0].Message, "interpolated matrix is not a string slice")
+
+	blockedJobDB, err := workflow_v2.LoadRunJobByID(context.TODO(), db, jobsByID["deploy"].ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.V2WorkflowRunJobStatusStopped, blockedJobDB.Status, "job of a failed run should be stopped")
+	require.NotNil(t, blockedJobDB.Ended)
+	jobInfos, err := workflow_v2.LoadRunJobInfosByRunJobID(context.TODO(), db, blockedJobDB.ID)
+	require.NoError(t, err)
+	var stoppedInfo bool
+	for _, info := range jobInfos {
+		if info.Message == "Job stopped because the workflow run failed" {
+			stoppedInfo = true
+		}
+	}
+	assert.True(t, stoppedInfo, "stopped job should have an info message")
+
+	// A running job is stopped too, so that it doesn't keep running outside of the run concurrency
+	testJobDB, err := workflow_v2.LoadRunJobByID(context.TODO(), db, testJob.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.V2WorkflowRunJobStatusStopped, testJobDB.Status, "running job of a failed run should be stopped")
+	assert.Equal(t, sdk.V2WorkflowRunJobStatusSuccess, testJobDB.StepsStatus["step-0"].Conclusion, "ended step should be kept")
+	assert.Equal(t, sdk.V2WorkflowRunJobStatusStopped, testJobDB.StepsStatus["step-1"].Conclusion, "running step should be stopped")
+	assert.False(t, testJobDB.StepsStatus["step-1"].Ended.IsZero())
+
+	// The holder ends: nothing is running anymore on the concurrency
+	holderJob.Status = sdk.V2WorkflowRunJobStatusSuccess
+	require.NoError(t, workflow_v2.UpdateJobRun(context.TODO(), db, &holderJob))
+
+	wr3 := newRun(3)
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr3))
+	canRun, err := canRunWithConcurrency(context.TODO(), concurrency, db.DbMap, wr3,
+		workflow_v2.ConcurrencyObject{ID: sdk.UUID(), Type: workflow_v2.ConcurrencyObjectTypeJob},
+		map[string]int64{}, map[string]workflow_v2.ConcurrencyObject{})
+	require.NoError(t, err)
+	assert.True(t, canRun, "new job should not be blocked by a job of a failed run")
+
+	// The unlock routine must not select a job whose run is already terminated
+	toUnlock, _, err := retrieveRunObjectsToUnLocked(context.TODO(), db.DbMap, wr.ProjectKey, wr.VCSServer, wr.Repository, wr.WorkflowName, concurrency)
+	require.NoError(t, err)
+	for _, o := range toUnlock {
+		assert.NotEqual(t, jobsByID["deploy"].ID, o.ID, "job of a failed run selected for unlock")
+	}
+}
+
+func insertBlockedRunWithConcurrency(t *testing.T, db gorpmapper.SqlExecutorWithTx, proj sdk.Project, vcsServer sdk.VCSProject, repo sdk.ProjectRepository, initiator *sdk.V2Initiator, runNumber int64, status sdk.V2WorkflowRunStatus, concurrency sdk.V2RunConcurrency) sdk.V2WorkflowRun {
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: "myworkflow",
+		WorkflowSha:  "abcdef",
+		WorkflowRef:  "refs/heads/master",
+		RunNumber:    runNumber,
+		Status:       status,
+		Initiator:    initiator,
+		Concurrency:  &concurrency,
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name:          "myworkflow",
+			Concurrency:   concurrency.Name,
+			Concurrencies: []sdk.WorkflowConcurrency{concurrency.WorkflowConcurrency},
+			Jobs: map[string]sdk.V2Job{
+				"job1": {Steps: []sdk.ActionStep{{Run: "echo job1"}}},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
+	// Newest objects are selected on last_modified
+	time.Sleep(10 * time.Millisecond)
+	return wr
+}
+
+// With cancel-in-progress, an older blocked run superseded by a newer blocked run must be cancelled when it is unlocked.
+func TestWorkflowRunUnlocking_CancelInProgress_CancelsSupersededRun(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+	initiator := &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator(), IsAdminWithMFA: true}
+
+	concurrency := sdk.V2RunConcurrency{
+		WorkflowConcurrency: sdk.WorkflowConcurrency{
+			Name:             "mycc",
+			Order:            sdk.ConcurrencyOrderNewestFirst,
+			Pool:             1,
+			CancelInProgress: true,
+		},
+		Scope: sdk.V2RunConcurrencyScopeWorkflow,
+	}
+
+	older := insertBlockedRunWithConcurrency(t, db, *proj, *vcsServer, *repo, initiator, 1, sdk.V2WorkflowRunStatusBlocked, concurrency)
+	newer := insertBlockedRunWithConcurrency(t, db, *proj, *vcsServer, *repo, initiator, 2, sdk.V2WorkflowRunStatusBlocked, concurrency)
+
+	toUnlock, toCancel, err := retrieveRunObjectsToUnLocked(context.TODO(), db.DbMap, proj.Key, vcsServer.Name, repo.Name, "myworkflow", concurrency)
+	require.NoError(t, err)
+	require.Len(t, toUnlock, 1)
+	require.Equal(t, newer.ID, toUnlock[0].ID)
+	require.Len(t, toCancel, 1)
+	require.Equal(t, older.ID, toCancel[0].ID)
+
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: older.ID, Initiator: *initiator}))
+
+	olderDB, err := workflow_v2.LoadRunByID(context.TODO(), db, older.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.V2WorkflowRunStatusCancelled, olderDB.Status, "superseded blocked run should be cancelled")
+}
+
+// With cancel-in-progress, a blocked run waiting for an in-progress run to be cancelled must stay blocked.
+func TestWorkflowRunUnlocking_CancelInProgress_KeepsNewestBlockedWhilePoolIsTaken(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+	initiator := &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator(), IsAdminWithMFA: true}
+
+	concurrency := sdk.V2RunConcurrency{
+		WorkflowConcurrency: sdk.WorkflowConcurrency{
+			Name:             "mycc",
+			Order:            sdk.ConcurrencyOrderNewestFirst,
+			Pool:             1,
+			CancelInProgress: true,
+		},
+		Scope: sdk.V2RunConcurrencyScopeWorkflow,
+	}
+
+	// Run being cancelled, still building
+	_ = insertBlockedRunWithConcurrency(t, db, *proj, *vcsServer, *repo, initiator, 1, sdk.V2WorkflowRunStatusBuilding, concurrency)
+	newest := insertBlockedRunWithConcurrency(t, db, *proj, *vcsServer, *repo, initiator, 2, sdk.V2WorkflowRunStatusBlocked, concurrency)
+
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: newest.ID, Initiator: *initiator}))
+
+	newestDB, err := workflow_v2.LoadRunByID(context.TODO(), db, newest.ID)
+	require.NoError(t, err)
+	assert.Equal(t, sdk.V2WorkflowRunStatusBlocked, newestDB.Status, "newest run must wait for the in-progress run to end")
+
+	toUnlock, toCancel, err := retrieveRunObjectsToUnLocked(context.TODO(), db.DbMap, proj.Key, vcsServer.Name, repo.Name, "myworkflow", concurrency)
+	require.NoError(t, err)
+	assert.Empty(t, toUnlock)
+	assert.Empty(t, toCancel, "newest blocked run must not be selected for cancellation while the pool is taken")
 }
