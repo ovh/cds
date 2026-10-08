@@ -265,3 +265,67 @@ func TestMatrixImplicitConcurrency_BranchesAreIndependent(t *testing.T) {
 	require.Len(t, featureDB.WorkflowData.Workflow.Concurrencies, 1)
 	assert.Equal(t, "matrix/test/feature", featureDB.WorkflowData.Workflow.Concurrencies[0].Name)
 }
+
+// With a user concurrency, the permutations are created with its pool bounded to the maximum parallelism
+func TestMatrixMaxParallelism_AboveMax(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
+	api.Config.WorkflowV2.MatrixMaxParallelism = 4
+	env := newMatrixTestEnv(t, api, db)
+	rule := sdk.WorkflowConcurrency{Name: "mycc", Pool: 10, Order: sdk.ConcurrencyOrderOldestFirst}
+	wr := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{Concurrency: rule.Name}, []sdk.WorkflowConcurrency{rule})
+
+	triggerRun(t, api, env, wr)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 4, sdk.V2WorkflowRunJobStatusBlocked: 1}, countJobStatuses(t, api, wr))
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
+	require.NoError(t, err)
+	for _, rj := range runJobs {
+		require.NotNil(t, rj.Concurrency)
+		assert.Equal(t, int64(4), rj.Concurrency.Pool)
+		assert.Equal(t, "mycc", rj.Concurrency.Name)
+	}
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	assert.Equal(t, int64(10), wrDB.WorkflowData.Workflow.Concurrencies[0].Pool, "the rule itself is not modified")
+	infos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
+	assert.Equal(t, `Job test: 5 permutations, concurrency "mycc" pool limited to 4 jobs in parallel`, infos[0].Message)
+
+	// The limit holds on the next passes and is not reported again
+	endOnePermutation(t, db, wr)
+	triggerRun(t, api, env, wr)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusSuccess: 1, sdk.V2WorkflowRunJobStatusWaiting: 4}, countJobStatuses(t, api, wr))
+	infos, err = workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
+}
+
+// A user concurrency within the maximum parallelism is used as is
+func TestMatrixMaxParallelism_WithinMax(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
+	api.Config.WorkflowV2.MatrixMaxParallelism = 4
+	env := newMatrixTestEnv(t, api, db)
+
+	// As many permutations as the maximum: no cap
+	rule := sdk.WorkflowConcurrency{Name: "mycc", Pool: 10, Order: sdk.ConcurrencyOrderOldestFirst}
+	wr := insertMatrixRun(t, db, env, 1, "master", 4, sdk.V2Job{Concurrency: rule.Name}, []sdk.WorkflowConcurrency{rule})
+	triggerRun(t, api, env, wr)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 4}, countJobStatuses(t, api, wr))
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
+	require.NoError(t, err)
+	assert.Equal(t, int64(10), runJobs[0].Concurrency.Pool)
+	infos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	assert.Empty(t, infos)
+
+	// A pool below the maximum applies as is, whatever the number of permutations
+	small := sdk.WorkflowConcurrency{Name: "small", Pool: 2, Order: sdk.ConcurrencyOrderOldestFirst}
+	wr2 := insertMatrixRun(t, db, env, 2, "master", 5, sdk.V2Job{Concurrency: small.Name}, []sdk.WorkflowConcurrency{small})
+	triggerRun(t, api, env, wr2)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 2, sdk.V2WorkflowRunJobStatusBlocked: 3}, countJobStatuses(t, api, wr2))
+	infos, err = workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr2.ID)
+	require.NoError(t, err)
+	assert.Empty(t, infos)
+}

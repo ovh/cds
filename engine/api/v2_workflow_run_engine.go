@@ -1831,6 +1831,9 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			}
 
 			if !jobDef.NeedsTemplateResolution() {
+				if info := capMatrixParallelism(run, jobID, concurrenciesDef, len(matrixPermutation), existingRunJobs, parallelism.Max); info != nil {
+					runInfos = append(runInfos, *info)
+				}
 				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 				if err != nil {
 					return nil, err

@@ -74,3 +74,28 @@ func limitMatrixParallelism(run *sdk.V2WorkflowRun, jobID string, jobDef sdk.V2J
 		Message:       fmt.Sprintf("Job %s: %d permutations, CDS limits it to %d jobs in parallel", jobID, nbPermutations, defaultParallelism),
 	}
 }
+
+// capMatrixParallelism bounds the pool of the concurrency of a matrix job to the maximum parallelism, on the definition
+// used to create its permutations; the rule itself is left untouched. It returns the run info to record when the
+// permutations are first created, or nil.
+func capMatrixParallelism(run *sdk.V2WorkflowRun, jobID string, concurrenciesDef map[string]sdk.V2RunConcurrency, nbPermutations int, existingRunJobs []sdk.V2WorkflowRunJob, maxParallelism int64) *sdk.V2WorkflowRunInfo {
+	def, has := concurrenciesDef[jobID]
+	if !has || int64(nbPermutations) <= maxParallelism || def.Pool <= maxParallelism {
+		return nil
+	}
+	def.Pool = maxParallelism
+	concurrenciesDef[jobID] = def
+
+	// The cap applies to every pass creating permutations; the limit is only reported on the first one
+	for _, rj := range existingRunJobs {
+		if rj.JobID == jobID {
+			return nil
+		}
+	}
+	return &sdk.V2WorkflowRunInfo{
+		WorkflowRunID: run.ID,
+		IssuedAt:      time.Now(),
+		Level:         sdk.WorkflowRunInfoLevelWarning,
+		Message:       fmt.Sprintf("Job %s: %d permutations, concurrency %q pool limited to %d jobs in parallel", jobID, nbPermutations, def.Name, maxParallelism),
+	}
+}
