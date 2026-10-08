@@ -117,7 +117,41 @@ cancel-in-progress unless every execution has it.
 
 ---
 
-## 6 — End of a run
+## 6 — Matrix jobs
+
+Each permutation of a matrix job is one execution. Two limits, configured on the API, keep a matrix
+with many permutations from flooding the queue:
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `matrixDefaultParallelism` | `20` | Permutations running in parallel for a matrix job without concurrency. |
+| `matrixMaxParallelism` | `40` | Permutations running in parallel for a matrix job, whatever its concurrency. |
+
+### 6.1 Implicit rule
+
+A matrix job without concurrency, with more permutations than the default parallelism, gets a rule
+named `matrix/<job>/<git ref name>`: scoped to the workflow, pool equal to the default parallelism,
+`oldest_first`, no cancel-in-progress. The rule is written in the run definition, like the jobs of a
+resolved template, and the run is processed again: the permutations are then created under that
+rule, like those of any job with a concurrency.
+
+Runs of the same workflow on the same branch share the rule, so their permutations queue up by
+arrival. Runs on different branches do not wait for each other. A matrix job with no more
+permutations than the default parallelism gets no rule.
+
+A run info reports the limit: `Job build: 100 permutations, CDS limits it to 20 jobs in parallel`.
+
+### 6.2 Maximum parallelism
+
+A matrix job using a concurrency keeps it. When it has more permutations than the maximum
+parallelism and the pool of its rule is above that maximum, its permutations are created with the
+pool bounded to the maximum. The rule itself is unchanged; through section 5, the bound applies to
+the other executions of the rule as long as these permutations are in the pool. A run info reports
+it once: `Job deploy: 50 permutations, concurrency "deploy" pool limited to 40 jobs in parallel`.
+
+---
+
+## 7 — End of a run
 
 When a run reaches a final status, for any reason (success, failure, stop, cancellation, engine
 error), its remaining jobs are terminated with it and every slot held by the run or its jobs is
@@ -125,7 +159,7 @@ released. A job still running is stopped; its worker ends within a few seconds.
 
 ---
 
-## 7 — Implementation
+## 8 — Implementation
 
 The engine is the part of the API that moves a run forward. It works in passes: a pass processes one
 run, decides which of its jobs can start, and stops. The run is processed again when something
@@ -139,7 +173,7 @@ decide concurrently.
 The diagrams below follow one example: rule `prod` with a pool of 1, used by the `deploy` job of the
 workflow `deploy-api`. Run #11 is in progress when run #12 arrives.
 
-### 7.1 A job asks for a slot
+### 8.1 A job asks for a slot
 
 ```mermaid
 sequenceDiagram
@@ -158,11 +192,11 @@ sequenceDiagram
         Note over Engine,DB: a hatchery can start it
     else no free slot, or older executions already wait (oldest_first)
         Engine->>DB: deploy created as Blocked
-        Note over Engine,DB: released later, see 7.3
+        Note over Engine,DB: released later, see 8.3
     end
 ```
 
-### 7.2 A job asks for a slot, with cancel-in-progress
+### 8.2 A job asks for a slot, with cancel-in-progress
 
 The new execution makes room for itself. A cancelled job is cancelled at once; a cancelled run is
 cancelled by a pass of its own, so the new execution waits for it.
@@ -186,11 +220,11 @@ sequenceDiagram
         Note over Engine,DB: "waiting for workflow cancellation"
         Queue->>Engine11: cancel run #11
         Engine11->>DB: run #11 and its jobs become Cancelled
-        Engine11->>Queue: process run #12, a slot is free (see 7.3)
+        Engine11->>Queue: process run #12, a slot is free (see 8.3)
     end
 ```
 
-### 7.3 A slot is freed
+### 8.3 A slot is freed
 
 Any execution reaching a final status frees its slot: a job whose worker sent its result, a run that
 ended, was stopped or cancelled.
@@ -217,7 +251,7 @@ sequenceDiagram
 When the waiting execution is a whole run, the same pass turns the run from Blocked to Building, then
 a next pass processes its jobs.
 
-### 7.4 Where this lives in the code
+### 8.4 Where this lives in the code
 
 | Behaviour | Function |
 |---|---|
@@ -227,3 +261,5 @@ a next pass processes its jobs.
 | Release of waiting executions (3.2, 4.2) | `retrieveRunObjectsToUnLocked` |
 | Request of a pass for each execution to release, after a final status | `manageEndConcurrency`; the release itself happens in the pass of each run |
 | Final status of a run from the engine, with the release of its slots | `terminateWorkflowRun` |
+| Implicit rule of a large matrix job (6.1) | `limitMatrixParallelism` |
+| Bound of the pool for a large matrix job (6.2) | `capMatrixParallelism` |
