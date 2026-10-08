@@ -44,6 +44,7 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 	// Comment text is available without git info, so evaluate the comment filter now and skip
 	// non-matching pull-request-comment hooks before the costly git info step.
 	skipNonMatchingPullRequestCommentHooks(ctx, hre)
+	skipHooksOfFailedAnalyses(hre)
 
 	// If no hook remains to run, we can end the process
 	hasRunnableHook := false
@@ -59,6 +60,7 @@ func (s *Service) triggerGetWorkflowHooks(ctx context.Context, hre *sdk.HookRepo
 		} else {
 			hre.Status = sdk.HookEventStatusSkipped
 		}
+		endWithAnalysisError(hre)
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
 		}

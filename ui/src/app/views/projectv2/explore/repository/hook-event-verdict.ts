@@ -33,6 +33,7 @@ const TRIGGERING = ['WorkflowHooks', 'GitInfo', 'Workflow'];
 const HINTS: Array<{ pattern: RegExp, hint: string }> = [
     { pattern: /User with key/i, hint: 'The commit signing key is not linked to any CDS user: the author must add it to their CDS profile, then push again.' },
     { pattern: /Commit not signed/i, hint: 'Commits must be signed with a key linked to a CDS user for CDS to run anything from them.' },
+    { pattern: /unable to retrieve files/i, hint: 'CDS could not read the .cds directory of this commit: check that the commit still exists on the repository and that the vcs credentials of the project declaring it can read it.' },
     { pattern: /unable to get git info/i, hint: 'The ref or commit the event points at could not be read on the repository: check that it still exists and that the vcs credentials of the project can reach it.' },
     { pattern: /no right to trigger (a|this) workflow/i, hint: 'The user the run is attributed to needs the trigger role on this workflow: grant it in the permissions of the project, then push again or start the workflow by hand.' },
     { pattern: /worker model/i, hint: 'The workflow references a worker model that does not exist on this ref: add it under .cds/worker-models or fix its runs-on value.' },
@@ -45,6 +46,10 @@ const EVENT_FAILURES: Array<{ pattern: RegExp, step: number, label: string }> = 
     { pattern: /^Commit not signed/i, step: 1, label: 'Commit not signed' },
     { pattern: /unable to get git info/i, step: 3, label: 'Git information unavailable' }
 ];
+
+// The error the hooks service reports on an event when repository analyses failed; each project only
+// sees its own analysis and its error
+const ANALYSES_FAILED = /^(\d+ of \d+ |all )?repository analys[ie]s failed$/i;
 
 /**
  * Whether an initiator names someone, by the rule the hooks service applies: a CDS user id or a vcs
@@ -126,6 +131,19 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     // known one names the step that failed; any other only speaks for itself when the workflows do
     // not: when all of them failed to start, it merely repeats their errors.
     const failure = lastError && !analysis ? EVENT_FAILURES.find(f => f.pattern.test(lastError)) : null;
+    // An analysis failed in another project declaring the repository: a warning, the workflows of the
+    // project tell the outcome. Older events carry the raw error of that analysis instead: on a listened
+    // repository, an error the steps of the project do not explain comes from there too.
+    const otherAnalysisFailed = ANALYSES_FAILED.test(lastError) && analysis?.status !== 'Error';
+    const outsideError = otherAnalysisFailed || (distant && !!lastError && !failure);
+    if (outsideError && distant) {
+        analysisStep.status = 'warning';
+        analysisStep.description = otherAnalysisFailed
+            ? `${analysisStep.description} An analysis failed in a project declaring it.`
+            : `${analysisStep.description} A project declaring it reported: ${lastError}`;
+    } else if (outsideError) {
+        analysisStep.description = `${analysisStep.description} · an analysis failed in another project declaring this repository`;
+    }
     if (failure) {
         const failed = steps[failure.step];
         failed.status = 'error';
@@ -145,7 +163,15 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
         return { level: done.length > 0 ? 'warning' : 'error', label, detail: errors, steps, hint: hintFor(errors) };
     }
 
-    if (lastError && !analysis) {
+    if (outsideError && workflows.length === 0) {
+        if (otherAnalysisFailed) {
+            return { level: 'warning', label: 'Analysis failed in another project', detail: lastError, steps };
+        }
+        workflowsStep.description = 'None evaluated: the event may have been stopped by the failure of a project declaring this repository.';
+        return { level: 'warning', label: 'Failed in another project', detail: lastError, steps, hint: hintFor(lastError) };
+    }
+
+    if (lastError && !analysis && !outsideError) {
         received.status = 'error';
         received.description = `${received.description} · ${lastError}`;
         return { level: 'error', label: firstLine(lastError) ?? 'Error', detail: lastError, steps, hint: hintFor(lastError) };

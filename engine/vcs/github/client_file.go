@@ -19,6 +19,9 @@ func (g *githubClient) ListContent(ctx context.Context, repo string, commit, dir
 		log.Warn(ctx, "githubClient.ListContent> Error %s", err)
 		return nil, err
 	}
+	if status == http.StatusNotFound {
+		return []sdk.VCSContent{}, nil
+	}
 	if status >= 400 {
 		return nil, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
 	}
