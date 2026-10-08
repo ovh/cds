@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,15 @@ func TestMatrixParallelism(t *testing.T) {
 	}
 }
 
-func insertMatrixRun(t *testing.T, api *API, db *test.FakeTransaction, nbPermutations int, job sdk.V2Job, concurrencies []sdk.WorkflowConcurrency) (sdk.V2WorkflowRun, *sdk.V2Initiator) {
+// matrixTestEnv is a project where matrix jobs can be enqueued
+type matrixTestEnv struct {
+	proj      *sdk.Project
+	vcsServer *sdk.VCSProject
+	repo      *sdk.ProjectRepository
+	initiator *sdk.V2Initiator
+}
+
+func newMatrixTestEnv(t *testing.T, api *API, db *test.FakeTransaction) matrixTestEnv {
 	t.Helper()
 	_, err := db.Exec("DELETE FROM rbac")
 	require.NoError(t, err)
@@ -55,8 +64,12 @@ func insertMatrixRun(t *testing.T, api *API, db *test.FakeTransaction, nbPermuta
 		Name:           sdk.RandomString(10),
 		RegionProjects: []sdk.RBACRegionProject{{RegionID: reg.ID, RBACProjectKeys: []string{proj.Key}, Role: sdk.RegionRoleExecute}},
 	}))
-	initiator := &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator(), IsAdminWithMFA: true}
+	return matrixTestEnv{proj: proj, vcsServer: vcsServer, repo: repo, initiator: &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator(), IsAdminWithMFA: true}}
+}
 
+// insertMatrixRun inserts a building run of "myworkflow" with one matrix job "test" of nbPermutations
+func insertMatrixRun(t *testing.T, db *test.FakeTransaction, env matrixTestEnv, runNumber int64, refName string, nbPermutations int, job sdk.V2Job, concurrencies []sdk.WorkflowConcurrency) sdk.V2WorkflowRun {
+	t.Helper()
 	values := make([]string, 0, nbPermutations)
 	for i := 0; i < nbPermutations; i++ {
 		values = append(values, strconv.Itoa(i))
@@ -65,18 +78,18 @@ func insertMatrixRun(t *testing.T, api *API, db *test.FakeTransaction, nbPermuta
 	job.Steps = []sdk.ActionStep{{Run: "echo test"}}
 
 	wr := sdk.V2WorkflowRun{
-		ProjectKey:   proj.Key,
-		VCSServerID:  vcsServer.ID,
-		VCSServer:    vcsServer.Name,
-		RepositoryID: repo.ID,
-		Repository:   repo.Name,
+		ProjectKey:   env.proj.Key,
+		VCSServerID:  env.vcsServer.ID,
+		VCSServer:    env.vcsServer.Name,
+		RepositoryID: env.repo.ID,
+		Repository:   env.repo.Name,
 		WorkflowName: "myworkflow",
 		WorkflowSha:  "abcdef",
-		WorkflowRef:  "refs/heads/master",
-		RunNumber:    1,
+		WorkflowRef:  "refs/heads/" + refName,
+		RunNumber:    runNumber,
 		Status:       sdk.V2WorkflowRunStatusBuilding,
-		Initiator:    initiator,
-		Contexts:     sdk.WorkflowRunContext{Git: sdk.GitContext{Ref: "refs/heads/master", RefName: "master"}},
+		Initiator:    env.initiator,
+		Contexts:     sdk.WorkflowRunContext{Git: sdk.GitContext{Ref: "refs/heads/" + refName, RefName: refName}},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
 			Name:          "myworkflow",
 			Concurrencies: concurrencies,
@@ -84,7 +97,30 @@ func insertMatrixRun(t *testing.T, api *API, db *test.FakeTransaction, nbPermuta
 		}},
 	}
 	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
-	return wr, initiator
+	return wr
+}
+
+// triggerRun runs one engine pass on the run
+func triggerRun(t *testing.T, api *API, env matrixTestEnv, wr sdk.V2WorkflowRun) {
+	t.Helper()
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: wr.ID, Initiator: *env.initiator}))
+}
+
+// endOnePermutation ends one waiting permutation of the run with a success, as a worker would
+func endOnePermutation(t *testing.T, db *test.FakeTransaction, wr sdk.V2WorkflowRun) {
+	t.Helper()
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
+	require.NoError(t, err)
+	for i := range runJobs {
+		if runJobs[i].Status == sdk.V2WorkflowRunJobStatusWaiting {
+			now := time.Now()
+			runJobs[i].Status = sdk.V2WorkflowRunJobStatusSuccess
+			runJobs[i].Ended = &now
+			require.NoError(t, workflow_v2.UpdateJobRun(context.TODO(), db, &runJobs[i]))
+			return
+		}
+	}
+	t.Fatal("no waiting permutation to end")
 }
 
 func countJobStatuses(t *testing.T, api *API, wr sdk.V2WorkflowRun) map[sdk.V2WorkflowRunJobStatus]int {
@@ -103,10 +139,11 @@ func TestMatrixImplicitConcurrency_AboveDefault(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
 	api.workflowRunTriggerChan = make(chan sdk.V2WorkflowRunEnqueue, 10)
-	wr, initiator := insertMatrixRun(t, api, db, 5, sdk.V2Job{}, nil)
+	env := newMatrixTestEnv(t, api, db)
+	wr := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{}, nil)
 
 	// First pass: the rule is written in the run definition, no permutation is created yet
-	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: wr.ID, Initiator: *initiator}))
+	triggerRun(t, api, env, wr)
 	require.Empty(t, countJobStatuses(t, api, wr))
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), api.mustDB(), wr.ID)
 	require.NoError(t, err)
@@ -126,7 +163,7 @@ func TestMatrixImplicitConcurrency_AboveDefault(t *testing.T) {
 	}
 
 	// Second pass: the permutations are created under the rule
-	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: wr.ID, Initiator: *initiator}))
+	triggerRun(t, api, env, wr)
 	counts := countJobStatuses(t, api, wr)
 	assert.Equal(t, 3, counts[sdk.V2WorkflowRunJobStatusWaiting])
 	assert.Equal(t, 2, counts[sdk.V2WorkflowRunJobStatusBlocked])
@@ -139,9 +176,10 @@ func TestMatrixImplicitConcurrency_AboveDefault(t *testing.T) {
 func TestMatrixImplicitConcurrency_WithinDefault(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
-	wr, initiator := insertMatrixRun(t, api, db, 3, sdk.V2Job{}, nil)
+	env := newMatrixTestEnv(t, api, db)
+	wr := insertMatrixRun(t, db, env, 1, "master", 3, sdk.V2Job{}, nil)
 
-	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: wr.ID, Initiator: *initiator}))
+	triggerRun(t, api, env, wr)
 	counts := countJobStatuses(t, api, wr)
 	assert.Equal(t, 3, counts[sdk.V2WorkflowRunJobStatusWaiting])
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), api.mustDB(), wr.ID)
@@ -158,13 +196,72 @@ func TestMatrixImplicitConcurrency_WithUserConcurrency(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
 	rule := sdk.WorkflowConcurrency{Name: "mycc", Pool: 10, Order: sdk.ConcurrencyOrderOldestFirst}
-	wr, initiator := insertMatrixRun(t, api, db, 5, sdk.V2Job{Concurrency: rule.Name}, []sdk.WorkflowConcurrency{rule})
+	env := newMatrixTestEnv(t, api, db)
+	wr := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{Concurrency: rule.Name}, []sdk.WorkflowConcurrency{rule})
 
-	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: wr.ID, Initiator: *initiator}))
+	triggerRun(t, api, env, wr)
 	counts := countJobStatuses(t, api, wr)
 	assert.Equal(t, 5, counts[sdk.V2WorkflowRunJobStatusWaiting])
 	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), api.mustDB(), wr.ID)
 	require.NoError(t, err)
 	require.Len(t, wrDB.WorkflowData.Workflow.Concurrencies, 1)
 	assert.Equal(t, "mycc", wrDB.WorkflowData.Workflow.Jobs["test"].Concurrency)
+}
+
+// A permutation ending frees a slot for the oldest blocked one
+func TestMatrixImplicitConcurrency_UnlockOnPermutationEnd(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
+	env := newMatrixTestEnv(t, api, db)
+	wr := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{}, nil)
+	triggerRun(t, api, env, wr)
+	triggerRun(t, api, env, wr)
+	require.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 3, sdk.V2WorkflowRunJobStatusBlocked: 2}, countJobStatuses(t, api, wr))
+
+	endOnePermutation(t, db, wr)
+	triggerRun(t, api, env, wr)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusSuccess: 1, sdk.V2WorkflowRunJobStatusWaiting: 3, sdk.V2WorkflowRunJobStatusBlocked: 1}, countJobStatuses(t, api, wr))
+}
+
+// Two runs on the same branch share the rule: the newest one waits behind the oldest one
+func TestMatrixImplicitConcurrency_RunsOnSameBranchQueueUp(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
+	env := newMatrixTestEnv(t, api, db)
+	first := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{}, nil)
+	triggerRun(t, api, env, first)
+	triggerRun(t, api, env, first)
+	require.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 3, sdk.V2WorkflowRunJobStatusBlocked: 2}, countJobStatuses(t, api, first))
+
+	second := insertMatrixRun(t, db, env, 2, "master", 5, sdk.V2Job{}, nil)
+	triggerRun(t, api, env, second)
+	triggerRun(t, api, env, second)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusBlocked: 5}, countJobStatuses(t, api, second), "the slots are held by the first run")
+
+	// A freed slot goes to the first run, which arrived first
+	endOnePermutation(t, db, first)
+	triggerRun(t, api, env, second)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusBlocked: 5}, countJobStatuses(t, api, second), "the second run must wait for the first one")
+	triggerRun(t, api, env, first)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusSuccess: 1, sdk.V2WorkflowRunJobStatusWaiting: 3, sdk.V2WorkflowRunJobStatusBlocked: 1}, countJobStatuses(t, api, first))
+}
+
+// Two branches have their own rule and don't wait for each other
+func TestMatrixImplicitConcurrency_BranchesAreIndependent(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
+	env := newMatrixTestEnv(t, api, db)
+	master := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{}, nil)
+	triggerRun(t, api, env, master)
+	triggerRun(t, api, env, master)
+	require.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 3, sdk.V2WorkflowRunJobStatusBlocked: 2}, countJobStatuses(t, api, master))
+
+	feature := insertMatrixRun(t, db, env, 2, "feature", 5, sdk.V2Job{}, nil)
+	triggerRun(t, api, env, feature)
+	triggerRun(t, api, env, feature)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 3, sdk.V2WorkflowRunJobStatusBlocked: 2}, countJobStatuses(t, api, feature))
+	featureDB, err := workflow_v2.LoadRunByID(context.TODO(), db, feature.ID)
+	require.NoError(t, err)
+	require.Len(t, featureDB.WorkflowData.Workflow.Concurrencies, 1)
+	assert.Equal(t, "matrix/test/feature", featureDB.WorkflowData.Workflow.Concurrencies[0].Name)
 }
