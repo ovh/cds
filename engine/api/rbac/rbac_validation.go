@@ -40,6 +40,16 @@ func IsValidRBAC(ctx context.Context, db gorp.SqlExecutor, rbac *sdk.RBAC) error
 			return err
 		}
 	}
+	for _, vs := range rbac.VariableSets {
+		if err := isValidRBACVariableSet(rbac.Name, vs); err != nil {
+			return err
+		}
+	}
+	for _, rp := range rbac.RegionProjects {
+		if err := isValidRBACRegionProject(rbac.Name, rp); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -188,6 +198,44 @@ func isValidRBACHatchery(rbacName string, rbacHatchery sdk.RBACHatchery) error {
 	}
 	if !sdk.HatcheryRoles.Contains(rbacHatchery.Role) {
 		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: role %s is not allowed on a hatchery permission", rbacName, rbacHatchery.Role)
+	}
+	return nil
+}
+
+func isValidRBACVariableSet(rbacName string, rbacVS sdk.RBACVariableSet) error {
+	// Check empty group and users
+	if len(rbacVS.RBACGroupsIDs) == 0 && len(rbacVS.RBACUsersIDs) == 0 && !rbacVS.AllUsers && len(rbacVS.RBACVCSUsers) == 0 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: missing groups or users on variableset permission", rbacName)
+	}
+
+	if (len(rbacVS.RBACGroupsIDs) > 0 || len(rbacVS.RBACUsersIDs) > 0) && rbacVS.AllUsers {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: cannot have a list of groups or users with flag allUsers", rbacName)
+	}
+
+	// Check role
+	if rbacVS.Role == "" {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: role for variableset permission cannot be empty", rbacName)
+	}
+	if !sdk.IsInArray(rbacVS.Role, sdk.VariableSetRoles) {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: role %s is not allowed on a variableset permission", rbacName, rbacVS.Role)
+	}
+	return nil
+}
+
+func isValidRBACRegionProject(rbacName string, rbacRegionProject sdk.RBACRegionProject) error {
+	if rbacRegionProject.RegionID == "" {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: missing region on region project permission", rbacName)
+	}
+	if !rbacRegionProject.AllProjects && len(rbacRegionProject.RBACProjectKeys) == 0 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: missing projects on region project permission", rbacName)
+	}
+
+	// Check role
+	if rbacRegionProject.Role == "" {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: role for region project permission cannot be empty", rbacName)
+	}
+	if !sdk.RegionProjectRoles.Contains(rbacRegionProject.Role) {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "rbac %s: role %s is not allowed on a region project permission", rbacName, rbacRegionProject.Role)
 	}
 	return nil
 }

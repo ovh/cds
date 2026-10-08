@@ -234,3 +234,127 @@ func TestRBACWorkflowInvalidAllAndListOfGroups(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "rbac myRule: cannot have a list of groups or users with flag allUsers")
 }
+
+func TestRBACVariableSetInvalidRole(t *testing.T) {
+	rb := sdk.RBACVariableSet{
+		ProjectKey:           "PROJ",
+		RBACVariableSetNames: []string{"foo"},
+		Role:                 sdk.ProjectRoleManageVariableSet,
+		RBACGroupsIDs:        []int64{1},
+	}
+	err := isValidRBACVariableSet("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), fmt.Sprintf("rbac myRule: role %s is not allowed on a variableset permission", sdk.ProjectRoleManageVariableSet))
+}
+func TestRBACVariableSetEmptyRole(t *testing.T) {
+	rb := sdk.RBACVariableSet{
+		ProjectKey:      "PROJ",
+		AllVariableSets: true,
+		Role:            "",
+		RBACGroupsIDs:   []int64{1},
+	}
+	err := isValidRBACVariableSet("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: role for variableset permission cannot be empty")
+}
+func TestRBACVariableSetInvalidGroupAndUsers(t *testing.T) {
+	rb := sdk.RBACVariableSet{
+		ProjectKey:      "PROJ",
+		AllVariableSets: true,
+		Role:            sdk.VariableSetRoleUse,
+		RBACGroupsIDs:   []int64{},
+		RBACUsersIDs:    []string{},
+	}
+	err := isValidRBACVariableSet("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: missing groups or users on variableset permission")
+}
+func TestRBACVariableSetInvalidAllAndListOfGroups(t *testing.T) {
+	rb := sdk.RBACVariableSet{
+		ProjectKey:      "PROJ",
+		AllVariableSets: true,
+		AllUsers:        true,
+		Role:            sdk.VariableSetRoleUse,
+		RBACGroupsIDs:   []int64{1},
+	}
+	err := isValidRBACVariableSet("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: cannot have a list of groups or users with flag allUsers")
+}
+func TestRBACVariableSetValidRoles(t *testing.T) {
+	for _, role := range sdk.VariableSetRoles {
+		rb := sdk.RBACVariableSet{
+			ProjectKey:      "PROJ",
+			AllVariableSets: true,
+			Role:            role,
+			RBACGroupsIDs:   []int64{1},
+		}
+		require.NoError(t, isValidRBACVariableSet("myRule", rb), role)
+	}
+}
+
+func TestRBACRegionProjectInvalidRole(t *testing.T) {
+	rb := sdk.RBACRegionProject{
+		RegionID:    "aa-aa-aa",
+		AllProjects: true,
+		Role:        sdk.RegionRoleManage,
+	}
+	err := isValidRBACRegionProject("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), fmt.Sprintf("rbac myRule: role %s is not allowed on a region project permission", sdk.RegionRoleManage))
+}
+func TestRBACRegionProjectEmptyRole(t *testing.T) {
+	rb := sdk.RBACRegionProject{
+		RegionID:    "aa-aa-aa",
+		AllProjects: true,
+		Role:        "",
+	}
+	err := isValidRBACRegionProject("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: role for region project permission cannot be empty")
+}
+func TestRBACRegionProjectMissingRegion(t *testing.T) {
+	rb := sdk.RBACRegionProject{
+		AllProjects: true,
+		Role:        sdk.RegionRoleExecute,
+	}
+	err := isValidRBACRegionProject("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: missing region on region project permission")
+}
+func TestRBACRegionProjectMissingProjects(t *testing.T) {
+	rb := sdk.RBACRegionProject{
+		RegionID: "aa-aa-aa",
+		Role:     sdk.RegionRoleExecute,
+	}
+	err := isValidRBACRegionProject("myRule", rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: missing projects on region project permission")
+}
+func TestRBACRegionProjectValid(t *testing.T) {
+	require.NoError(t, isValidRBACRegionProject("myRule", sdk.RBACRegionProject{RegionID: "aa-aa-aa", AllProjects: true, Role: sdk.RegionRoleExecute}))
+	require.NoError(t, isValidRBACRegionProject("myRule", sdk.RBACRegionProject{RegionID: "aa-aa-aa", RBACProjectKeys: []string{"PROJ"}, Role: sdk.RegionRoleExecute}))
+}
+
+// Rules without region permission never touch the database, so IsValidRBAC can run without one
+func TestIsValidRBACChecksVariableSetsAndRegionProjects(t *testing.T) {
+	rb := sdk.RBAC{
+		Name: "myRule",
+		VariableSets: []sdk.RBACVariableSet{
+			{ProjectKey: "PROJ", AllVariableSets: true, AllUsers: true, Role: "manage-items"},
+		},
+	}
+	err := IsValidRBAC(context.TODO(), nil, &rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "rbac myRule: role manage-items is not allowed on a variableset permission")
+
+	rb = sdk.RBAC{
+		Name: "myRule",
+		RegionProjects: []sdk.RBACRegionProject{
+			{RegionID: "aa-aa-aa", AllProjects: true, Role: sdk.RegionRoleList},
+		},
+	}
+	err = IsValidRBAC(context.TODO(), nil, &rb)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), fmt.Sprintf("rbac myRule: role %s is not allowed on a region project permission", sdk.RegionRoleList))
+}
