@@ -1388,8 +1388,10 @@ func TestConcurrencyCancelInProgress_SupersededBlockedRunIsCancelled(t *testing.
 	require.NoError(t, err)
 	tx, err := db.Begin()
 	require.NoError(t, err)
-	require.NoError(t, api.cancelRunObjects(context.TODO(), tx, toCancel))
+	runsCancelled, runJobsCancelled, err := cancelRunObjects(context.TODO(), tx, toCancel)
+	require.NoError(t, err)
 	require.NoError(t, tx.Commit())
+	api.enqueueCancelledRunObjects(context.TODO(), runsCancelled, runJobsCancelled)
 
 	// Both A and B are sent to the engine for cancellation
 	cancelled := make(map[string]sdk.V2WorkflowRunEnqueue)

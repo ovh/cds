@@ -530,9 +530,10 @@ func retrieveConcurrencyDefinition(ctx context.Context, db gorp.SqlExecutor, run
 	}, nil
 }
 
-// cancelRunObjects cancels jobs in the transaction and enqueues runs for cancellation: a run is terminated by its
-// own engine pass, which is why newer objects wait for it in a blocked state.
-func (api *API) cancelRunObjects(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, runObjectsToCancel map[string]workflow_v2.ConcurrencyObject) error {
+// cancelRunObjects cancels jobs in the transaction and returns the runs and jobs to notify once it is committed, with
+// enqueueCancelledRunObjects: a run is terminated by its own engine pass, which is why newer objects wait for it in a
+// blocked state.
+func cancelRunObjects(ctx context.Context, tx gorpmapper.SqlExecutorWithTx, runObjectsToCancel map[string]workflow_v2.ConcurrencyObject) ([]sdk.V2WorkflowRun, []sdk.V2WorkflowRunJob, error) {
 	runCancelled := make([]sdk.V2WorkflowRun, 0)
 	runJobCancelled := make([]sdk.V2WorkflowRunJob, 0)
 	for _, runObject := range runObjectsToCancel {
@@ -540,20 +541,20 @@ func (api *API) cancelRunObjects(ctx context.Context, tx gorpmapper.SqlExecutorW
 		case workflow_v2.ConcurrencyObjectTypeWorkflow:
 			run, err := workflow_v2.LoadRunByID(ctx, tx, runObject.ID)
 			if err != nil {
-				return err
+				return nil, nil, err
 			}
 			// Do nothing, we will enqueue the workflow with a dedicated status
 			runCancelled = append(runCancelled, *run)
 		default:
 			rj, err := workflow_v2.LoadRunJobByID(ctx, tx, runObject.ID)
 			if err != nil {
-				return err
+				return nil, nil, err
 			}
 			rj.Status = sdk.V2WorkflowRunJobStatusCancelled
 			now := time.Now()
 			rj.Ended = &now
 			if err := workflow_v2.UpdateJobRun(ctx, tx, rj); err != nil {
-				return err
+				return nil, nil, err
 			}
 			jobInfo := sdk.V2WorkflowRunJobInfo{
 				WorkflowRunID:    rj.WorkflowRunID,
@@ -563,11 +564,10 @@ func (api *API) cancelRunObjects(ctx context.Context, tx gorpmapper.SqlExecutorW
 				Message:          fmt.Sprintf("Job cancelled due to concurrency %q", rj.Concurrency.Name),
 			}
 			if err := workflow_v2.InsertRunJobInfo(ctx, tx, &jobInfo); err != nil {
-				return err
+				return nil, nil, err
 			}
 			runJobCancelled = append(runJobCancelled, *rj)
 		}
 	}
-	api.enqueueCancelledRunObjects(ctx, runCancelled, runJobCancelled)
-	return nil
+	return runCancelled, runJobCancelled, nil
 }
