@@ -437,14 +437,15 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	wref.ef.vcsServerCache[vcsServer.Name] = *vcsServer
 
 	// Prepare run jobs to be enqueued
-	runJobs, runObjectToCancel, runJobsInfos, errorMsg, runUpdated, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, proj, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, concurrenciesDef, api.Config.Workflow.JobDefaultRegion)
+	runJobsPrepared, err := prepareRunJobs(ctx, api.mustDB(), api.Cache, proj, wref, run, allRunJobs, variableSetCtx, wrEnqueue, jobsToQueue, runJobsContexts, concurrenciesDef, api.Config.Workflow.JobDefaultRegion, api.matrixParallelism())
 	if err != nil {
 		return err
 	}
-
-	if errorMsg != nil {
-		return api.terminateWorkflowRun(ctx, run, sdk.V2WorkflowRunStatusFail, sdk.V2WorkflowRunJobStatusStopped, jobStoppedOnRunFailureMsg, errorMsg, allrunJobsMap, runResults, wrEnqueue)
+	if runJobsPrepared.errorMsgs != nil {
+		return api.terminateWorkflowRun(ctx, run, sdk.V2WorkflowRunStatusFail, sdk.V2WorkflowRunJobStatusStopped, jobStoppedOnRunFailureMsg, runJobsPrepared.errorMsgs, allrunJobsMap, runResults, wrEnqueue)
 	}
+	runJobs, runObjectToCancel, runJobsInfos, runUpdated := runJobsPrepared.runJobs, runJobsPrepared.runObjectsToCancel, runJobsPrepared.runJobsInfo, runJobsPrepared.runUpdated
+	runMsgs = append(runMsgs, runJobsPrepared.runInfos...)
 
 	tx, errTx := api.mustDB().Begin()
 	if errTx != nil {
@@ -550,7 +551,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunUpdated, *run, allrunJobsMap, runResults, nil)
 	}
 
-	needReEnqueue := hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedJob
+	needReEnqueue := hasSkippedOrFailedJob || hasNoStepsJobs || hasTemplatedJob || runJobsPrepared.reEnqueue
 	api.endWorkflowV2Trigger(ctx, run, allrunJobsMap, runJobs, runResults, wrEnqueue, needReEnqueue)
 
 	return nil
@@ -1593,10 +1594,23 @@ func computeRunJobsInterpolation(ctx context.Context, db *gorp.DbMap, store cach
 	return nil, runUpdated
 }
 
-func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, existingRunJobs []sdk.V2WorkflowRunJob, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]JobToTrigger, runJobsContexts sdk.JobsResultContext, concurrenciesDef map[string]sdk.V2RunConcurrency, defaultRegion string) ([]sdk.V2WorkflowRunJob, map[string]workflow_v2.ConcurrencyObject, map[string]sdk.V2WorkflowRunJobInfo, []sdk.V2WorkflowRunInfo, bool, error) {
+// prepareRunJobsResult is what an engine pass has to persist for the jobs it enqueues
+type prepareRunJobsResult struct {
+	runJobs            []sdk.V2WorkflowRunJob
+	runObjectsToCancel map[string]workflow_v2.ConcurrencyObject
+	runJobsInfo        map[string]sdk.V2WorkflowRunJobInfo
+	runInfos           []sdk.V2WorkflowRunInfo
+	errorMsgs          []sdk.V2WorkflowRunInfo // when set, the run fails with these messages
+	runUpdated         bool                    // the run definition changed and must be saved
+	reEnqueue          bool                    // another pass is needed right away
+}
+
+func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wref *WorkflowRunEntityFinder, run *sdk.V2WorkflowRun, existingRunJobs []sdk.V2WorkflowRunJob, runVarsetCtx map[string]interface{}, wrEnqueue sdk.V2WorkflowRunEnqueue, jobsToQueue map[string]JobToTrigger, runJobsContexts sdk.JobsResultContext, concurrenciesDef map[string]sdk.V2RunConcurrency, defaultRegion string, parallelism matrixParallelism) (*prepareRunJobsResult, error) {
 	runJobs := make([]sdk.V2WorkflowRunJob, 0)
 	runJobsInfo := make(map[string]sdk.V2WorkflowRunJobInfo)
+	runInfos := make([]sdk.V2WorkflowRunInfo, 0)
 	hasToUpdateRun := false
+	reEnqueue := false
 
 	regionPermCache := make(map[string]*sdk.V2WorkflowRunJobInfo)
 
@@ -1605,7 +1619,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 
 	projectVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
 	if err != nil {
-		return nil, nil, nil, nil, false, err
+		return nil, err
 	}
 
 	// Browse job to queue and compute data ( matrix / region / model etc..... )
@@ -1639,7 +1653,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			if _, has := runVarsetCtx[vs]; !has {
 				vsDB, err := project.LoadVariableSetByName(ctx, db, run.ProjectKey, vs)
 				if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-					return nil, nil, nil, nil, hasToUpdateRun, err
+					return nil, err
 				}
 				// If not found stop the run
 				if err != nil {
@@ -1650,18 +1664,18 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 						Level:         sdk.WorkflowRunInfoLevelError,
 						Message:       fmt.Sprintf("variable set %s not found on project", vs),
 					}
-					return nil, nil, nil, []sdk.V2WorkflowRunInfo{msg}, hasToUpdateRun, nil
+					return &prepareRunJobsResult{errorMsgs: []sdk.V2WorkflowRunInfo{msg}}, nil
 				}
 				vsDB.Items, err = project.LoadVariableSetAllItem(ctx, db, vsDB.ID)
 				if err != nil {
-					return nil, nil, nil, nil, hasToUpdateRun, err
+					return nil, err
 				}
 				vss = append(vss, *vsDB)
 			}
 		}
 		jobVarsCtx, _, err := buildVarsContext(ctx, vss)
 		if err != nil {
-			return nil, nil, nil, nil, false, err
+			return nil, err
 		}
 		for k, v := range runVarsetCtx {
 			jobVarsCtx[k] = v
@@ -1681,7 +1695,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		// Compute job matrix strategy
 		matrixPermutation, msInfo := generateMatrixPermutation(ctx, runJobContext, run, jobDef, jobToTrigger.Status)
 		if msInfo != nil {
-			return nil, nil, nil, []sdk.V2WorkflowRunInfo{*msInfo}, false, err
+			return &prepareRunJobsResult{errorMsgs: []sdk.V2WorkflowRunInfo{*msInfo}}, nil
 		}
 
 		// No matrixed jobs or templated job skipped
@@ -1728,10 +1742,10 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					// With previous computed flag `hasTemplatedJob` the workflow will be retriggered in the workflow engine
 					msgs, err := computeJobFromTemplate(ctx, db, store, wref, runJobContext, jobID, jobDef, run, projectVariableSets, defaultRegion)
 					if err != nil {
-						return nil, nil, nil, nil, hasToUpdateRun, err
+						return nil, err
 					}
 					if len(msgs) > 0 {
-						return nil, nil, nil, msgs, false, nil
+						return &prepareRunJobsResult{errorMsgs: msgs}, nil
 					}
 				} else {
 					// If no template, interpolate job data
@@ -1774,7 +1788,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 					// Manage concurrency if the job is not skipped
 					runJobInfo, err := manageJobConcurrency(ctx, db, *run, jobID, &runJob, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 					if err != nil {
-						return nil, nil, nil, nil, hasToUpdateRun, err
+						return nil, err
 					}
 					if runJobInfo != nil {
 						runJobsInfo[runJob.ID] = *runJobInfo
@@ -1792,7 +1806,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 
 			allVariableSets, err := project.LoadVariableSetsByProject(ctx, db, proj.Key)
 			if err != nil {
-				return nil, nil, nil, nil, false, err
+				return nil, err
 			}
 
 			jobData := prepareJobData{
@@ -1809,10 +1823,17 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				allVariableSets: allVariableSets,
 			}
 
+			if info := limitMatrixParallelism(run, jobID, jobDef, len(matrixPermutation), parallelism.Default); info != nil {
+				runInfos = append(runInfos, *info)
+				hasToUpdateRun = true
+				reEnqueue = true
+				continue
+			}
+
 			if !jobDef.NeedsTemplateResolution() {
 				jobs, runUpdated, err := createMatrixedRunJobs(ctx, db, store, wref, matrixPermutation, runJobsInfo, run, jobData, concurrenciesDef, concurrencyUnlockedCount, runObjectsToCancelled)
 				if err != nil {
-					return nil, nil, nil, nil, false, err
+					return nil, err
 				}
 				runJobs = append(runJobs, jobs...)
 				if runUpdated {
@@ -1825,7 +1846,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				msgInfo := createTemplatedMatrixedJobs(ctx, db, store, wref, matrixPermutation, run, jobData)
 				hasToUpdateRun = true
 				if len(msgInfo) > 0 {
-					return nil, nil, nil, msgInfo, false, nil
+					return &prepareRunJobsResult{errorMsgs: msgInfo}, nil
 				}
 			}
 		}
@@ -1845,7 +1866,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			var err error
 			objsToUnlocked, objsToCancelled, err = retrieveRunObjectsToUnLocked(ctx, db, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, *rj.Concurrency)
 			if err != nil {
-				return nil, nil, nil, nil, false, err
+				return nil, err
 			}
 			unlockedByConcurrency[concurrencyKey] = objsToUnlocked
 			for _, runObject := range objsToCancelled {
@@ -1868,7 +1889,14 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		}
 	}
 
-	return runJobs, runObjectsToCancelled, runJobsInfo, nil, hasToUpdateRun, nil
+	return &prepareRunJobsResult{
+		runJobs:            runJobs,
+		runObjectsToCancel: runObjectsToCancelled,
+		runJobsInfo:        runJobsInfo,
+		runInfos:           runInfos,
+		runUpdated:         hasToUpdateRun,
+		reEnqueue:          reEnqueue,
+	}, nil
 }
 
 func computeJobFromTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wref *WorkflowRunEntityFinder, runJobContext sdk.WorkflowRunJobsContext, jobID string, j sdk.V2Job, run *sdk.V2WorkflowRun, allVariableSets []sdk.ProjectVariableSet, defaultRegion string) ([]sdk.V2WorkflowRunInfo, error) {
