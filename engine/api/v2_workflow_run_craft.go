@@ -550,13 +550,15 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		}
 	}
 
-	if err := api.cancelRunObjects(ctx, tx, runObjectToCancel); err != nil {
+	runsCancelled, runJobsCancelled, err := cancelRunObjects(ctx, tx, runObjectToCancel)
+	if err != nil {
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(tx.Commit())
+		return sdk.WithStack(err)
 	}
+	api.enqueueCancelledRunObjects(ctx, runsCancelled, runJobsCancelled)
 
 	event_v2.PublishRunEvent(ctx, api.Cache, sdk.EventRunBuilding, *run, nil, nil, nil)
 	api.EnqueueWorkflowRun(ctx, run.ID, *run.Initiator, run.WorkflowName, run.RunNumber)
