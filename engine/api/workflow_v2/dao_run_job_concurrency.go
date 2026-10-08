@@ -142,7 +142,7 @@ func CountBlockedWithWorkflowConcurrency(ctx context.Context, db gorp.SqlExecuto
 }
 
 func LoadProjectConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string) ([]ConcurrencyRule, error) {
-	q := `SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min(concurrency->>'pool') as pool
+	q := `SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min((concurrency->>'pool')::int) as pool
 	FROM v2_workflow_run_job 
 	WHERE 
 		project_key = $1 AND 
@@ -151,7 +151,7 @@ func LoadProjectConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj 
 		status = ANY($4)
 	GROUP BY concurrency->>'order', concurrency->>'cancel-in-progress'
 	UNION
-	SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min(concurrency->>'pool') as pool
+	SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min((concurrency->>'pool')::int) as pool
 	FROM v2_workflow_run
 	WHERE 
 		project_key = $1 AND 
@@ -175,7 +175,7 @@ func LoadProjectConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj 
 }
 
 func LoadWorkflowConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string) ([]ConcurrencyRule, error) {
-	q := `SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min(concurrency->>'pool') as pool
+	q := `SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min((concurrency->>'pool')::int) as pool
 	FROM v2_workflow_run_job 
 	WHERE 
 		project_key = $1 AND 
@@ -187,7 +187,7 @@ func LoadWorkflowConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj
 		status = ANY($7)
 	GROUP BY concurrency->>'order', concurrency->>'cancel-in-progress'
 	UNION
-	SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min(concurrency->>'pool') as pool
+	SELECT concurrency->>'order' as order, concurrency->>'cancel-in-progress' as cancel, min((concurrency->>'pool')::int) as pool
 	FROM v2_workflow_run 
 	WHERE 
 		project_key = $1 AND 
@@ -213,9 +213,11 @@ func LoadWorkflowConcurrencyRules(ctx context.Context, db gorp.SqlExecutor, proj
 	return rules, nil
 }
 
+// Concurrency objects are ordered by arrival: queued for a job, started for a run. A run's last_modified moves at
+// each engine pass and would make an old building run look recent.
 func LoadOldestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string, rjStatus []string, workflowRunStatus sdk.V2WorkflowRunStatus, limit int64) ([]ConcurrencyObject, error) {
 	q := `WITH jobs as (
-		SELECT id, queued as last_modified, 'JOB' as type 
+		SELECT id, queued as arrival, 'JOB' as type 
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			vcs_server = $2 AND 
@@ -224,9 +226,9 @@ func LoadOldestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 			concurrency->>'name' = $5 AND
 			concurrency->>'scope' = $6 AND
 			status = ANY($7)
-		ORDER BY last_modified ASC LIMIT $9
+		ORDER BY arrival ASC LIMIT $9
 	), runs as (
-		SELECT id, last_modified, 'WORKFLOW' as type 
+		SELECT id, started as arrival, 'WORKFLOW' as type 
 		FROM v2_workflow_run 
 		WHERE project_key = $1 AND 
 			vcs_server = $2 AND 
@@ -235,13 +237,13 @@ func LoadOldestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 			concurrency->>'name' = $5 AND
 			concurrency->>'scope' = $6 AND
 			status = $8
-		ORDER BY run_number ASC, last_modified ASC LIMIT $9
+		ORDER BY arrival ASC LIMIT $9
 	) SELECT id, type FROM (
 	 	SELECT * FROM jobs
 		UNION
 		SELECT * FROM runs
 	) tmpl
-	ORDER BY last_modified ASC LIMIT $9`
+	ORDER BY arrival ASC LIMIT $9`
 	var cos []ConcurrencyObject
 	if _, err := db.Select(&cos, q, proj, vcs, repo, workflow, concurrencyName, sdk.V2RunConcurrencyScopeWorkflow, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
 		return nil, sdk.WithStack(err)
@@ -251,7 +253,7 @@ func LoadOldestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 
 func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, vcs string, repo string, workflow string, concurrencyName string, rjStatus []string, workflowRunStatus sdk.V2WorkflowRunStatus, limit interface{}) ([]ConcurrencyObject, error) {
 	q := `WITH jobs as (
-		SELECT id, queued as last_modified, 'JOB' as type
+		SELECT id, queued as arrival, 'JOB' as type
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			vcs_server = $2 AND 
@@ -260,10 +262,10 @@ func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 			concurrency->>'name' = $5 AND
 			concurrency->>'scope' = $6 AND 
 			status = ANY($7)
-		ORDER BY last_modified DESC
+		ORDER BY arrival DESC
 		LIMIT $9
 	), runs as (
-		SELECT id, last_modified, 'WORKFLOW' as type
+		SELECT id, started as arrival, 'WORKFLOW' as type
 		FROM v2_workflow_run
 		WHERE project_key = $1 AND 
 			vcs_server = $2 AND 
@@ -272,14 +274,14 @@ func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 			concurrency->>'name' = $5 AND
 			concurrency->>'scope' = $6 AND 
 			status = $8
-		ORDER BY run_number DESC, last_modified DESC
+		ORDER BY arrival DESC
 		LIMIT $9
 	) SELECT id, type FROM (
 	 	SELECT * FROM jobs
 		UNION
 		SELECT * FROM runs
 	) tmp 
-	ORDER BY last_modified DESC
+	ORDER BY arrival DESC
 	LIMIT $9`
 
 	var cos []ConcurrencyObject
@@ -292,27 +294,27 @@ func LoadNewestRunJobWithWorkflowScopedConcurrency(ctx context.Context, db gorp.
 func LoadOldestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string, rjStatus []string, workflowStatus sdk.V2WorkflowRunStatus, limit int64) ([]ConcurrencyObject, error) {
 	q := `WITH jobs as (
 		-- GET THE n OLDEST RUN JOBS
-		SELECT id as id, queued as last_modified, 'JOB' as type 
+		SELECT id as id, queued as arrival, 'JOB' as type 
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND
 			status = ANY($4)
-		ORDER BY last_modified ASC LIMIT $6
+		ORDER BY arrival ASC LIMIT $6
 	), runs as (
 	    -- GET THE n OLDEST WORKFLOW RUN 
-	    SELECT id as id, last_modified as last_modified, 'WORKFLOW' as type 
+	    SELECT id as id, started as arrival, 'WORKFLOW' as type 
 		FROM v2_workflow_run
 		WHERE project_key = $1 AND 
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND
 			status = $5
-		ORDER BY run_number ASC, last_modified ASC LIMIT $6
+		ORDER BY arrival ASC LIMIT $6
 	) SELECT id, type FROM (
 	 	SELECT * FROM jobs
 		UNION
 		SELECT * FROM runs
-	) tmp ORDER BY last_modified ASC LIMIT $6`
+	) tmp ORDER BY arrival ASC LIMIT $6`
 	var cos []ConcurrencyObject
 	if _, err := db.Select(&cos, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray(rjStatus), workflowStatus, limit); err != nil {
 		return nil, sdk.WithStack(err)
@@ -322,28 +324,28 @@ func LoadOldestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.S
 
 func LoadNewestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string, rjStatus []string, workflowRunStatus sdk.V2WorkflowRunStatus, limit interface{}) ([]ConcurrencyObject, error) {
 	q := `WITH jobs as (
-		SELECT id,  queued as last_modified, 'JOB' as type
+		SELECT id,  queued as arrival, 'JOB' as type
 		FROM v2_workflow_run_job 
 		WHERE project_key = $1 AND 
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND 
 			status = ANY($4)
-			ORDER BY last_modified DESC
+			ORDER BY arrival DESC
 			LIMIT $6
 	), runs as (
-		SELECT id, last_modified, 'WORKFLOW' as type
+		SELECT id, started as arrival, 'WORKFLOW' as type
 		FROM v2_workflow_run 
 		WHERE project_key = $1 AND 
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND 
 			status = $5
-			ORDER BY run_number DESC, last_modified DESC
+			ORDER BY arrival DESC
 			LIMIT $6
 	) SELECT id, type FROM (
 		SELECT * from jobs
 		UNION
 		SELECT * from runs 
-	) tmp ORDER BY last_modified DESC
+	) tmp ORDER BY arrival DESC
 	LIMIT $6`
 	var cos []ConcurrencyObject
 	if _, err := db.Select(&cos, q, proj, concurrencyName, sdk.V2RunConcurrencyScopeProject, pq.StringArray(rjStatus), workflowRunStatus, limit); err != nil {
