@@ -448,9 +448,11 @@ func (p *addRunResultPlugin) performDockerFromItem(ctx context.Context, integ sd
 	return false, nil
 }
 
-// archFileInfoFrom serves the per-architecture manifests out of the glob enumeration. The
-// fallback is insurance: staticPrefix never goes deeper than the image folder, so the
-// digest folders are always in the scope of the search.
+// archFileInfoFrom serves the per-architecture manifests of a manifest list: out of the glob
+// enumeration when the search returned the digest folders, from artifactory otherwise. The
+// enumeration is narrowed to the pattern (patternCriteria), which usually leaves the digest
+// folders <image>/sha256:<digest> outside it: the fallback is the normal path, one call per
+// architecture.
 func (p *addRunResultPlugin) archFileInfoFrom(ctx context.Context, artiConfig grpcplugins.ArtifactoryConfig, virtualRepo, localRepo, image string, archByPath map[string]grpcplugins.SearchResult) func(string) (*grpcplugins.ArtifactoryFileInfo, error) {
 	return func(digest string) (*grpcplugins.ArtifactoryFileInfo, error) {
 		folder := image + "/" + digest
@@ -1060,43 +1062,98 @@ func globSupportedType(resultType sdk.V2WorkflowRunResultType) bool {
 	}
 }
 
-// staticPrefix returns the folder prefix common to all positive patterns of the expression,
-// each truncated before its first wildcard. It only narrows the AQL search: a shorter prefix
-// widens the search, the exact selection is done by the glob matcher afterwards.
-func staticPrefix(expression string) string {
-	var common []string
-	first := true
+// aqlWildcard converts one glob pattern into an AQL $match wildcard matching a SUPERSET of
+// it: "*" and "**" become the AQL "*", which also spans "/"; "?" is the AQL "?"; a "[...]"
+// class is one character, "?". The "/" around a "**" go with it: "a/**/b" matches "a/b",
+// the AQL "a/*/b" would not. Widening is safe, the glob matcher does the exact selection
+// afterwards; narrowing silently drops artifacts.
+func aqlWildcard(pattern string) string {
+	out := make([]byte, 0, len(pattern))
+	for i := 0; i < len(pattern); i++ {
+		switch pattern[i] {
+		case '*':
+			if strings.HasPrefix(pattern[i:], "**") {
+				i++
+				if n := len(out); n > 0 && out[n-1] == '/' {
+					out = out[:n-1]
+				}
+				if strings.HasPrefix(pattern[i+1:], "/") {
+					i++
+				}
+			}
+			if n := len(out); n == 0 || out[n-1] != '*' {
+				out = append(out, '*')
+			}
+		case '[':
+			if j := strings.IndexByte(pattern[i:], ']'); j > 0 {
+				out = append(out, '?')
+				i += j
+				continue
+			}
+			// unterminated class: the glob scanner reads it as a literal matching nothing,
+			// any wildcard is a superset
+			out = append(out, '[')
+		default:
+			out = append(out, pattern[i])
+		}
+	}
+	return string(out)
+}
+
+// patternCriteria returns the AQL criteria narrowing the enumeration to the positive patterns
+// of the expression, one criterion per pattern joined by $or, or "" when the search cannot be
+// narrowed. Each criterion is a SUPERSET of what its pattern matches: the exact selection is
+// done by the glob matcher afterwards, widening is safe, narrowing silently drops artifacts.
+// The criteria follow the layout deriveCandidate matches against:
+//   - oci and docker: the folder path (docker patterns are rewritten by dockerPatternToPath
+//     before, the digest folders of a manifest list usually fall outside, see archFileInfoFrom);
+//   - conan: the export folder of the package revision;
+//   - file-based types: folder path and file name, split on the last "/", as in the glob only
+//     "**" spans "/". A last segment holding "**" spans folders: only the folders before it
+//     narrow the path. A root pattern (no "/") narrows by name only.
+//
+// Exclusion patterns only remove matches, they never narrow. A trailing "/" is dropped: the
+// matcher accepts it, an AQL path never ends with one.
+func patternCriteria(expression string, resultType sdk.V2WorkflowRunResultType) string {
+	var criteria []string
 	for _, pattern := range strings.FieldsFunc(expression, func(r rune) bool {
 		return r == ' ' || r == '\t' || r == '\n' || r == ','
 	}) {
-		if strings.HasPrefix(pattern, "!") { // exclusion patterns don't widen the search
+		if strings.HasPrefix(pattern, "!") {
 			continue
 		}
-		if i := strings.IndexAny(pattern, "*?["); i >= 0 {
-			pattern = pattern[:i]
+		pattern = strings.TrimSuffix(pattern, "/")
+		var c string
+		switch resultType {
+		case sdk.V2WorkflowRunResultTypeOCI, sdk.V2WorkflowRunResultTypeDocker:
+			c = fmt.Sprintf(`{"path":{"$match":"%s"}}`, aqlWildcard(pattern))
+		case sdk.V2WorkflowRunResultTypeConan:
+			c = fmt.Sprintf(`{"path":{"$match":"%s/export"}}`, aqlWildcard(pattern))
+		default:
+			dir, name := "", pattern
+			if i := strings.LastIndex(pattern, "/"); i >= 0 {
+				dir, name = pattern[:i], pattern[i+1:]
+			}
+			switch {
+			case strings.Contains(name, "**") && dir == "":
+				return "" // anywhere in the repository
+			case strings.Contains(name, "**"):
+				c = fmt.Sprintf(`{"path":{"$match":"%s"}}`, aqlWildcard(dir+"/**"))
+			case dir == "":
+				c = fmt.Sprintf(`{"name":{"$match":"%s"}}`, aqlWildcard(name))
+			default:
+				c = fmt.Sprintf(`{"path":{"$match":"%s"},"name":{"$match":"%s"}}`, aqlWildcard(dir), aqlWildcard(name))
+			}
 		}
-		var segments []string
-		if i := strings.LastIndex(pattern, "/"); i > 0 {
-			segments = strings.Split(strings.Trim(pattern[:i], "/"), "/")
-		}
-		if first {
-			common, first = segments, false
-		} else {
-			common = commonSegments(common, segments)
-		}
-		if len(common) == 0 {
-			return ""
-		}
+		criteria = append(criteria, c)
 	}
-	return strings.Join(common, "/")
-}
-
-func commonSegments(a, b []string) []string {
-	n := 0
-	for n < len(a) && n < len(b) && a[n] == b[n] {
-		n++
+	switch len(criteria) {
+	case 0:
+		return ""
+	case 1:
+		return criteria[0]
 	}
-	return a[:n]
+	return fmt.Sprintf(`{"$or":[%s]}`, strings.Join(criteria, ","))
 }
 
 // repoCriteria returns the AQL criteria matching the local repositories (maturities) behind
@@ -1116,7 +1173,7 @@ func dockerRepoCriteria(repository, maturity string) string {
 }
 
 // dockerPatternToPath rewrites the image:tag patterns of an expression into the folder
-// layout they match in artifactory (<image>/<tag>). Only staticPrefix reads it, the glob
+// layout they match in artifactory (<image>/<tag>). Only patternCriteria reads it, the glob
 // keeps matching image references.
 func dockerPatternToPath(expression string) string {
 	patterns := strings.FieldsFunc(expression, func(r rune) bool {
@@ -1266,35 +1323,38 @@ func globSearchAQL(criteria []string) string {
 }
 
 // enumerateGlobMatches lists the artifacts matching the glob pattern in the local
-// repositories behind the virtual repository. One AQL search scoped to the static prefix of
-// the pattern enumerates the candidates with the data needed to build the run results
-// (checksums, size, dates, properties), then the glob matcher selects them in Go:
+// repositories behind the virtual repository. One AQL search narrowed to the positive
+// patterns (patternCriteria, a superset of the glob) enumerates the candidates with the data
+// needed to build the run results (checksums, size, dates, properties), then the glob matcher
+// selects them in Go:
 //   - file-based types: every file is a candidate;
 //   - oci: a package is the folder directly holding a manifest.json or list.manifest.json
 //     (digest folders <image>/sha256:<digest> are standalone packages and are kept);
 //   - docker: the same folders as oci, rebuilt into <image>:<tag> references. Digest
-//     folders are indexed apart, they feed the manifests of a manifest list. The search is
-//     scoped to the low maturity repository, the only one performDocker reads;
+//     folders are indexed apart when the search returns them, they feed the manifests of a
+//     manifest list (archFileInfoFrom fetches the others). The search is scoped to the low
+//     maturity repository, the only one performDocker reads;
 //   - conan: a package revision is the parent of the export folder holding conanmanifest.txt.
 //
 // The search carries no limit (see aqlSearchLimit) and is not paginated: when the results
 // are trimmed by a server-side limit, the search fails rather than registering an
 // incomplete set.
 func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfig grpcplugins.ArtifactoryConfig, integ sdk.JobIntegrationsContext, repository, pattern string, resultType sdk.V2WorkflowRunResultType) (*globEnumeration, error) {
+	pattern = trimPatternsLeadingSlash(pattern) // the AQL and the glob matcher must see the same patterns
 	criteria := []string{repoCriteria(repository)}
-	prefixPattern := pattern
+	aqlPattern := pattern
 	if resultType == sdk.V2WorkflowRunResultTypeDocker {
 		criteria = []string{dockerRepoCriteria(repository, integ.Get(sdk.ArtifactoryConfigPromotionLowMaturity))}
-		prefixPattern = dockerPatternToPath(pattern)
+		aqlPattern = dockerPatternToPath(pattern)
 	}
-	if base := staticPrefix(prefixPattern); base != "" {
-		criteria = append(criteria, fmt.Sprintf(`{"$or":[{"path":{"$eq":"%s"}},{"path":{"$match":"%s/*"}}]}`, base, base))
+	if c := patternCriteria(aqlPattern, resultType); c != "" {
+		criteria = append(criteria, c)
 	}
 	switch resultType {
 	case sdk.V2WorkflowRunResultTypeOCI, sdk.V2WorkflowRunResultTypeDocker:
 		criteria = append(criteria, `{"$or":[{"name":{"$eq":"manifest.json"}},{"name":{"$eq":"list.manifest.json"}}]}`)
 	case sdk.V2WorkflowRunResultTypeConan:
-		criteria = append(criteria, `{"name":{"$eq":"conanmanifest.txt"}}`, `{"path":{"$match":"*/export"}}`)
+		criteria = append(criteria, `{"name":{"$eq":"conanmanifest.txt"}}`) // the export folder is carried by patternCriteria
 	default:
 		criteria = append(criteria, `{"type":"file"}`)
 	}
@@ -1309,7 +1369,7 @@ func (p *addRunResultPlugin) enumerateGlobMatches(ctx context.Context, artiConfi
 		return nil, sdk.NewErrorFrom(sdk.ErrInvalidData, "glob search returned %d items, above the %d supported: use a more specific pattern", len(res.Results), aqlSearchLimit)
 	}
 
-	g := glob.New(trimPatternsLeadingSlash(pattern))
+	g := glob.New(pattern)
 	seen := make(map[string]struct{}, len(res.Results))
 	enum := globEnumeration{archByPath: map[string]grpcplugins.SearchResult{}}
 	for _, r := range res.Results {
