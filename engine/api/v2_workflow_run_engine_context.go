@@ -16,6 +16,28 @@ var matrixStatusSeverity = map[sdk.V2WorkflowRunJobStatus]int{
 	sdk.V2WorkflowRunJobStatusStopped:   4,
 }
 
+// mostSevereStatus aggregates two statuses of the same matrix job, the first call starting from an unknown status
+func mostSevereStatus(current, candidate sdk.V2WorkflowRunJobStatus) sdk.V2WorkflowRunJobStatus {
+	if current == sdk.V2WorkflowRunJobStatusUnknown || matrixStatusSeverity[candidate] > matrixStatusSeverity[current] {
+		return candidate
+	}
+	return current
+}
+
+// hookJobConclusions gives the conclusion of each job for the outgoing hook event, a matrix job taking the most
+// severe status of its permutations
+func hookJobConclusions(runJobs []sdk.V2WorkflowRunJob) map[string]sdk.HookWorkflowRunEventJob {
+	statuses := make(map[string]sdk.V2WorkflowRunJobStatus)
+	for _, rj := range runJobs {
+		statuses[rj.JobID] = mostSevereStatus(statuses[rj.JobID], rj.Status)
+	}
+	jobs := make(map[string]sdk.HookWorkflowRunEventJob, len(statuses))
+	for jobID, status := range statuses {
+		jobs[jobID] = sdk.HookWorkflowRunEventJob{Conclusion: string(status)}
+	}
+	return jobs
+}
+
 func computeExistingRunJobContexts(ctx context.Context, runJobs []sdk.V2WorkflowRunJob, runResults []sdk.V2WorkflowRunResult) (sdk.JobsResultContext, sdk.JobsGateContext) {
 	runResultMap := make(map[string][]sdk.V2WorkflowRunResult)
 	for _, rr := range runResults {
@@ -131,9 +153,7 @@ nextjob:
 				outputs[outputK] = outputV
 			}
 
-			if finalStatus == sdk.V2WorkflowRunJobStatusUnknown || matrixStatusSeverity[rj.Result] > matrixStatusSeverity[finalStatus] {
-				finalStatus = rj.Result
-			}
+			finalStatus = mostSevereStatus(finalStatus, rj.Result)
 		}
 		result := sdk.JobResultContext{
 			Result:  finalStatus,

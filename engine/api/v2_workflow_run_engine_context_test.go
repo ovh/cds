@@ -38,3 +38,16 @@ func TestComputeExistingRunJobContexts_MatrixStatusIsOrderIndependent(t *testing
 		})
 	}
 }
+
+// The outgoing hook event carries one conclusion per job, the most severe one for a matrix job.
+func TestHookJobConclusions_MatrixUsesMostSevereStatus(t *testing.T) {
+	runJobs := []sdk.V2WorkflowRunJob{
+		{JobID: "build", Matrix: sdk.JobMatrix{"os": "linux"}, Status: sdk.V2WorkflowRunJobStatusSuccess},
+		{JobID: "build", Matrix: sdk.JobMatrix{"os": "windows"}, Status: sdk.V2WorkflowRunJobStatusFail},
+		{JobID: "lint", Status: sdk.V2WorkflowRunJobStatusSuccess},
+	}
+	jobs := hookJobConclusions(runJobs)
+	require.Len(t, jobs, 2)
+	require.Equal(t, string(sdk.V2WorkflowRunJobStatusFail), jobs["build"].Conclusion)
+	require.Equal(t, string(sdk.V2WorkflowRunJobStatusSuccess), jobs["lint"].Conclusion)
+}
