@@ -57,7 +57,7 @@ workflows:
     all_workflows: true
     project: %s
 variablesets:
-  - role: manage
+  - role: manage-item
     all_users: true
     all_variablesets: true
     project: %s	
