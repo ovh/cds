@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ovh/cds/engine/api/entity"
 	"github.com/ovh/cds/engine/api/rbac"
 	"github.com/ovh/cds/engine/api/region"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -266,6 +267,38 @@ func TestMatrixImplicitConcurrency_BranchesAreIndependent(t *testing.T) {
 	assert.Equal(t, "matrix/test/feature", featureDB.WorkflowData.Workflow.Concurrencies[0].Name)
 }
 
+// Without configuration, a matrix job runs up to 20 permutations in parallel and the rule applies above
+func TestMatrixImplicitConcurrency_DefaultConfig(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.workflowRunTriggerChan = make(chan sdk.V2WorkflowRunEnqueue, 10)
+	require.Equal(t, int64(defaultMatrixParallelism), api.matrixParallelism().Default)
+	env := newMatrixTestEnv(t, api, db)
+	nb := int(defaultMatrixParallelism)
+
+	atDefault := insertMatrixRun(t, db, env, 1, "master", nb, sdk.V2Job{}, nil)
+	triggerRun(t, api, env, atDefault)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: nb}, countJobStatuses(t, api, atDefault))
+	atDefaultDB, err := workflow_v2.LoadRunByID(context.TODO(), db, atDefault.ID)
+	require.NoError(t, err)
+	assert.Empty(t, atDefaultDB.WorkflowData.Workflow.Concurrencies)
+	infos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, atDefault.ID)
+	require.NoError(t, err)
+	assert.Empty(t, infos)
+
+	aboveDefault := insertMatrixRun(t, db, env, 2, "feature", nb+1, sdk.V2Job{}, nil)
+	triggerRun(t, api, env, aboveDefault)
+	triggerRun(t, api, env, aboveDefault)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: nb, sdk.V2WorkflowRunJobStatusBlocked: 1}, countJobStatuses(t, api, aboveDefault))
+	aboveDefaultDB, err := workflow_v2.LoadRunByID(context.TODO(), db, aboveDefault.ID)
+	require.NoError(t, err)
+	require.Len(t, aboveDefaultDB.WorkflowData.Workflow.Concurrencies, 1)
+	assert.Equal(t, sdk.WorkflowConcurrency{Name: "matrix/test/feature", Pool: defaultMatrixParallelism, Order: sdk.ConcurrencyOrderOldestFirst}, aboveDefaultDB.WorkflowData.Workflow.Concurrencies[0])
+	infos, err = workflow_v2.LoadRunInfosByRunID(context.TODO(), db, aboveDefault.ID)
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
+	assert.Equal(t, "Job test: 21 permutations, CDS limits it to 20 jobs in parallel", infos[0].Message)
+}
+
 // With a user concurrency, the permutations are created with its pool bounded to the maximum parallelism
 func TestMatrixMaxParallelism_AboveMax(t *testing.T) {
 	api, db, _ := newTestAPI(t)
@@ -328,4 +361,36 @@ func TestMatrixMaxParallelism_WithinMax(t *testing.T) {
 	infos, err = workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr2.ID)
 	require.NoError(t, err)
 	assert.Empty(t, infos)
+}
+
+// The analysis bounds max-parallel by the configured maximum parallelism
+func TestLint_MaxParallelBound(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj.Key, *admin)
+	initiator := sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()}
+	require.NoError(t, entity.Insert(context.TODO(), db, &sdk.Entity{ProjectKey: proj.Key, ProjectRepositoryID: repo.ID, Type: sdk.EntityTypeWorkerModel, Name: "mymodel", FilePath: ".cds/worker-models/mymodel.yml", Commit: "abcdef", Ref: "refs/heads/master", Data: "name: mymodel\ntype: docker\nosarch: linux-amd64\nspec:\n  image: debian:12", Initiator: &initiator}))
+	ef, err := NewEntityFinder(context.TODO(), db.DbMap, proj.Key, "refs/heads/master", "abcdef", *repo, *vcsServer, initiator, "")
+	require.NoError(t, err)
+
+	workflow := func(maxParallel int64) sdk.V2Workflow {
+		return sdk.V2Workflow{
+			Name: "myworkflow",
+			Jobs: map[string]sdk.V2Job{
+				"test": {
+					Strategy: &sdk.V2JobStrategy{Matrix: map[string]interface{}{"os": []interface{}{"linux", "windows"}}, MaxParallel: maxParallel},
+					RunsOn:   sdk.V2JobRunsOn{Model: ".cds/worker-models/mymodel.yml"},
+					Steps:    []sdk.ActionStep{{Run: "echo"}},
+				},
+			},
+		}
+	}
+	require.Empty(t, Lint(context.TODO(), db.DbMap, api.Cache, workflow(4), ef, proj.Key, nil, 4))
+	errs := Lint(context.TODO(), db.DbMap, api.Cache, workflow(5), ef, proj.Key, nil, 4)
+	require.Len(t, errs, 1)
+	assert.Contains(t, errs[0].Error(), "max-parallel 5 is above the maximum of 4")
+	require.Empty(t, Lint(context.TODO(), db.DbMap, api.Cache, workflow(5), ef, proj.Key, nil, 0), "no bound when unknown")
 }
