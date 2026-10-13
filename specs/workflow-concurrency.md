@@ -132,8 +132,9 @@ run, decides which of its jobs can start, and stops. The run is processed again 
 changes: a job ended, a slot was freed, a run was cancelled. Passes are requested through a queue.
 
 Only one pass at a time runs on a given run, and only one pass at a time takes a decision on a given
-rule, since the counts come from the database. A pass that finds the rule busy goes back to the queue
-and retries.
+rule, since the counts come from the database. A pass that finds the run or the rule busy is retried
+a moment later. The lock on a rule expires after one minute: a pass longer than that lets another one
+decide concurrently.
 
 The diagrams below follow one example: rule `prod` with a pool of 1, used by the `deploy` job of the
 workflow `deploy-api`. Run #11 is in progress when run #12 arrives.

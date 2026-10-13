@@ -354,6 +354,8 @@ func LoadNewestRunJobWithProjectScopedConcurrency(ctx context.Context, db gorp.S
 	return cos, nil
 }
 
+// LoadProjectConccurencyRunObjects lists the executions of a project rule in their arrival order; the arrival date is
+// exposed as last_modified
 func LoadProjectConccurencyRunObjects(ctx context.Context, db gorp.SqlExecutor, proj string, concurrencyName string) ([]sdk.ProjectConcurrencyRunObject, error) {
 	q := `WITH jobs as (
 		SELECT workflow_run_id as workflow_run_id, queued as last_modified, 'JOB' as type, workflow_name, run_number, job_id as job_name, status
@@ -364,13 +366,13 @@ func LoadProjectConccurencyRunObjects(ctx context.Context, db gorp.SqlExecutor, 
 			status = ANY($4)
 		ORDER BY last_modified ASC
 	), runs as (
-	    SELECT id as workflow_run_id, last_modified as last_modified, 'WORKFLOW' as type, workflow_name, run_number, '' as job_name, status
+	    SELECT id as workflow_run_id, started as last_modified, 'WORKFLOW' as type, workflow_name, run_number, '' as job_name, status
 		FROM v2_workflow_run
 		WHERE project_key = $1 AND 
 			concurrency->>'name' = $2 AND
 			concurrency->>'scope' = $3 AND
 			status = ANY($5)
-		ORDER BY run_number ASC, last_modified ASC
+		ORDER BY started ASC
 	) SELECT * FROM (
 	 	SELECT * FROM jobs
 		UNION

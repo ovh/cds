@@ -134,10 +134,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 	}
 	if !b {
 		log.Debug(ctx, "api.workflowRunV2Trigger> run %s is locked in cache", wrEnqueue.RunID)
-		if err := api.Cache.Enqueue(workflow_v2.WorkflowEngineKey, wrEnqueue); err != nil {
-			next()
-			return err
-		}
+		api.enqueueWorkflowRunLater(wrEnqueue, "", 0, 500*time.Millisecond)
 		next()
 		return nil
 	}
@@ -425,8 +422,7 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		}
 		if !b {
 			log.Info(ctx, "concurrency %q already locked", concurrencyKey)
-			time.Sleep(2 * time.Second)
-			api.EnqueueWorkflowRun(ctx, wrEnqueue.RunID, wrEnqueue.Initiator, run.WorkflowName, run.RunNumber)
+			api.enqueueWorkflowRunLater(wrEnqueue, run.WorkflowName, run.RunNumber, 2*time.Second)
 			return nil
 		}
 		defer api.Cache.Unlock(lockKey)
@@ -534,13 +530,15 @@ func (api *API) workflowRunV2Trigger(ctx context.Context, wrEnqueue sdk.V2Workfl
 		return err
 	}
 
-	if err := api.cancelRunObjects(ctx, tx, runObjectToCancel); err != nil {
+	runsCancelled, runJobsCancelled, err := cancelRunObjects(ctx, tx, runObjectToCancel)
+	if err != nil {
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WithStack(tx.Commit())
+		return sdk.WithStack(err)
 	}
+	api.enqueueCancelledRunObjects(ctx, runsCancelled, runJobsCancelled)
 
 	// The definition of the run changed while it was running: jobs coming from a template or a matrix
 	// replaced the job that declared them. Send the new definition so that a run view can redraw its
@@ -577,6 +575,7 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 				continue
 			}
 			if rj.Status.IsTerminated() {
+				conccurencyTriggered[concurrencyKey] = struct{}{}
 				api.manageEndConcurrency(rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, rj.WorkflowRunID, rj.ID, rj.Concurrency)
 			}
 		}
@@ -649,17 +648,16 @@ func (api *API) endWorkflowV2Trigger(ctx context.Context, run *sdk.V2WorkflowRun
 					},
 				},
 			}
-			for _, rj := range allrunJobsMap {
-				req.Request.WorkflowRun.Jobs[rj.JobID] = sdk.HookWorkflowRunEventJob{
-					Conclusion: string(rj.Status),
+			// All jobs are final here; the fallback only lacks the permutations of matrix jobs
+			runJobs, err := workflow_v2.LoadRunJobsByRunID(ctx, api.mustDB(), run.ID, run.RunAttempt)
+			if err != nil {
+				log.ErrorWithStackTrace(ctx, err)
+				for _, rj := range allrunJobsMap {
+					runJobs = append(runJobs, rj)
 				}
+				runJobs = append(runJobs, updatedRunJobs...)
 			}
-			// Update with final status
-			for _, rj := range updatedRunJobs {
-				req.Request.WorkflowRun.Jobs[rj.JobID] = sdk.HookWorkflowRunEventJob{
-					Conclusion: string(rj.Status),
-				}
-			}
+			req.Request.WorkflowRun.Jobs = hookJobConclusions(runJobs)
 			if _, _, err := services.NewClient(hookServices).DoJSONRequest(ctx, http.MethodPost, "/v2/workflow/outgoing", req, nil); err != nil {
 				log.ErrorWithStackTrace(ctx, err)
 			}
@@ -1709,8 +1707,8 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 			if !jobDef.NeedsTemplateResolution() && len(jobDef.Steps) == 0 && !jobToTrigger.Status.IsTerminated() {
 				runJob.Status = sdk.V2WorkflowRunJobStatusSuccess
 			}
-			// If the current job was a matrix, skip it
-			if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 {
+			// A matrix without any permutation leaves nothing to run; a job already skipped keeps its own reason
+			if jobDef.Strategy != nil && len(jobDef.Strategy.Matrix) > 0 && !jobToTrigger.Status.IsTerminated() {
 				runJob.Status = sdk.V2WorkflowRunJobStatusSkipped
 				runJobsInfo[runJob.ID] = sdk.V2WorkflowRunJobInfo{
 					WorkflowRunID:    runJob.WorkflowRunID,
@@ -1833,18 +1831,29 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 		}
 	}
 
-	// Jobs of this run blocked by a concurrency: release the ones that got a slot, cancel the superseded ones
+	// Jobs of this run blocked by a concurrency: release the ones that got a slot, cancel the superseded ones.
+	// Nothing is written meanwhile, so the objects to release are computed once per concurrency.
+	unlockedByConcurrency := make(map[string][]workflow_v2.ConcurrencyObject)
 	for _, rj := range existingRunJobs {
 		if rj.Concurrency == nil || rj.Status != sdk.StatusBlocked {
 			continue
 		}
-		objsToUnlocked, objsToCancelled, err := retrieveRunObjectsToUnLocked(ctx, db, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, *rj.Concurrency)
-		if err != nil {
-			return nil, nil, nil, nil, false, err
+		concurrencyKey := getConcurrencyUniqueKey(*rj.Concurrency, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName)
+		objsToUnlocked, has := unlockedByConcurrency[concurrencyKey]
+		if !has {
+			var objsToCancelled []workflow_v2.ConcurrencyObject
+			var err error
+			objsToUnlocked, objsToCancelled, err = retrieveRunObjectsToUnLocked(ctx, db, rj.ProjectKey, rj.VCSServer, rj.Repository, rj.WorkflowName, *rj.Concurrency)
+			if err != nil {
+				return nil, nil, nil, nil, false, err
+			}
+			unlockedByConcurrency[concurrencyKey] = objsToUnlocked
+			for _, runObject := range objsToCancelled {
+				runObjectsToCancelled[runObject.ID] = runObject
+			}
 		}
 		for _, rjUnlocked := range objsToUnlocked {
 			if rj.ID == rjUnlocked.ID {
-
 				runJobsInfo[rj.ID] = sdk.V2WorkflowRunJobInfo{
 					WorkflowRunID:    rj.WorkflowRunID,
 					WorkflowRunJobID: rj.ID,
@@ -1857,10 +1866,6 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				runJobs = append(runJobs, rj)
 			}
 		}
-		for _, runObject := range objsToCancelled {
-			runObjectsToCancelled[runObject.ID] = runObject
-		}
-
 	}
 
 	return runJobs, runObjectsToCancelled, runJobsInfo, nil, hasToUpdateRun, nil
@@ -3101,6 +3106,14 @@ func (api *API) EnqueueWorkflowRun(ctx context.Context, runID string, initiator 
 	api.enqueueWorkflowRun(ctx, enqueueRequest, workflowName, runNumber)
 }
 
+// enqueueWorkflowRunLater requests an engine pass after a delay, without holding an engine goroutine meanwhile
+func (api *API) enqueueWorkflowRunLater(request sdk.V2WorkflowRunEnqueue, name string, runNumber int64, delay time.Duration) {
+	api.GoRoutines.Exec(context.Background(), "enqueueWorkflowRunLater."+request.RunID, func(ctx context.Context) {
+		time.Sleep(delay)
+		api.enqueueWorkflowRun(ctx, request, name, runNumber)
+	})
+}
+
 func (api *API) enqueueWorkflowRun(ctx context.Context, request sdk.V2WorkflowRunEnqueue, name string, runNumber int64) {
 	select {
 	case api.workflowRunTriggerChan <- request:
@@ -3123,8 +3136,7 @@ func (api *API) workflowRunV2TriggerUnlocking(ctx context.Context, run *sdk.V2Wo
 	}
 	if !b {
 		log.Info(ctx, "concurrency %q already locked", concurrencyKey)
-		time.Sleep(2 * time.Second)
-		api.EnqueueWorkflowRun(ctx, wrEnqueue.RunID, wrEnqueue.Initiator, run.WorkflowName, run.RunNumber)
+		api.enqueueWorkflowRunLater(wrEnqueue, run.WorkflowName, run.RunNumber, 2*time.Second)
 		return nil
 	}
 	defer api.Cache.Unlock(lockKey)

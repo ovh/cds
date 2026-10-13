@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -5142,4 +5143,62 @@ func TestSynchronizeRunResultsReadInfoOfArtifactMissingFromSearch(t *testing.T) 
 
 	require.NoError(t, api.synchronizeRunResults(context.TODO(), db, wr.ID))
 	require.Equal(t, "from-storage", (*signed)["sha256"])
+}
+
+// A matrix job skipped by its condition keeps that reason; only a matrix without permutation reports an empty matrix.
+func TestWorkflowTrigger_SkippedMatrixJobHasNoEmptyMatrixWarning(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+	initiator := &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator(), IsAdminWithMFA: true}
+
+	wr := sdk.V2WorkflowRun{
+		ProjectKey:   proj.Key,
+		VCSServerID:  vcsServer.ID,
+		VCSServer:    vcsServer.Name,
+		RepositoryID: repo.ID,
+		Repository:   repo.Name,
+		WorkflowName: "myworkflow",
+		WorkflowSha:  "abcdef",
+		WorkflowRef:  "refs/heads/master",
+		RunNumber:    1,
+		Status:       sdk.V2WorkflowRunStatusBuilding,
+		Initiator:    initiator,
+		Contexts:     sdk.WorkflowRunContext{Git: sdk.GitContext{Ref: "refs/heads/master"}},
+		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{
+			Name: "myworkflow",
+			Jobs: map[string]sdk.V2Job{
+				"skipped": {
+					If:       "${{ git.ref == 'refs/heads/other' }}",
+					Strategy: &sdk.V2JobStrategy{Matrix: map[string]interface{}{"os": []string{"linux", "windows"}}},
+					Steps:    []sdk.ActionStep{{Run: "echo skipped"}},
+				},
+				"empty": {
+					Strategy: &sdk.V2JobStrategy{Matrix: map[string]interface{}{"os": []string{}}},
+					Steps:    []sdk.ActionStep{{Run: "echo empty"}},
+				},
+			},
+		}},
+	}
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
+	require.NoError(t, api.workflowRunV2Trigger(context.TODO(), sdk.V2WorkflowRunEnqueue{RunID: wr.ID, Initiator: *initiator}))
+
+	runJobs, err := workflow_v2.LoadRunJobsByRunID(context.TODO(), db, wr.ID, wr.RunAttempt)
+	require.NoError(t, err)
+	require.Len(t, runJobs, 2)
+	for _, rj := range runJobs {
+		require.Equal(t, sdk.V2WorkflowRunJobStatusSkipped, rj.Status, rj.JobID)
+		infos, err := workflow_v2.LoadRunJobInfosByRunJobID(context.TODO(), db, rj.ID)
+		require.NoError(t, err)
+		var emptyMatrix bool
+		for _, info := range infos {
+			if strings.Contains(info.Message, "empty matrix") {
+				emptyMatrix = true
+			}
+		}
+		require.Equal(t, rj.JobID == "empty", emptyMatrix, "job %s", rj.JobID)
+	}
 }
