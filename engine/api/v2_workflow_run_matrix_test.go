@@ -75,7 +75,10 @@ func insertMatrixRun(t *testing.T, db *test.FakeTransaction, env matrixTestEnv, 
 	for i := 0; i < nbPermutations; i++ {
 		values = append(values, strconv.Itoa(i))
 	}
-	job.Strategy = &sdk.V2JobStrategy{Matrix: map[string]interface{}{"n": values}}
+	if job.Strategy == nil {
+		job.Strategy = &sdk.V2JobStrategy{}
+	}
+	job.Strategy.Matrix = map[string]interface{}{"n": values}
 	job.Steps = []sdk.ActionStep{{Run: "echo test"}}
 
 	wr := sdk.V2WorkflowRun{
@@ -297,6 +300,69 @@ func TestMatrixImplicitConcurrency_DefaultConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, infos, 1)
 	assert.Equal(t, "Job test: 21 permutations, CDS limits it to 20 jobs in parallel", infos[0].Message)
+}
+
+// max-parallel replaces the default parallelism as the threshold and the pool of the implicit rule
+func TestMatrixMaxParallel_AbovePermutations(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
+	api.Config.WorkflowV2.MatrixMaxParallelism = 6
+	env := newMatrixTestEnv(t, api, db)
+	wr := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{Strategy: &sdk.V2JobStrategy{MaxParallel: 4}}, nil)
+
+	triggerRun(t, api, env, wr)
+	triggerRun(t, api, env, wr)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 4, sdk.V2WorkflowRunJobStatusBlocked: 1}, countJobStatuses(t, api, wr))
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Len(t, wrDB.WorkflowData.Workflow.Concurrencies, 1)
+	assert.Equal(t, sdk.WorkflowConcurrency{Name: "matrix/test/master", Pool: 4, Order: sdk.ConcurrencyOrderOldestFirst}, wrDB.WorkflowData.Workflow.Concurrencies[0])
+	assert.Equal(t, "matrix/test/master", wrDB.WorkflowData.Workflow.Jobs["test"].Concurrency)
+	infos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
+	assert.Equal(t, "Job test: 5 permutations, limited to 4 jobs in parallel (max-parallel)", infos[0].Message)
+	assert.Equal(t, sdk.WorkflowRunInfoLevelInfo, infos[0].Level)
+}
+
+// A max-parallel covering the permutations gives no rule, even above the default parallelism
+func TestMatrixMaxParallel_CoversPermutations(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
+	env := newMatrixTestEnv(t, api, db)
+	wr := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{Strategy: &sdk.V2JobStrategy{MaxParallel: 5}}, nil)
+
+	triggerRun(t, api, env, wr)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 5}, countJobStatuses(t, api, wr))
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	assert.Empty(t, wrDB.WorkflowData.Workflow.Concurrencies)
+	assert.Empty(t, wrDB.WorkflowData.Workflow.Jobs["test"].Concurrency)
+	infos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	assert.Empty(t, infos)
+}
+
+// A max-parallel above the maximum parallelism, as a template may carry, is bounded to it
+func TestMatrixMaxParallel_AboveMax(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	api.Config.WorkflowV2.MatrixDefaultParallelism = 3
+	api.Config.WorkflowV2.MatrixMaxParallelism = 4
+	env := newMatrixTestEnv(t, api, db)
+	wr := insertMatrixRun(t, db, env, 1, "master", 5, sdk.V2Job{Strategy: &sdk.V2JobStrategy{MaxParallel: 100}}, nil)
+
+	triggerRun(t, api, env, wr)
+	triggerRun(t, api, env, wr)
+	assert.Equal(t, map[sdk.V2WorkflowRunJobStatus]int{sdk.V2WorkflowRunJobStatusWaiting: 4, sdk.V2WorkflowRunJobStatusBlocked: 1}, countJobStatuses(t, api, wr))
+	wrDB, err := workflow_v2.LoadRunByID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Len(t, wrDB.WorkflowData.Workflow.Concurrencies, 1)
+	assert.Equal(t, int64(4), wrDB.WorkflowData.Workflow.Concurrencies[0].Pool)
+	infos, err := workflow_v2.LoadRunInfosByRunID(context.TODO(), db, wr.ID)
+	require.NoError(t, err)
+	require.Len(t, infos, 1)
+	assert.Equal(t, "Job test: 5 permutations, max-parallel 100 is above the maximum, CDS limits it to 4 jobs in parallel", infos[0].Message)
+	assert.Equal(t, sdk.WorkflowRunInfoLevelWarning, infos[0].Level)
 }
 
 // With a user concurrency, the permutations are created with its pool bounded to the maximum parallelism

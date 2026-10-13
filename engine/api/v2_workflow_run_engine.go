@@ -1823,7 +1823,7 @@ func prepareRunJobs(ctx context.Context, db *gorp.DbMap, store cache.Store, proj
 				allVariableSets: allVariableSets,
 			}
 
-			if info := limitMatrixParallelism(run, jobID, jobDef, len(matrixPermutation), parallelism.Default); info != nil {
+			if info := limitMatrixParallelism(run, jobID, jobDef, len(matrixPermutation), parallelism); info != nil {
 				runInfos = append(runInfos, *info)
 				hasToUpdateRun = true
 				reEnqueue = true

@@ -37,10 +37,26 @@ func (api *API) matrixParallelism() matrixParallelism {
 }
 
 // limitMatrixParallelism gives a matrix job without concurrency an implicit rule, scoped to the workflow and the git
-// ref name, when it has more permutations than the default parallelism. The rule is written in the run definition so
-// that the next engine pass handles the job like any job with a concurrency. It returns the run info to record, or nil.
-func limitMatrixParallelism(run *sdk.V2WorkflowRun, jobID string, jobDef sdk.V2Job, nbPermutations int, defaultParallelism int64) *sdk.V2WorkflowRunInfo {
-	if jobDef.NeedsTemplateResolution() || jobDef.Concurrency != "" || int64(nbPermutations) <= defaultParallelism {
+// ref name, when it has more permutations than its parallelism: the max-parallel of its strategy bounded by the
+// maximum, or the default. The rule is written in the run definition so that the next engine pass handles the job like
+// any job with a concurrency. It returns the run info to record, or nil.
+func limitMatrixParallelism(run *sdk.V2WorkflowRun, jobID string, jobDef sdk.V2Job, nbPermutations int, parallelism matrixParallelism) *sdk.V2WorkflowRunInfo {
+	if jobDef.NeedsTemplateResolution() || jobDef.Concurrency != "" {
+		return nil
+	}
+	limit := parallelism.Default
+	level := sdk.WorkflowRunInfoLevelWarning
+	message := fmt.Sprintf("Job %s: %d permutations, CDS limits it to %d jobs in parallel", jobID, nbPermutations, limit)
+	if jobDef.Strategy != nil && jobDef.Strategy.MaxParallel > 0 {
+		limit = min(jobDef.Strategy.MaxParallel, parallelism.Max)
+		level = sdk.WorkflowRunInfoLevelInfo
+		message = fmt.Sprintf("Job %s: %d permutations, limited to %d jobs in parallel (max-parallel)", jobID, nbPermutations, limit)
+		if jobDef.Strategy.MaxParallel > limit {
+			level = sdk.WorkflowRunInfoLevelWarning
+			message = fmt.Sprintf("Job %s: %d permutations, max-parallel %d is above the maximum, CDS limits it to %d jobs in parallel", jobID, nbPermutations, jobDef.Strategy.MaxParallel, limit)
+		}
+	}
+	if int64(nbPermutations) <= limit {
 		return nil
 	}
 	ref := run.Contexts.Git.RefName
@@ -59,7 +75,7 @@ func limitMatrixParallelism(run *sdk.V2WorkflowRun, jobID string, jobDef sdk.V2J
 	if !found {
 		run.WorkflowData.Workflow.Concurrencies = append(run.WorkflowData.Workflow.Concurrencies, sdk.WorkflowConcurrency{
 			Name:  name,
-			Pool:  defaultParallelism,
+			Pool:  limit,
 			Order: sdk.ConcurrencyOrderOldestFirst,
 		})
 	}
@@ -70,8 +86,8 @@ func limitMatrixParallelism(run *sdk.V2WorkflowRun, jobID string, jobDef sdk.V2J
 	return &sdk.V2WorkflowRunInfo{
 		WorkflowRunID: run.ID,
 		IssuedAt:      time.Now(),
-		Level:         sdk.WorkflowRunInfoLevelWarning,
-		Message:       fmt.Sprintf("Job %s: %d permutations, CDS limits it to %d jobs in parallel", jobID, nbPermutations, defaultParallelism),
+		Level:         level,
+		Message:       message,
 	}
 }
 

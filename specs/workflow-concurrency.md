@@ -141,6 +141,13 @@ permutations than the default parallelism gets no rule.
 
 A run info reports the limit: `Job build: 100 permutations, CDS limits it to 20 jobs in parallel`.
 
+`strategy.max-parallel` on the job replaces the default parallelism, as the threshold and as the
+pool of the rule: `max-parallel: 25` on 64 permutations gives a pool of 25, on 25 permutations gives
+no rule. It cannot exceed the maximum parallelism: the lint rejects it on a workflow, the engine
+bounds it on a job coming from a template. It cannot be combined with `concurrency`, the lint
+rejects both on the same job. The run info then reads `Job build: 64 permutations, limited to 25
+jobs in parallel (max-parallel)`.
+
 ### 6.2 Maximum parallelism
 
 A matrix job using a concurrency keeps it. When it has more permutations than the maximum
