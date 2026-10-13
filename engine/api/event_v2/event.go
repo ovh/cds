@@ -133,7 +133,8 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		return nil
 	}
 
-	if event.Type != sdk.EventRunEnded && event.Type != sdk.EventRunBuilding {
+	// A restart puts the run back to building: the VCS must be reset from the final status of the previous attempt
+	if event.Type != sdk.EventRunEnded && event.Type != sdk.EventRunBuilding && event.Type != sdk.EventRunRestart {
 		return nil
 	}
 
@@ -143,7 +144,7 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		return sdk.WrapError(err, "cannot read payload for type %q", event.Type)
 	}
 
-	// always send build status on workflow End
+	// send the build status on run start, restart and end
 	vcsClient, err := repositoriesmanager.AuthorizedClient(ctx, db, store, event.ProjectKey, event.VCSName)
 	if err != nil {
 		return sdk.WrapError(err, "can't get AuthorizedClient for %v/%v", event.ProjectKey, event.VCSName)
@@ -165,7 +166,7 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 		Description:        description,
 		URLCDS:             fmt.Sprintf("%s/project/%s/run/%s", cdsUIURL, event.ProjectKey, event.WorkflowRunID),
 		Context:            fmt.Sprintf("%s-%s", event.ProjectKey, run.WorkflowName),
-		Status:             event.Status,
+		Status:             vcsBuildStatus(run.Status),
 		RepositoryFullname: event.RepositoryOrigin,
 		GitHash:            run.Contexts.Git.Sha,
 	}
@@ -206,6 +207,15 @@ func workflowNotifications(ctx context.Context, db *gorp.DbMap, store cache.Stor
 	}
 
 	return nil
+}
+
+// vcsBuildStatus maps a run status to the build status sent to the VCS: a run that is not terminated yet
+// (crafting, blocked by its concurrency, building) is reported as building, whatever its internal state.
+func vcsBuildStatus(status sdk.V2WorkflowRunStatus) string {
+	if !status.IsTerminated() {
+		return sdk.StatusBuilding
+	}
+	return string(status)
 }
 
 func sendVCSPullRequestComment(ctx context.Context, db *gorp.DbMap, vcsClient sdk.VCSAuthorizedClientService, run sdk.EventWorkflowRunPayload, comment string) error {
