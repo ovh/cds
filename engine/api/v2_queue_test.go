@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -16,14 +17,60 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow_v2"
+	"github.com/ovh/cds/engine/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/rockbears/yaml"
 	"github.com/stretchr/testify/require"
 )
 
+// runJobEventsRecorder keeps the run job events published through the cache; everything else reaches the store.
+type runJobEventsRecorder struct {
+	cache.Store
+	mu     sync.Mutex
+	events []sdk.WorkflowRunJobEvent
+}
+
+func (r *runJobEventsRecorder) Enqueue(queueName string, value interface{}) error {
+	if e, ok := value.(sdk.WorkflowRunJobEvent); ok {
+		r.mu.Lock()
+		r.events = append(r.events, e)
+		r.mu.Unlock()
+		return nil
+	}
+	return r.Store.Enqueue(queueName, value)
+}
+
+// waitFor blocks until an event of the given type is published for the run job; the handlers publish after answering.
+func (r *runJobEventsRecorder) waitFor(t *testing.T, runJobID string, eventType sdk.EventType) {
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		if r.count(runJobID, eventType) > 0 {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Fatalf("no %s event published for run job %s", eventType, runJobID)
+}
+
+func (r *runJobEventsRecorder) count(runJobID string, eventType sdk.EventType) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	n := 0
+	for _, e := range r.events {
+		if e.RunJobID == runJobID && e.Type == eventType {
+			n++
+		}
+	}
+	return n
+}
+
 func TestPostHatcheryTakeAndReleaseJobRunHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 	ctx := context.TODO()
+
+	api.Config.WorkflowV2.JobSchedulingMaxErrors = 2
+	events := &runJobEventsRecorder{Store: api.Cache}
+	api.Cache = events
 
 	db.Exec("DELETE FROM rbac")
 	db.Exec("DELETE FROM region")
@@ -103,19 +150,41 @@ hatcheries:
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &jobRunResponse))
 	require.Equal(t, sdk.V2WorkflowRunJobStatusScheduling, jobRunResponse.Status)
 
-	// release
-
+	// Release: the job goes back to the queue, without the trace of its scheduling
 	uriRelease := api.Router.GetRouteV2("DELETE", api.deleteHatcheryReleaseJobRunHandler, vars)
-	test.NotEmpty(t, uri)
+	test.NotEmpty(t, uriRelease)
 	reqRelease := assets.NewJWTAuthentifiedRequest(t, jwt, "DELETE", uriRelease, nil)
 	wRelease := httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(wRelease, reqRelease)
-	require.Equal(t, 200, w.Code)
+	require.Equal(t, 204, wRelease.Code)
 
 	jobRunDB, err := workflow_v2.LoadRunJobByRunIDAndID(ctx, db, wr.ID, jobRun.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, jobRunDB.Status)
 	require.Equal(t, "", jobRunDB.HatcheryName)
+	require.Nil(t, jobRunDB.Scheduled)
+	require.Nil(t, jobRunDB.Ended)
+	events.waitFor(t, jobRun.ID, sdk.EventRunJobEnqueued)
+
+	// Take and release again: the last allowed attempt fails the job for good
+	req = assets.NewJWTAuthentifiedRequest(t, jwt, "POST", uri, nil)
+	w = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	require.Equal(t, 200, w.Code)
+
+	reqRelease = assets.NewJWTAuthentifiedRequest(t, jwt, "DELETE", uriRelease, nil)
+	wRelease = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(wRelease, reqRelease)
+	require.Equal(t, 204, wRelease.Code)
+
+	jobRunDB, err = workflow_v2.LoadRunJobByRunIDAndID(ctx, db, wr.ID, jobRun.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.V2WorkflowRunJobStatusFail, jobRunDB.Status)
+	require.Equal(t, "", jobRunDB.HatcheryName)
+	require.NotNil(t, jobRunDB.Scheduled)
+	require.NotNil(t, jobRunDB.Ended)
+	events.waitFor(t, jobRun.ID, sdk.EventRunJobEnded)
+	require.Equal(t, 1, events.count(jobRun.ID, sdk.EventRunJobEnqueued))
 }
 
 func TestPostJobResultHandler(t *testing.T) {
