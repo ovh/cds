@@ -264,6 +264,7 @@ func reEnqueueScheduledJob(ctx context.Context, store cache.Store, db *gorp.DbMa
 
 	runJob.Status = sdk.V2WorkflowRunJobStatusWaiting
 	runJob.HatcheryName = ""
+	runJob.Scheduled = nil
 
 	if err := workflow_v2.UpdateJobRun(ctx, tx, runJob); err != nil {
 		return err
