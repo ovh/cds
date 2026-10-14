@@ -27,7 +27,6 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
     validateForm: FormGroup<{
         name: FormControl<string | null>;
         description: FormControl<string | null>;
-        retention: FormControl<number | null>;
     }>;
 
     private _v2ProjectService = inject(V2ProjectService)
@@ -40,8 +39,7 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
     constructor() {
         this.validateForm = this._fb.group({
             name: this._fb.control<string | null>(null, Validators.required),
-            description: this._fb.control<string | null>(null),
-            retention: this._fb.control<number | null>(null, Validators.required)
+            description: this._fb.control<string | null>(null)
         });
     }
 
@@ -55,7 +53,6 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         this.validateForm.controls.name.setValue(this.project.name);
         this.validateForm.controls.description.setValue(this.project.description);
-        this.validateForm.controls.retention.setValue(this.project.workflow_retention);
     }
 
     async onSubmitProjectUpdate() {
@@ -77,7 +74,6 @@ export class ProjectAdvancedComponent implements OnInit, OnChanges {
                 ...this.project,
                 name: this.validateForm.value.name,
                 description: this.validateForm.value.description,
-                workflow_retention: this.validateForm.value.retention,
             }));
             this._store.dispatch(new SetCurrentProjectV2(p));
             this._messageService.success('Project updated');
