@@ -102,13 +102,13 @@ func RegisterWorker(ctx context.Context, db gorpmapper.SqlExecutorWithTx, store 
 	if spawnArgs.JobID > 0 {
 		canTakeJob := runNodeJob.ExecGroups.HasOneOf(hatcheryConsumer.GetGroupIDs()...) || hatcheryConsumer.Admin()
 		if !canTakeJob {
-			return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %q", spawnArgs.JobID)
+			return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job with id %d", spawnArgs.JobID)
 		}
 
 		if model != nil {
 			canUseModelForJob := runNodeJob.ExecGroups.HasOneOf(model.GroupID)
 			if !canUseModelForJob {
-				return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job (id: %q) with model (path: %q) for a group that is not in job's exec groups", spawnArgs.JobID, model.Path())
+				return nil, sdk.WrapError(sdk.ErrForbidden, "hatchery can't register job (id: %d) with model (path: %q) for a group that is not in job's exec groups", spawnArgs.JobID, model.Path())
 			}
 		}
 
