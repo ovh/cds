@@ -44,6 +44,10 @@ export class GraphNode {
             });
         };
         let alls = new Array<Map<string, string>>();
+        // A matrix computed by an expression has no variants until the run has interpolated it.
+        if (Object.keys(matrix ?? {}).some(k => !Array.isArray(matrix[k]))) {
+            return alls;
+        }
         generateMatrix(matrix, Object.keys(matrix), 0, new Map<string, string>(), alls);
         return alls;
     }
