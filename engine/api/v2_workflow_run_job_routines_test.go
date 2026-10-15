@@ -95,6 +95,7 @@ func TestReEnqueueScheduledJobs(t *testing.T) {
 	rjDB, err := workflow_v2.LoadRunJobByID(ctx, db, jobs[0].ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.V2WorkflowRunJobStatusWaiting, rjDB.Status)
+	require.Nil(t, rjDB.Scheduled)
 }
 
 func TestStopDeadJobs(t *testing.T) {

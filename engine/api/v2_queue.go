@@ -635,11 +635,14 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 			}
 
 			if nbHatcheryStopWarning >= api.Config.WorkflowV2.JobSchedulingMaxErrors {
+				// The job fails while being scheduled: it keeps the date of its last scheduling and ends now
+				now := time.Now()
 				jobRun.Status = sdk.V2WorkflowRunJobStatusFail
+				jobRun.Ended = &now
 
 				info := sdk.V2WorkflowRunJobInfo{
 					WorkflowRunID:    jobRun.WorkflowRunID,
-					IssuedAt:         time.Now(),
+					IssuedAt:         now,
 					Level:            sdk.WorkflowRunInfoLevelError,
 					WorkflowRunJobID: jobRun.ID,
 					Message:          "unable to start job: too many hatchery failed attempts",
@@ -647,6 +650,9 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 				if err := workflow_v2.InsertRunJobInfo(ctx, tx, &info); err != nil {
 					return err
 				}
+			} else {
+				// Back in the queue: the next hatchery that takes the job sets its own scheduling date
+				jobRun.Scheduled = nil
 			}
 
 			if err := workflow_v2.UpdateJobRun(ctx, tx, jobRun); err != nil {
@@ -668,7 +674,11 @@ func (api *API) deleteHatcheryReleaseJobRunHandler() ([]service.RbacChecker, ser
 					log.ErrorWithStackTrace(ctx, err)
 					return
 				}
-				event_v2.PublishRunJobEvent(ctx, api.Cache, sdk.EventRunJobEnqueued, *run, *jobRun)
+				eventType := sdk.EventRunJobEnqueued
+				if jobRun.Status.IsTerminated() {
+					eventType = sdk.EventRunJobEnded
+				}
+				event_v2.PublishRunJobEvent(ctx, api.Cache, eventType, *run, *jobRun)
 			})
 			return nil
 		}

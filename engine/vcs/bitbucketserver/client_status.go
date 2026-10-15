@@ -114,7 +114,7 @@ func getBitbucketStateFromStatus(status string) string {
 	switch status {
 	case sdk.StatusSuccess, sdk.StatusDisabled:
 		return successful
-	case sdk.StatusWaiting, sdk.StatusBuilding:
+	case sdk.StatusWaiting, sdk.StatusBuilding, string(sdk.V2WorkflowRunStatusBlocked), string(sdk.V2WorkflowRunStatusCrafting):
 		return inProgress
 	case sdk.StatusFail:
 		return failed
