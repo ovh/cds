@@ -59,6 +59,13 @@ func Test_crudGPGKey(t *testing.T) {
 		require.Equal(t, mykey.ID, loaded.ID)
 	}
 
+	exists, err := user.GPGKeyIDsExist(db, []string{mykey.SubKeyIDs[0]})
+	require.NoError(t, err)
+	require.True(t, exists)
+	exists, err = user.GPGKeyIDsExist(db, []string{"0000000000000000"})
+	require.NoError(t, err)
+	require.False(t, exists)
+
 	//----------- Importing the same key again (same primary and subkey IDs) is refused
 	user2, pass2 := assets.InsertLambdaUser(t, db)
 	uri2 := api.Router.GetRouteV2("POST", api.postUserGPGGKeyHandler, map[string]string{"user": user2.Username})

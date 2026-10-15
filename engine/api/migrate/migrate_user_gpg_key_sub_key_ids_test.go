@@ -45,6 +45,7 @@ func TestMigrateUserGPGKeySubKeyIDs(t *testing.T) {
 	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	ctx := context.TODO()
 	u, _ := assets.InsertLambdaUser(t, db)
+	other, _ := assets.InsertLambdaUser(t, db)
 
 	pair, err := keys.GeneratePGPKeyPair(sdk.RandomString(10), "", "test@cds")
 	require.NoError(t, err)
@@ -59,7 +60,7 @@ func TestMigrateUserGPGKeySubKeyIDs(t *testing.T) {
 	tampered := insertLegacyGPGKey(t, db, u.ID, pair2.Public)
 	pub2, err := gpg.NewPublicKeyFromPem(pair2.Public)
 	require.NoError(t, err)
-	_, err = db.Exec(`UPDATE user_gpg_key SET authentified_user_id = $1 WHERE id = $2`, sdk.UUID(), tampered.ID)
+	_, err = db.Exec(`UPDATE user_gpg_key SET authentified_user_id = $1 WHERE id = $2`, other.ID, tampered.ID)
 	require.NoError(t, err)
 
 	// Signed with the former canonical form, the row still loads but its subkey is unknown
@@ -89,18 +90,4 @@ func TestMigrateUserGPGKeySubKeyIDs(t *testing.T) {
 	loaded, err = user.LoadGPGKeyByKeyID(ctx, db, subKeyID)
 	require.NoError(t, err)
 	require.Equal(t, []string{subKeyID}, []string(loaded.SubKeyIDs))
-}
-
-func TestFirstOwnedByAnother(t *testing.T) {
-	owners := map[string]string{"A": "A", "S1": "A", "B": "B"}
-	_, collides := firstOwnedByAnother(owners, []string{"S2"}, "B")
-	require.False(t, collides)
-	_, collides = firstOwnedByAnother(owners, []string{"S1"}, "A")
-	require.False(t, collides)
-	other, collides := firstOwnedByAnother(owners, []string{"S2", "S1"}, "B")
-	require.True(t, collides)
-	require.Equal(t, "A", other)
-	other, collides = firstOwnedByAnother(owners, []string{"A"}, "B")
-	require.True(t, collides)
-	require.Equal(t, "A", other)
 }
