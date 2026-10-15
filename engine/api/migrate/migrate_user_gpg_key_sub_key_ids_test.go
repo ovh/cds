@@ -1,0 +1,91 @@
+package migrate
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/gorpmapper"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gpg"
+)
+
+// legacyGPGKeyRow writes user GPG keys signed the way versions without sub_key_ids did.
+type legacyGPGKeyRow struct {
+	sdk.UserGPGKey
+	gorpmapper.SignedEntity
+}
+
+func (g legacyGPGKeyRow) Canonical() gorpmapper.CanonicalForms {
+	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{.AuthentifiedUserID}}{{.KeyID}}{{.PublicKey}}",
+	}
+}
+
+func init() {
+	gorpmapping.Register(gorpmapping.New(legacyGPGKeyRow{}, "user_gpg_key", false, "id"))
+}
+
+func insertLegacyGPGKey(t *testing.T, db gorpmapper.SqlExecutorWithTx, userID, publicKey string) sdk.UserGPGKey {
+	pub, err := gpg.NewPublicKeyFromPem(publicKey)
+	require.NoError(t, err)
+	k := sdk.UserGPGKey{ID: sdk.UUID(), AuthentifiedUserID: userID, KeyID: pub.KeyShortID(), SubKeyIDs: sdk.StringSlice{}, PublicKey: publicKey}
+	require.NoError(t, gorpmapping.InsertAndSign(context.TODO(), db, &legacyGPGKeyRow{UserGPGKey: k}))
+	return k
+}
+
+func TestMigrateUserGPGKeySubKeyIDs(t *testing.T) {
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	ctx := context.TODO()
+	u, _ := assets.InsertLambdaUser(t, db)
+
+	pair, err := keys.GeneratePGPKeyPair(sdk.RandomString(10), "", "test@cds")
+	require.NoError(t, err)
+	k := insertLegacyGPGKey(t, db, u.ID, pair.Public)
+	pub, err := gpg.NewPublicKeyFromPem(pair.Public)
+	require.NoError(t, err)
+	subKeyID := pub.SubKeyIDs()[0]
+
+	// Signed with the former canonical form, the row still loads but its subkey is unknown
+	loaded, err := user.LoadGPGKeyByKeyID(ctx, db, k.KeyID)
+	require.NoError(t, err)
+	require.Empty(t, loaded.SubKeyIDs)
+	_, err = user.LoadGPGKeyByKeyID(ctx, db, subKeyID)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "got %v", err)
+
+	require.NoError(t, MigrateUserGPGKeySubKeyIDs(ctx, db.DbMap))
+
+	for _, id := range []string{k.KeyID, subKeyID} {
+		loaded, err = user.LoadGPGKeyByKeyID(ctx, db, id)
+		require.NoError(t, err)
+		require.Equal(t, k.ID, loaded.ID)
+	}
+	require.Equal(t, []string{subKeyID}, []string(loaded.SubKeyIDs))
+
+	// A second run changes nothing
+	require.NoError(t, MigrateUserGPGKeySubKeyIDs(ctx, db.DbMap))
+	loaded, err = user.LoadGPGKeyByKeyID(ctx, db, subKeyID)
+	require.NoError(t, err)
+	require.Equal(t, []string{subKeyID}, []string(loaded.SubKeyIDs))
+}
+
+func TestFirstOwnedByAnother(t *testing.T) {
+	owners := map[string]string{"A": "A", "S1": "A", "B": "B"}
+	_, collides := firstOwnedByAnother(owners, []string{"S2"}, "B")
+	require.False(t, collides)
+	_, collides = firstOwnedByAnother(owners, []string{"S1"}, "A")
+	require.False(t, collides)
+	other, collides := firstOwnedByAnother(owners, []string{"S2", "S1"}, "B")
+	require.True(t, collides)
+	require.Equal(t, "A", other)
+	other, collides = firstOwnedByAnother(owners, []string{"A"}, "B")
+	require.True(t, collides)
+	require.Equal(t, "A", other)
+}
