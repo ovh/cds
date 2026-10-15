@@ -98,17 +98,9 @@ func DeleteGPGKey(db gorpmapper.SqlExecutorWithTx, gpgKey sdk.UserGPGKey) error 
 	return sdk.WrapError(gorpmapping.Delete(db, &dbKey), "unable to delete key %s", gpgKey.KeyID)
 }
 
-// LoadAllGPGKeysUnverified loads every stored key without checking its signature, so that a migration can rewrite them.
-func LoadAllGPGKeysUnverified(ctx context.Context, db gorp.SqlExecutor) ([]sdk.UserGPGKey, error) {
-	var keys []dbGpgKey
-	if err := gorpmapping.GetAll(ctx, db, gorpmapping.NewQuery(`SELECT * FROM user_gpg_key ORDER BY created`), &keys); err != nil {
-		return nil, sdk.WrapError(err, "cannot get user gpg keys")
-	}
-	gpgKeys := make([]sdk.UserGPGKey, len(keys))
-	for i := range keys {
-		gpgKeys[i] = keys[i].UserGPGKey
-	}
-	return gpgKeys, nil
+// LoadAllGPGKeys loads every stored key whose signature is valid; corrupted rows are logged and left out.
+func LoadAllGPGKeys(ctx context.Context, db gorp.SqlExecutor) ([]sdk.UserGPGKey, error) {
+	return getGPGKeys(ctx, db, gorpmapping.NewQuery(`SELECT * FROM user_gpg_key ORDER BY created`))
 }
 
 // UpdateGPGKeySubKeyIDs stores the subkey IDs of a key and signs the row again.

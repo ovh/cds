@@ -53,6 +53,15 @@ func TestMigrateUserGPGKeySubKeyIDs(t *testing.T) {
 	require.NoError(t, err)
 	subKeyID := pub.SubKeyIDs()[0]
 
+	// A tampered row is neither migrated nor made loadable
+	pair2, err := keys.GeneratePGPKeyPair(sdk.RandomString(10), "", "test2@cds")
+	require.NoError(t, err)
+	tampered := insertLegacyGPGKey(t, db, u.ID, pair2.Public)
+	pub2, err := gpg.NewPublicKeyFromPem(pair2.Public)
+	require.NoError(t, err)
+	_, err = db.Exec(`UPDATE user_gpg_key SET authentified_user_id = $1 WHERE id = $2`, sdk.UUID(), tampered.ID)
+	require.NoError(t, err)
+
 	// Signed with the former canonical form, the row still loads but its subkey is unknown
 	loaded, err := user.LoadGPGKeyByKeyID(ctx, db, k.KeyID)
 	require.NoError(t, err)
@@ -68,6 +77,12 @@ func TestMigrateUserGPGKeySubKeyIDs(t *testing.T) {
 		require.Equal(t, k.ID, loaded.ID)
 	}
 	require.Equal(t, []string{subKeyID}, []string(loaded.SubKeyIDs))
+
+	_, err = user.LoadGPGKeyByKeyID(ctx, db, pub2.SubKeyIDs()[0])
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "got %v", err)
+	var subKeyIDs sdk.StringSlice
+	require.NoError(t, db.QueryRow(`SELECT sub_key_ids FROM user_gpg_key WHERE id = $1`, tampered.ID).Scan(&subKeyIDs))
+	require.Empty(t, subKeyIDs)
 
 	// A second run changes nothing
 	require.NoError(t, MigrateUserGPGKeySubKeyIDs(ctx, db.DbMap))

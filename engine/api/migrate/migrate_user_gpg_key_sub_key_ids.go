@@ -12,9 +12,10 @@ import (
 )
 
 // MigrateUserGPGKeySubKeyIDs stores the subkey IDs of the user GPG keys imported before they were recorded.
+// Rows failing their signature are left untouched, so that re-signing never validates a tampered key.
 // A subkey ID already used by another key is left out, so that a commit never matches two users.
 func MigrateUserGPGKeySubKeyIDs(ctx context.Context, db *gorp.DbMap) error {
-	keys, err := user.LoadAllGPGKeysUnverified(ctx, db)
+	keys, err := user.LoadAllGPGKeys(ctx, db)
 	if err != nil {
 		return err
 	}
