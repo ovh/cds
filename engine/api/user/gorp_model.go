@@ -36,8 +36,9 @@ type dbGpgKey struct {
 }
 
 func (g dbGpgKey) Canonical() gorpmapper.CanonicalForms {
-	_ = []interface{}{g.ID, g.AuthentifiedUserID, g.KeyID, g.PublicKey} // Checks that fields exists at compilation
+	_ = []interface{}{g.ID, g.AuthentifiedUserID, g.KeyID, g.SubKeyIDs, g.PublicKey} // Checks that fields exists at compilation
 	return []gorpmapper.CanonicalForm{
+		"{{printf .ID}}{{.AuthentifiedUserID}}{{.KeyID}}{{.SubKeyIDs}}{{.PublicKey}}",
 		"{{printf .ID}}{{.AuthentifiedUserID}}{{.KeyID}}{{.PublicKey}}",
 		"{{print .ID}}{{.AuthentifiedUserID}}{{.KeyID}}{{.PublicKey}}",
 	}

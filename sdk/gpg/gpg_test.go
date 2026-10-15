@@ -3,6 +3,7 @@ package gpg
 import (
 	"testing"
 
+	"github.com/keybase/go-crypto/openpgp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -93,4 +94,15 @@ func TestGetKeyIdFromSignature_ValidSignature(t *testing.T) {
 	// keyId, err := GetKeyIdFromSignature(realSignature)
 	// require.NoError(t, err)
 	// assert.Regexp(t, "^[0-9A-F]{16}$", keyId)
+}
+
+func TestPublicKey_SubKeyIDs(t *testing.T) {
+	e, err := openpgp.NewEntity("test", "", "test@cds", nil)
+	require.NoError(t, err)
+	require.Len(t, e.Subkeys, 1)
+
+	ids := PublicKey{Entity: e}.SubKeyIDs()
+	require.Equal(t, []string{e.Subkeys[0].PublicKey.KeyIdString()}, ids)
+	require.Len(t, ids[0], 16)
+	require.NotEqual(t, PublicKey{Entity: e}.KeyShortID(), ids[0])
 }
