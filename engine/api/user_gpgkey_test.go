@@ -59,6 +59,15 @@ func Test_crudGPGKey(t *testing.T) {
 		require.Equal(t, mykey.ID, loaded.ID)
 	}
 
+	//----------- Importing the same key again (same primary and subkey IDs) is refused
+	user2, pass2 := assets.InsertLambdaUser(t, db)
+	uri2 := api.Router.GetRouteV2("POST", api.postUserGPGGKeyHandler, map[string]string{"user": user2.Username})
+	req2 := assets.NewAuthentifiedRequest(t, user2, pass2, "POST", uri2, nil)
+	req2.Body = io.NopCloser(bytes.NewReader(bts))
+	w2 := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w2, req2)
+	require.Equal(t, 409, w2.Code)
+
 	//----------- List keys
 
 	uriGetAll := api.Router.GetRouteV2("GET", api.getUserGPGKeysHandler, vars)

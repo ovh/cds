@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -73,6 +74,16 @@ func LoadGPGKeyByKeyID(ctx context.Context, db gorp.SqlExecutor, keyID string) (
     WHERE key_id = $1 OR sub_key_ids @> to_jsonb($1::text)
   `).Args(keyID)
 	return getGPGKey(ctx, db, query)
+}
+
+// GPGKeyIDsExist tells whether any of the given key IDs is already the primary or a subkey ID of a stored key.
+func GPGKeyIDsExist(db gorp.SqlExecutor, keyIDs []string) (bool, error) {
+	n, err := db.SelectInt(`
+    SELECT COUNT(*)
+    FROM user_gpg_key
+    WHERE key_id = ANY($1) OR jsonb_exists_any(sub_key_ids, $1)
+  `, pq.Array(keyIDs))
+	return n > 0, sdk.WrapError(err, "cannot check gpg key ids")
 }
 
 func InsertGPGKey(ctx context.Context, db gorpmapper.SqlExecutorWithTx, gpgKey *sdk.UserGPGKey) error {

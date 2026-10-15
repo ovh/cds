@@ -72,6 +72,14 @@ func (api *API) postUserGPGGKeyHandler() ([]service.RbacChecker, service.Handler
 			gpgKey.KeyID = publicKey.KeyShortID()
 			gpgKey.SubKeyIDs = publicKey.SubKeyIDs()
 
+			exists, err := user.GPGKeyIDsExist(api.mustDB(), append([]string{gpgKey.KeyID}, gpgKey.SubKeyIDs...))
+			if err != nil {
+				return err
+			}
+			if exists {
+				return sdk.NewErrorFrom(sdk.ErrConflictData, "gpg key or one of its subkeys is already registered")
+			}
+
 			tx, err := api.mustDB().Begin()
 			if err != nil {
 				return err
