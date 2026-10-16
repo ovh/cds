@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http/httptest"
@@ -13,7 +14,9 @@ import (
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/gpg"
 )
 
 func Test_crudGPGKey(t *testing.T) {
@@ -44,6 +47,33 @@ func Test_crudGPGKey(t *testing.T) {
 	var mykey sdk.UserGPGKey
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &mykey))
 	require.True(t, strings.HasSuffix(mykey.KeyID, k.KeyID))
+
+	//----------- Load by primary and subkey IDs
+	pub, err := gpg.NewPublicKeyFromPem(k.Public)
+	require.NoError(t, err)
+	require.Len(t, mykey.SubKeyIDs, 1)
+	require.Equal(t, pub.SubKeyIDs(), []string(mykey.SubKeyIDs))
+	for _, id := range []string{mykey.KeyID, mykey.SubKeyIDs[0]} {
+		loaded, err := user.LoadGPGKeyByKeyID(context.TODO(), db, id)
+		require.NoError(t, err)
+		require.Equal(t, mykey.ID, loaded.ID)
+	}
+
+	exists, err := user.GPGKeyIDsExist(db, []string{mykey.SubKeyIDs[0]})
+	require.NoError(t, err)
+	require.True(t, exists)
+	exists, err = user.GPGKeyIDsExist(db, []string{"0000000000000000"})
+	require.NoError(t, err)
+	require.False(t, exists)
+
+	//----------- Importing the same key again (same primary and subkey IDs) is refused
+	user2, pass2 := assets.InsertLambdaUser(t, db)
+	uri2 := api.Router.GetRouteV2("POST", api.postUserGPGGKeyHandler, map[string]string{"user": user2.Username})
+	req2 := assets.NewAuthentifiedRequest(t, user2, pass2, "POST", uri2, nil)
+	req2.Body = io.NopCloser(bytes.NewReader(bts))
+	w2 := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w2, req2)
+	require.Equal(t, 409, w2.Code)
 
 	//----------- List keys
 
