@@ -172,10 +172,12 @@ testcases:
             # one glob step registering the two glob-*.deb files above; the timestamp keeps the
             # pattern from matching artifacts of previous runs in the shared -debian repository.
             # The leading "/" is accepted as in a single path: with if-no-files-found: error the
-            # job fails if the pattern is not trimmed before matching.
+            # job fails if the pattern is not trimmed before matching. Two patterns, a class and
+            # a "?": the plugin narrows its AQL search to them ($or of path+name objects, "?" in
+            # $match), a wrong translation leaves a file out and the debian count below fails.
             - uses: actions/addRunResult
               with:
-                path: /pool/glob-${{ steps.name.outputs.GLOBTS }}-*.deb
+                path: "/pool/glob-${{ steps.name.outputs.GLOBTS }}-[a].deb /pool/glob-${{ steps.name.outputs.GLOBTS }}-?.deb"
                 type: debian
                 if-no-files-found: error
             # A pattern matching nothing, if-no-files-found left to its default: the step warns
@@ -224,8 +226,10 @@ testcases:
             # three docker images pushed with skopeo into <prefix>-docker, registered by a single
             # glob step. A docker pattern is an image reference: the tag is matched after the ":".
             # The <ts> in the image name keeps the pattern from matching images of previous runs
-            # in the shared -docker repository, the globns/ folder keeps the AQL search narrow.
-            # The third one is copied with --all: a manifest list, to cover the multi-arch path.
+            # in the shared -docker repository, and the whole pattern narrows the AQL search,
+            # image and tag wildcards included. The third one is copied with --all: a manifest
+            # list, to cover the multi-arch path: its per-architecture manifests live in digest
+            # folders outside the pattern and are fetched one by one.
             - id: dockerpush
               run: |
                 set -e

@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"regexp"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/ovh/cds/contrib/grpcplugins"
@@ -77,23 +79,89 @@ func TestGlobSupportedType(t *testing.T) {
 	require.True(t, globSupportedType(sdk.V2WorkflowRunResultTypeConan))
 }
 
-func TestStaticPrefix(t *testing.T) {
-	require.Equal(t, "pool", staticPrefix("pool/*.deb"))
-	require.Equal(t, "myns/app", staticPrefix("myns/app/*"))
-	require.Equal(t, "", staticPrefix("*/*"))
-	require.Equal(t, "", staticPrefix("**"))
-	require.Equal(t, "mirror", staticPrefix("mirror/**"))
-	// multi-patterns: common folder prefix of positive patterns
-	require.Equal(t, "pool", staticPrefix("pool/a*.deb pool/b*.deb"))
-	require.Equal(t, "", staticPrefix("pool/*.deb dist/*.deb"))
-	// exclusion patterns don't widen the search
-	require.Equal(t, "mirror", staticPrefix("mirror/** !**/sha256:*"))
-	// wildcard inside a segment: the segment is not part of the prefix
-	require.Equal(t, "pool", staticPrefix("pool/sub*/file.deb"))
-	// docker patterns are image references, staticPrefix only splits on "/": see
-	// TestDockerPatternToPath for the rewrite that puts the image folder in the prefix
-	require.Equal(t, "ovhcom", staticPrefix("ovhcom/*:*-1234"))
-	require.Equal(t, "ovhcom", staticPrefix("ovhcom/venom:*"))
+// TestAqlWildcard locks the glob to AQL $match conversion. The AQL only has to contain the
+// glob: a wildcard narrower than the glob silently drops artifacts, the matcher never sees
+// them.
+func TestAqlWildcard(t *testing.T) {
+	require.Equal(t, "pool/*.deb", aqlWildcard("pool/*.deb"))
+	require.Equal(t, "myorg/myimage-*/1234-*", aqlWildcard("myorg/myimage-*/1234-*"))
+	require.Equal(t, "foo?.txt", aqlWildcard("foo?.txt"))
+	// "**" is the AQL "*", which spans "/"
+	require.Equal(t, "*", aqlWildcard("**"))
+	require.Equal(t, "mirror*", aqlWildcard("mirror/**"))
+	require.Equal(t, "*.zip", aqlWildcard("**/*.zip"))
+	// the "/" around a "**" go with it: "a/**/b" matches "a/b", the AQL "a/*/b" would not
+	require.Equal(t, "a*b", aqlWildcard("a/**/b"))
+	// a class is one character
+	require.Equal(t, "pool/?*.deb", aqlWildcard("pool/[ab]*.deb"))
+	require.Equal(t, "fo??.txt", aqlWildcard("fo[a-z]?.txt"))
+	require.Equal(t, "path*?rtifac?/*", aqlWildcard("path/**/[abc]rtifac?/*"))
+	// an unterminated class is a literal for the matcher too
+	require.Equal(t, "pool/[ab*.deb", aqlWildcard("pool/[ab*.deb"))
+}
+
+// TestPatternCriteria tells the incident it prevents: a -docker repository holding 61717
+// manifests under one namespace (tag and digest folders of every image), and a pattern
+// selecting a handful of images of one run, myorg/myimage-*:<run>-*.
+// With only the static folder prefix in the AQL (myorg), the enumeration blew
+// past aqlSearchLimit before the matcher saw a single candidate, and the step failed with
+// "use a more specific pattern". The image and tag wildcards must reach the AQL.
+func TestPatternCriteria(t *testing.T) {
+	require.Equal(t, `{"path":{"$match":"myorg/myimage-*/1234-*"}}`,
+		patternCriteria(dockerPatternToPath("myorg/myimage-*:1234-*"), sdk.V2WorkflowRunResultTypeDocker))
+
+	// file-based types: folder path and file name, split on the last "/"
+	require.Equal(t, `{"path":{"$match":"pool"},"name":{"$match":"glob-1234-*.deb"}}`,
+		patternCriteria(trimPatternsLeadingSlash("/pool/glob-1234-*.deb"), sdk.V2WorkflowRunResultTypeDebian))
+	require.Equal(t, `{"path":{"$match":"myorg/myprovider/0.24.0"},"name":{"$match":"*.zip"}}`,
+		patternCriteria("myorg/myprovider/0.24.0/*.zip", sdk.V2WorkflowRunResultTypeTerraformProvider))
+	require.Equal(t, `{"path":{"$match":"pool"},"name":{"$match":"?*.deb"}}`, patternCriteria("pool/[ab]*.deb", sdk.V2WorkflowRunResultTypeDebian))
+	// a root pattern narrows by name only: artifactory reports the root path as ".", no
+	// criterion is safer than a guess
+	require.Equal(t, `{"name":{"$match":"terraform-*.tar.gz"}}`, patternCriteria("terraform-*.tar.gz", sdk.V2WorkflowRunResultTypeTerraformProvider))
+	// a last segment holding "**" spans folders: only the folders before it narrow the path
+	require.Equal(t, `{"path":{"$match":"pool*"}}`, patternCriteria("pool/**", sdk.V2WorkflowRunResultTypeDebian))
+	require.Equal(t, `{"path":{"$match":"a*"}}`, patternCriteria("a/b**", sdk.V2WorkflowRunResultTypeDebian))
+	require.Equal(t, `{"path":{"$match":"*"},"name":{"$match":"*.zip"}}`, patternCriteria("**/*.zip", sdk.V2WorkflowRunResultTypeGeneric))
+	require.Equal(t, `{"path":{"$match":"a*b"},"name":{"$match":"*.zip"}}`, patternCriteria("a/**/b/*.zip", sdk.V2WorkflowRunResultTypeGeneric))
+	// anywhere in the repository: nothing to narrow
+	require.Equal(t, "", patternCriteria("**", sdk.V2WorkflowRunResultTypeDebian))
+
+	// several positive patterns are an $or, exclusions only remove matches
+	require.Equal(t, `{"$or":[{"path":{"$match":"pool"},"name":{"$match":"a*.deb"}},{"path":{"$match":"pool"},"name":{"$match":"b*.deb"}}]}`,
+		patternCriteria("pool/a*.deb pool/b*.deb !pool/*-dbg*", sdk.V2WorkflowRunResultTypeDebian))
+	require.Equal(t, "", patternCriteria("!pool/*", sdk.V2WorkflowRunResultTypeDebian))
+
+	// oci and docker match the package folder, conan its export folder
+	require.Equal(t, `{"path":{"$match":"services/*/*"}}`, patternCriteria("services/*/*", sdk.V2WorkflowRunResultTypeOCI))
+	require.Equal(t, `{"path":{"$match":"mirror*"}}`, patternCriteria("mirror/** !**/sha256:*", sdk.V2WorkflowRunResultTypeOCI))
+	require.Equal(t, `{"path":{"$match":"_/abseil/*/_/*/export"}}`, patternCriteria("_/abseil/*/_/*", sdk.V2WorkflowRunResultTypeConan))
+	// the matcher accepts a trailing "/", an AQL path never ends with one
+	require.Equal(t, `{"path":{"$match":"services/*"}}`, patternCriteria("services/*/", sdk.V2WorkflowRunResultTypeOCI))
+}
+
+// TestAqlWildcardIsSuperset locks the invariant the narrowing rests on: whatever the glob
+// matcher accepts, the AQL wildcard accepts too. An AQL "*" or "?" spans "/" like the SQL
+// LIKE it is translated to. The matcher lets a pattern literal skip one "/" of the content
+// (pool/*x.deb accepts pool/sub/x.deb), a quirk the AQL does not serve: the layouts below
+// are the realistic ones of TestGlobSelection, where it does not fire.
+func TestAqlWildcardIsSuperset(t *testing.T) {
+	patterns := []string{"pool/*.deb", "pool/**", "**/*.zip", "a/**/b/*.zip", "path/**/[abc]rtifac?/*", "services/*/*", "mirror/**", "myorg/*/*-1234", "_/*/*/_/*", "*", "**", "foo?.txt", "fo[a-z]?.txt"}
+	paths := []string{"pool/a.deb", "pool/sub/b.deb", "a.deb", "a/b/x.zip", "a/x/y/b/x.zip", "path/to/artifact/foo1.txt", "services/core/1.0", "mirror/x/sha256:abc", "myorg/myimage/v1-1234", "_/abseil/1.0/_/rev", "foo1.txt", "fooo.txt"}
+	var checked int
+	for _, pattern := range patterns {
+		aql := regexp.MustCompile("^" + strings.NewReplacer(`\*`, ".*", `\?`, ".").Replace(regexp.QuoteMeta(aqlWildcard(pattern))) + "$")
+		for _, path := range paths {
+			m, err := glob.New(pattern).MatchString(path)
+			require.NoError(t, err)
+			if m == nil {
+				continue
+			}
+			checked++
+			require.True(t, aql.MatchString(path), "glob %q matches %q, aql %q must too", pattern, path, aqlWildcard(pattern))
+		}
+	}
+	require.Greater(t, checked, 10, "the lists must overlap enough to mean something")
 }
 
 // TestTrimPatternsLeadingSlash: a user writes the glob like the single path, often with a
@@ -140,8 +208,8 @@ func TestDockerRepoCriteria(t *testing.T) {
 	require.Equal(t, `{"repo":{"$eq":"proj-docker-snapshot"}}`, dockerRepoCriteria("proj-docker", "snapshot"))
 }
 
-// TestDockerPatternToPath locks the rewrite feeding staticPrefix: the ":" of an image
-// reference is a "/" in the artifactory layout, and the image folder belongs to the prefix.
+// TestDockerPatternToPath locks the rewrite feeding patternCriteria: the ":" of an image
+// reference is a "/" in the artifactory layout, and the image folder belongs to the path.
 func TestDockerPatternToPath(t *testing.T) {
 	require.Equal(t, "busybox/*", dockerPatternToPath("busybox:*"))
 	require.Equal(t, "ovhcom/venom/*", dockerPatternToPath("ovhcom/venom:*"))
@@ -151,11 +219,9 @@ func TestDockerPatternToPath(t *testing.T) {
 	// exclusions keep their "!" and are rewritten too
 	require.Equal(t, "ovhcom/venom/* !ovhcom/venom/latest-*", dockerPatternToPath("ovhcom/venom:* !ovhcom/venom:latest-*"))
 
-	// without the rewrite, "busybox:*" has no static folder and the AQL scans the whole repo
-	require.Equal(t, "", staticPrefix("busybox:*"))
-	require.Equal(t, "busybox", staticPrefix(dockerPatternToPath("busybox:*")))
-	require.Equal(t, "ovhcom/venom", staticPrefix(dockerPatternToPath("ovhcom/venom:*")))
-	require.Equal(t, "ovhcom", staticPrefix(dockerPatternToPath("ovhcom/*:*-1234")))
+	// without the rewrite, "busybox:*" narrows the path to a folder that does not exist
+	require.Equal(t, `{"path":{"$match":"busybox/*"}}`, patternCriteria(dockerPatternToPath("busybox:*"), sdk.V2WorkflowRunResultTypeDocker))
+	require.Equal(t, `{"path":{"$match":"busybox:*"}}`, patternCriteria("busybox:*", sdk.V2WorkflowRunResultTypeDocker))
 }
 
 // TestDockerArchPath locks which items the enumeration keeps apart: the per-architecture
