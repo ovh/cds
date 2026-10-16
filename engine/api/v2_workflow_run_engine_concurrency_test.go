@@ -1525,7 +1525,7 @@ func TestLint_JobUsingWorkflowConcurrency(t *testing.T) {
 			"job1": {Concurrency: "deploy", RunsOn: sdk.V2JobRunsOn{Model: ".cds/worker-models/mymodel.yml"}, Steps: []sdk.ActionStep{{Run: "echo"}}},
 		},
 	}
-	errs := Lint(context.TODO(), db.DbMap, api.Cache, wkf, ef, proj.Key, nil)
+	errs := Lint(context.TODO(), db.DbMap, api.Cache, wkf, ef, proj.Key, nil, 0)
 	require.Len(t, errs, 1)
 	assert.Contains(t, errs[0].Error(), "a job cannot use the concurrency of its own workflow (deploy)")
 }
