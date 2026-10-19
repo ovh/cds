@@ -2,6 +2,7 @@ package keys
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"encoding/base64"
 	"io"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/packet"
 )
 
 func TestGenerateSSHKeyPair(t *testing.T) {
@@ -99,4 +101,20 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 	pub2, _ := io.ReadAll(pubReader)
 	t.Log(string(pub2))
 	assert.Equal(t, string([]byte(k.Public)), string(pub2))
+}
+
+func TestGeneratePGPKeyPairOrdersRSAPrimes(t *testing.T) {
+	// Without ordering, half of the keys have p > q: 10 keys make a regression near certain to show.
+	for i := 0; i < 10; i++ {
+		k, err := GeneratePGPKeyPair("mykey", "this is a test key", "email@localhost.local")
+		test.NoError(t, err)
+		entity, err := GetOpenPGPEntity(bytes.NewBufferString(k.Private))
+		test.NoError(t, err)
+
+		// The parser loads p into Primes[0] and q into Primes[1].
+		for _, pk := range []*packet.PrivateKey{entity.PrivateKey, entity.Subkeys[0].PrivateKey} {
+			primes := pk.PrivateKey.(*rsa.PrivateKey).Primes
+			assert.Equal(t, -1, primes[0].Cmp(primes[1]), "p must be lower than q")
+		}
+	}
 }

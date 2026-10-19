@@ -2,6 +2,7 @@ package keys
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"io"
@@ -42,6 +43,11 @@ func NewOpenPGPEntity(keyname, comment, email string) (*openpgp.Entity, error) {
 		return nil, fmt.Errorf("Wrong key generation")
 	}
 
+	orderRSAPrimes(key.PrivateKey)
+	for _, sk := range key.Subkeys {
+		orderRSAPrimes(sk.PrivateKey)
+	}
+
 	// Self sign Identity
 	for _, id := range key.Identities {
 		id.SelfSignature.PreferredSymmetric = []uint8{
@@ -57,6 +63,18 @@ func NewOpenPGPEntity(keyname, comment, email string) (*openpgp.Entity, error) {
 	}
 
 	return key, nil
+}
+
+// orderRSAPrimes makes the serialized key satisfy p < q (RFC 4880 5.5.3), which libgcrypt relies on:
+// with p > q, gpg sometimes produces invalid signatures. x/crypto/openpgp writes Primes[1] as p.
+func orderRSAPrimes(k *packet.PrivateKey) {
+	priv, ok := k.PrivateKey.(*rsa.PrivateKey)
+	if !ok || len(priv.Primes) != 2 || priv.Primes[1].Cmp(priv.Primes[0]) < 0 {
+		return
+	}
+	priv.Primes[0], priv.Primes[1] = priv.Primes[1], priv.Primes[0]
+	priv.Precomputed = rsa.PrecomputedValues{} // drop the stale CRT values, Precompute reuses them otherwise
+	priv.Precompute()
 }
 
 // generatePGPPrivateKey generates a private key
