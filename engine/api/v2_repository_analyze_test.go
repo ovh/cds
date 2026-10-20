@@ -1098,6 +1098,13 @@ func TestAnalyzeBitbucketMergeCommit(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
+	// The Bitbucket committer is only trusted through the account linked to the CDS user
+	require.NoError(t, link.Insert(context.TODO(), db, &sdk.UserLink{
+		AuthentifiedUserID: u.ID,
+		Type:               string(sdk.ConsumerBitbucketServer),
+		ExternalID:         u.Username,
+		Username:           u.Username,
+	}))
 
 	// Create VCS
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", sdk.VCSTypeBitbucketServer)
@@ -3663,6 +3670,46 @@ func TestCommitSignatureUntrustedReason(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, tt.sig.untrustedReason("abcdef", "github"))
+		})
+	}
+}
+
+// TestFindCommitter_CommitterWithoutLink ensures a commit signed by the VCS key is not attributed to a
+// CDS user from a matching username alone: the committer must be linked to that user.
+func TestFindCommitter_CommitterWithoutLink(t *testing.T) {
+	for _, vcsType := range []string{sdk.VCSTypeBitbucketServer, sdk.VCSTypeForgejo} {
+		t.Run(vcsType, func(t *testing.T) {
+			api, db, vcsProject, projKey, repoName, cleanup := setupFindCommitterTest(t)
+			defer cleanup()
+			ctx := context.TODO()
+			vcsProject.Type = vcsType
+
+			// A CDS user with the same username as the committer, without any link
+			u, _ := assets.InsertLambdaUser(t, db)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			servicesClients := mock_services.NewMockClient(ctrl)
+			services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
+
+			servicesClients.EXPECT().
+				DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/commitsha", gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+					*(out.(*sdk.VCSCommit)) = sdk.VCSCommit{
+						Hash:      "commitsha",
+						Author:    sdk.VCSAuthor{Name: u.Username, Slug: u.Username},
+						Committer: sdk.VCSAuthor{Name: u.Username, Slug: u.Username},
+					}
+					return nil, 200, nil
+				}).Times(1)
+
+			vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
+			initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/heads/master", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+
+			require.NoError(t, err)
+			require.Nil(t, initiator)
+			require.Equal(t, sdk.RepositoryAnalysisStatusError, status)
+			require.Equal(t, fmt.Sprintf("%s user %s is not linked to a CDS user", vcsType, u.Username), errMsg)
 		})
 	}
 }

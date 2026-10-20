@@ -1467,22 +1467,21 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 		committer = commit.Committer.Slug
+		if initiator := vcsAccountInitiator(possibleVCSGPGUSers, vcsProjectWithSecret.Name, committer); initiator != nil {
+			return initiator, "", "", nil
+		}
 
-		// Retrieve user link by external ID
+		// The committer must be linked to a CDS user: a username match is not proof of identity
 		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, string(sdk.ConsumerBitbucketServer), committer)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
-			// Keep fallback to committer slug and  not return an error if no link found
-			log.Info(ctx, "%s user %s not found in CDS", string(sdk.ConsumerBitbucketServer), committer)
+			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("%s user %s is not linked to a CDS user", sdk.ConsumerBitbucketServer, committer), nil
 		}
-
-		if userLink != nil {
-			cdsUser, err = user.LoadByID(ctx, db, userLink.AuthentifiedUserID)
-			if err != nil {
-				return nil, sdk.RepositoryAnalysisStatusError, "", err
-			}
+		cdsUser, err = user.LoadByID(ctx, db, userLink.AuthentifiedUserID)
+		if err != nil {
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 	case sdk.VCSTypeForgejo:
 		// tag sha are compatible with get commit
@@ -1498,21 +1497,21 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 			committer = commit.Committer.Slug
 		}
 
-		// Retrieve user link by external ID
+		if initiator := vcsAccountInitiator(possibleVCSGPGUSers, vcsProjectWithSecret.Name, committer); initiator != nil {
+			return initiator, "", "", nil
+		}
+
+		// The committer must be linked to a CDS user: a username match is not proof of identity
 		userLink, err := link.LoadUserLinkByTypeAndExternalID(ctx, db, string(sdk.ConsumerForgejo), committer)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
-			// Keep fallback to committer slug and  not return an error if no link found
-			log.Info(ctx, "%s user %s not found in CDS", string(sdk.ConsumerForgejo), committer)
+			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("%s user %s is not linked to a CDS user", sdk.ConsumerForgejo, committer), nil
 		}
-
-		if userLink != nil {
-			cdsUser, err = user.LoadByID(ctx, db, userLink.AuthentifiedUserID)
-			if err != nil {
-				return nil, sdk.RepositoryAnalysisStatusError, "", err
-			}
+		cdsUser, err = user.LoadByID(ctx, db, userLink.AuthentifiedUserID)
+		if err != nil {
+			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 	case sdk.VCSTypeGithub:
 		var committerID, committerName string
@@ -1540,13 +1539,8 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 		}
 
 		// The VCS account signing with its project key needs no CDS user, as for the other VCS types
-		for _, VCSGPGUser := range possibleVCSGPGUSers {
-			if VCSGPGUser.Username == committerName {
-				return &sdk.V2Initiator{
-					VCS:         vcsProjectWithSecret.Name,
-					VCSUsername: committerName,
-				}, "", "", nil
-			}
+		if initiator := vcsAccountInitiator(possibleVCSGPGUSers, vcsProjectWithSecret.Name, committerName); initiator != nil {
+			return initiator, "", "", nil
 		}
 
 		if committerID == "" {
@@ -1591,13 +1585,8 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 	}
 
 	// Try to match committer and possible vcs user
-	for _, VCSGPGUser := range possibleVCSGPGUSers {
-		if VCSGPGUser.Username == committer {
-			return &sdk.V2Initiator{
-				VCS:         vcsProjectWithSecret.Name,
-				VCSUsername: VCSGPGUser.Username,
-			}, "", "", nil
-		}
+	if initiator := vcsAccountInitiator(possibleVCSGPGUSers, vcsProjectWithSecret.Name, committer); initiator != nil {
+		return initiator, "", "", nil
 	}
 
 	// Then try to load a CDS user from the committer name
@@ -1619,6 +1608,17 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 
 	// This error should not happen
 	return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("committer %q does not match any CDS user", committer), nil
+}
+
+// vcsAccountInitiator returns the VCS account as initiator when the commit was signed with the key of a
+// VCS account configured on a project and that account is the committer, nil otherwise.
+func vcsAccountInitiator(possibleVCSGPGUsers []sdk.VCSUserGPGKey, vcsName, committer string) *sdk.V2Initiator {
+	for _, u := range possibleVCSGPGUsers {
+		if u.Username == committer {
+			return &sdk.V2Initiator{VCS: vcsName, VCSUsername: u.Username}
+		}
+	}
+	return nil
 }
 
 func sortEntitiesFiles(filesContent map[string][]byte) []string {
