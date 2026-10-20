@@ -539,11 +539,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 		default:
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs of type: %s", vcsProjectWithSecret.Type))
 		}
-		analysis.Data.SignKeyID = keyID
 		if analysisError != "" {
+			// The untrusted key is not recorded, so nothing downstream can rely on it.
 			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
 			analysis.Data.Error = analysisError
 		} else {
+			analysis.Data.SignKeyID = keyID
 			analysis.Data.CommitCheck = true
 
 			// retrieve the committer
@@ -1964,64 +1965,78 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 
 // analyzeCommitSignatureThroughVcsAPI analyzes commit.
 func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysis sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) (string, string, error) {
-	var analyzesError string
 	ctx, next := telemetry.Span(ctx, "api.analyzeCommitSignatureThroughVcsAPI")
 	defer next()
 
-	keyID, err := retrieveSigninKey(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsProject.Name, vcsProject.Type, repoWithSecret.Name, analysis.Ref, analysis.Commit)
+	sig, err := retrieveSigninKey(ctx, api.mustDB(), api.Cache, analysis.ProjectKey, vcsProject.Name, vcsProject.Type, repoWithSecret.Name, analysis.Ref, analysis.Commit)
 	if err != nil {
-		return keyID, analyzesError, err
+		return sig.KeyID, "", err
 	}
-	if keyID == "" {
-		analyzesError = fmt.Sprintf("commit %s is not signed", analysis.Commit)
-	}
-	return keyID, analyzesError, nil
+	return sig.KeyID, sig.untrustedReason(analysis.Commit), nil
 }
 
-func retrieveSigninKey(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, projKey, vcsName, vcsType, repoName, ref, sha string) (string, error) {
-	var keyID string
+// commitSignature is the signature of a commit or tag as reported by the VCS.
+type commitSignature struct {
+	KeyID    string
+	Verified bool
+}
+
+// untrustedReason explains why the signature cannot identify the initiator, empty when it can.
+func (s commitSignature) untrustedReason(sha string) string {
+	switch {
+	case s.KeyID == "":
+		return fmt.Sprintf("commit %s is not signed", sha)
+	case !s.Verified:
+		return fmt.Sprintf("commit %s signature could not be verified", sha)
+	}
+	return ""
+}
+
+// retrieveSigninKey returns the commit/tag signature reported by the VCS. Its key ID is
+// written by the signer: it can only be trusted when Verified is set.
+func retrieveSigninKey(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, projKey, vcsName, vcsType, repoName, ref, sha string) (commitSignature, error) {
+	var sig commitSignature
 	ctx, next := telemetry.Span(ctx, "api.retrieveSigninKey")
 	defer next()
 
 	// Check commit signature
 	client, err := repositoriesmanager.AuthorizedClient(ctx, db, cache, projKey, vcsName)
 	if err != nil {
-		return keyID, err
+		return sig, err
 	}
 
 	switch {
 	case strings.HasPrefix(ref, sdk.GitRefTagPrefix) && (vcsType == sdk.VCSTypeGithub || vcsType == sdk.VCSTypeForgejo):
 		tag, err := client.Tag(ctx, repoName, strings.TrimPrefix(ref, sdk.GitRefTagPrefix))
 		if err != nil {
-			return keyID, err
+			return sig, err
 		}
 		if tag.Signature == "" {
-			return keyID, sdk.NewErrorFrom(sdk.ErrInvalidData, "tag not signed or from an unsigned commit")
+			return sig, sdk.NewErrorFrom(sdk.ErrInvalidData, "tag not signed or from an unsigned commit")
 		}
-		keyID, err = gpg.GetKeyIdFromSignature(tag.Signature)
+		sig.KeyID, err = gpg.GetKeyIdFromSignature(tag.Signature)
 		if err != nil {
-			return keyID, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to extract keyID from signature: %v", err)
+			return sig, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to extract keyID from signature: %v", err)
 		}
+		sig.Verified = tag.Verified
 	default:
 		vcsCommit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
-			return keyID, err
+			return sig, err
 		}
 		if vcsCommit.Hash == "" {
-			return keyID, sdk.NewErrorFrom(sdk.ErrNotFound, "commit %s not found", sha)
+			return sig, sdk.NewErrorFrom(sdk.ErrNotFound, "commit %s not found", sha)
 		}
-		if vcsCommit.KeyID == "" && vcsCommit.Signature != "" {
-			keyID, err = gpg.GetKeyIdFromSignature(vcsCommit.Signature)
+		sig.KeyID = vcsCommit.KeyID
+		if sig.KeyID == "" && vcsCommit.Signature != "" {
+			sig.KeyID, err = gpg.GetKeyIdFromSignature(vcsCommit.Signature)
 			if err != nil {
-				return keyID, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to extract keyID from vcsCommit %q signature: %v", sha, err)
+				return sig, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to extract keyID from vcsCommit %q signature: %v", sha, err)
 			}
-			vcsCommit.KeyID = keyID
 		}
-		keyID = vcsCommit.KeyID
+		sig.Verified = vcsCommit.Verified
 	}
-
-	return keyID, nil
-
+	return sig, nil
 }
 
 func (api *API) analyzeCommitSignatureThroughOperation(ctx context.Context, analysis *sdk.ProjectRepositoryAnalysis, vcsProject sdk.VCSProject, repoWithSecret sdk.ProjectRepository) (string, string, error) {

@@ -3549,3 +3549,101 @@ func TestLoadAnalysesInProgressIdleSinceRespectsItsBound(t *testing.T) {
 		require.False(t, stuck[i].LastModified.Before(stuck[i-1].LastModified), "stale analyses must come back oldest first")
 	}
 }
+
+// TestAnalyzeGithubUnverifiedSignature ensures that a commit carrying a signature
+// whose advertised key ID is known to CDS, but that the VCS did not verify, does not
+// resolve any initiator. The key ID in a signature is unauthenticated: trusting it
+// without verification would let anyone inherit another user's permissions.
+func TestAnalyzeGithubUnverifiedSignature(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	// Create project
+	key1 := sdk.RandomString(10)
+	proj1 := assets.InsertTestProject(t, db, api.Cache, key1, key1)
+
+	uk, err := user.LoadGPGKeyByKeyID(ctx, db, "F344BDDCE15F17D7")
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		require.NoError(t, err)
+	}
+	if uk != nil {
+		require.NoError(t, user.DeleteGPGKey(db, *uk))
+	}
+
+	// Register the key matching the signature to a CDS user: without the verification
+	// gate this would make findCommitter resolve that user as the initiator.
+	u, _ := assets.InsertLambdaUser(t, db)
+	userKey := &sdk.UserGPGKey{
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
+		AuthentifiedUserID: u.ID,
+	}
+	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
+
+	// Create VCS
+	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
+
+	repo := sdk.ProjectRepository{
+		Name:         "myrepo",
+		Created:      time.Now(),
+		VCSProjectID: vcsProject.ID,
+		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
+	}
+	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
+
+	analysis := sdk.ProjectRepositoryAnalysis{
+		ID:                  "",
+		Status:              sdk.RepositoryAnalysisStatusInProgress,
+		Commit:              "abcdef",
+		ProjectKey:          proj1.Key,
+		ProjectRepositoryID: repo.ID,
+		Created:             time.Now(),
+		LastModified:        time.Now(),
+		Ref:                 "refs/heads/master",
+		VCSProjectID:        vcsProject.ID,
+	}
+	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
+
+	// Mock VCS
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				commit := &sdk.VCSCommit{
+					Signature: testGPGCommitSignature,
+					Verified:  false,
+					Hash:      "abcdef",
+				}
+				*(out.(*sdk.VCSCommit)) = *commit
+				return nil, 200, nil
+			},
+		).MaxTimes(2)
+
+	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
+
+	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
+	require.Equal(t, "commit abcdef signature could not be verified", analysisUpdated.Data.Error)
+	// No initiator resolved, and the untrusted key ID must not be recorded as the sign key
+	// (otherwise it would be propagated downstream and trusted to resolve a committer).
+	require.Empty(t, analysisUpdated.Data.Initiator.UserID)
+	require.Empty(t, analysisUpdated.Data.SignKeyID)
+}

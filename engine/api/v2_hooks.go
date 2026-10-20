@@ -78,12 +78,16 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 				SignKey: r.SignKey,
 			}
 			if r.SignKey == "" {
-				keyID, err := retrieveSigninKey(ctx, api.mustDB(), api.Cache, r.ProjectKey, vcsProjectWithSecret.Name, vcsProjectWithSecret.Type, r.RepositoryName, r.Ref, r.Commit)
+				sig, err := retrieveSigninKey(ctx, api.mustDB(), api.Cache, r.ProjectKey, vcsProjectWithSecret.Name, vcsProjectWithSecret.Type, r.RepositoryName, r.Ref, r.Commit)
 				if err != nil {
 					return err
 				}
-				r.SignKey = keyID
-				resp.SignKey = keyID
+				// Only a verified signature identifies the initiator.
+				if sig.KeyID == "" || !sig.Verified {
+					return service.WriteJSON(w, resp, http.StatusOK)
+				}
+				r.SignKey = sig.KeyID
+				resp.SignKey = sig.KeyID
 			}
 			initiator, _, _, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Ref, r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
 			if err != nil {
