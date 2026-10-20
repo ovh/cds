@@ -787,6 +787,9 @@ func (a *API) Serve(ctx context.Context) error {
 	migrate.Add(ctx, sdk.Migration{Name: migrate.MigrateEntityInitiatorName, Release: "0.58.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
 		return migrate.MigrateEntityInitiator(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
 	}})
+	migrate.Add(ctx, sdk.Migration{Name: migrate.MigratePGPKeyPrimesName, Release: "0.58.0", Blocker: false, Automatic: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigratePGPKeyPrimes(ctx, a.DBConnectionFactory.GetDBMap(gorpmapping.Mapper)())
+	}})
 
 	isFreshInstall, err := version.IsFreshInstall(a.mustDB())
 	if err != nil {

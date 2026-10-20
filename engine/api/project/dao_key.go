@@ -149,6 +149,47 @@ func LoadKey(ctx context.Context, db gorp.SqlExecutor, id int64, keyName string)
 	return &k.ProjectKey, nil
 }
 
+// PGPKeyRef identifies a project PGP key and its project.
+type PGPKeyRef struct {
+	ID         int64  `db:"id"`
+	ProjectKey string `db:"projectkey"`
+}
+
+// LoadPGPKeyRefs returns the PGP keys of every project, builtin keys excluded.
+func LoadPGPKeyRefs(_ context.Context, db gorp.SqlExecutor) ([]PGPKeyRef, error) {
+	var refs []PGPKeyRef
+	if _, err := db.Select(&refs, `
+		SELECT project_key.id, project.projectkey
+		FROM project_key
+		JOIN project ON project.id = project_key.project_id
+		WHERE project_key.type = $1 AND project_key.builtin = false
+		ORDER BY project_key.id`, string(sdk.KeyTypePGP)); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+	return refs, nil
+}
+
+// LoadAndLockKeyByID loads a project key with its private part and locks it.
+func LoadAndLockKeyByID(ctx context.Context, db gorpmapper.SqlExecutorWithTx, id int64) (*sdk.ProjectKey, error) {
+	query := gorpmapping.NewQuery(`SELECT * FROM project_key WHERE id = $1 FOR UPDATE`).Args(id)
+	var k dbProjectKey
+	found, err := gorpmapping.Get(ctx, db, query, &k, gorpmapping.GetOptions.WithDecryption)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(k, k.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, sdk.NewErrorFrom(sdk.ErrCorruptedData, "project key %d", k.ID)
+	}
+	return &k.ProjectKey, nil
+}
+
 // DeleteProjectKey Delete the given key from the given project
 func DeleteProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) error {
 	_, err := db.Exec("DELETE FROM project_key WHERE project_id = $1 AND name = $2", projectID, keyName)
