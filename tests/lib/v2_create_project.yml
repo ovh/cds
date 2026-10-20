@@ -32,10 +32,53 @@ steps:
   - script: >
      {{.input.cdsctl_command}} project keys list {{.input.cds_project}} --filter type=pgp --format json
     vars:
-      gpgKeyPub:
-        from: result.systemoutjson.systemoutjson0.publickey
       gpgKeyName:
         from: result.systemoutjson.systemoutjson0.name
+  # Register the GPG key used by CDS jobs to sign commits on the forgejo account, so that forgejo
+  # verifies these commits. Forgejo only accepts a key whose email is on the account.
+  - script: >
+     {{.input.cdsctl_command}} project keys list {{.input.cds_project}} --filter type=pgp --format json |
+     jq -r '.[] | select(.name=="{{.gpgKeyName}}") | .publickey' > /tmp/project_gpg_{{.input.cds_project}}.asc
+  - script: >
+     gpg --show-keys --with-colons /tmp/project_gpg_{{.input.cds_project}}.asc |
+     awk -F: '/^uid/{print $10; exit}' | grep -o '<.*>' | tr -d '<>'
+    vars:
+      gpgKeyEmail:
+        from: result.systemout
+  - script: awk '{printf "%s\\\\n", $0}' /tmp/project_gpg_{{.input.cds_project}}.asc
+    vars:
+      gpgKeyPub:
+        from: result.systemout
+  - type: http
+    method: POST
+    url: "{{.input.git_host}}/api/v1/user/emails"
+    headers:
+      Content-Type: application/json
+    basic_auth_user: "{{.input.git_user}}"
+    basic_auth_password: "{{.input.git_password}}"
+    body: >
+      {
+        "emails": ["{{.gpgKeyEmail}}"]
+      }
+    assertions:
+    - or:
+      - result.statuscode ShouldEqual 201
+      - result.bodyjson.message ShouldContainSubstring "Email address has been used"
+  - type: http
+    method: POST
+    url: "{{.input.git_host}}/api/v1/user/gpg_keys"
+    basic_auth_user: "{{.input.git_user}}"
+    basic_auth_password: "{{.input.git_password}}"
+    headers:
+      Content-Type: application/json
+    body: >
+      {
+        "armored_public_key": "{{.gpgKeyPub}}"
+      }
+    assertions:
+    - or:
+      - result.statuscode ShouldEqual 201
+      - result.systemout ShouldContainSubstring "A key with the same id already exists"
   # Prepare VCS Server configuration for the project
   - script: |-
       /bin/bash -c cat <<- EOF > /tmp/project_vcs_{{.input.cds_project}}.yml

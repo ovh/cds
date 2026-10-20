@@ -1098,13 +1098,7 @@ func TestAnalyzeBitbucketMergeCommit(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
-	// The Bitbucket committer is only trusted through the account linked to the CDS user
-	require.NoError(t, link.Insert(context.TODO(), db, &sdk.UserLink{
-		AuthentifiedUserID: u.ID,
-		Type:               string(sdk.ConsumerBitbucketServer),
-		ExternalID:         u.Username,
-		Username:           u.Username,
-	}))
+	linkBitbucketServerUser(t, db, u)
 
 	// Create VCS
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", sdk.VCSTypeBitbucketServer)
@@ -2305,6 +2299,7 @@ func TestAnalyzeWrongWorkflow(t *testing.T) {
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	linkBitbucketServerUser(t, db, u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 
 	// Create VCS
@@ -2488,6 +2483,7 @@ func TestAnalyzeWorkflowWithProjectConcurrency(t *testing.T) {
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	linkBitbucketServerUser(t, db, u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkflow, proj1.Key, *u)
@@ -2685,6 +2681,7 @@ func TestAnalyzeWorkflowWithConcurrency(t *testing.T) {
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	linkBitbucketServerUser(t, db, u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkflow, proj1.Key, *u)
@@ -2879,6 +2876,7 @@ func TestAnalyzeWorkflowWithConcurrencyNotFound(t *testing.T) {
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	linkBitbucketServerUser(t, db, u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkflow, proj1.Key, *u)
@@ -3684,6 +3682,15 @@ func TestFindCommitter_CommitterWithoutLink(t *testing.T) {
 			ctx := context.TODO()
 			vcsProject.Type = vcsType
 
+			// Make sure the signing key is not registered on a CDS user by a previous test
+			uk, err := user.LoadGPGKeyByKeyID(ctx, db, testGPGKeyID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				require.NoError(t, err)
+			}
+			if uk != nil {
+				require.NoError(t, user.DeleteGPGKey(db, *uk))
+			}
+
 			// A CDS user with the same username as the committer, without any link
 			u, _ := assets.InsertLambdaUser(t, db)
 
@@ -3712,4 +3719,15 @@ func TestFindCommitter_CommitterWithoutLink(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("%s user %s is not linked to a CDS user", vcsType, u.Username), errMsg)
 		})
 	}
+}
+
+// linkBitbucketServerUser links the user to the Bitbucket Server account of the same name, which is
+// how a Bitbucket Server committer is mapped to a CDS user.
+func linkBitbucketServerUser(t *testing.T, db *test.FakeTransaction, u *sdk.AuthentifiedUser) {
+	require.NoError(t, link.Insert(context.TODO(), db, &sdk.UserLink{
+		AuthentifiedUserID: u.ID,
+		Type:               string(sdk.ConsumerBitbucketServer),
+		ExternalID:         u.Username,
+		Username:           u.Username,
+	}))
 }
