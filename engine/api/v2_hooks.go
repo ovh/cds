@@ -82,7 +82,7 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 				if err != nil {
 					return err
 				}
-				// Only a verified signature identifies the initiator.
+				// See specs/commit-signature-initiator.md: only a verified signature identifies the initiator.
 				if reason := sig.untrustedReason(r.Commit, vcsProjectWithSecret.Name); reason != "" {
 					resp.Error = reason
 					return service.WriteJSON(w, resp, http.StatusOK)

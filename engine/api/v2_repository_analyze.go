@@ -540,8 +540,8 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs of type: %s", vcsProjectWithSecret.Type))
 		}
 		if analysisError != "" {
-			// The untrusted key is not recorded, so nothing downstream can rely on it. An unsigned
-			// commit is skipped so distant workflows can still run on it; an untrusted one fails.
+			// The untrusted key is not recorded, so nothing downstream can rely on it.
+			// Unsigned is skipped, untrusted fails: see specs/commit-signature-initiator.md.
 			analysis.Status = sdk.RepositoryAnalysisStatusError
 			if keyID == "" {
 				analysis.Status = sdk.RepositoryAnalysisStatusSkipped
