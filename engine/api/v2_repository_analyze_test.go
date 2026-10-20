@@ -385,7 +385,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
 	require.Equal(t, "signing key F344BDDCE15F17D7 is not registered in CDS: add it to your CDS user profile", analysisUpdated.Data.Error)
 }
 
@@ -891,7 +891,7 @@ func TestAnalyzeGithubMergeCommitNoLink(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	t.Logf("%+v", analysisUpdated.Data)
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
 	require.Equal(t, fmt.Sprintf("github user %s is not linked to a CDS user: link your github account from your CDS profile", githubUsername), analysisUpdated.Data.Error)
 }
 
@@ -3340,7 +3340,7 @@ func TestFindCommitter_GithubTag_VCSUser_UnknownAuthor(t *testing.T) {
 	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
 
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, status)
 	require.Contains(t, errMsg, "unable to find commiter for commit commitsha")
 	require.Nil(t, initiator)
 }
@@ -3448,7 +3448,7 @@ func TestFindCommitter_GithubUnsignedTag_CommitterNotFound(t *testing.T) {
 	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "tagsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
 
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, status)
 	require.Contains(t, errMsg, unknownGithubUsername)
 	require.Nil(t, initiator)
 }
@@ -3641,7 +3641,7 @@ func TestAnalyzeGithubUnverifiedSignature(t *testing.T) {
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
 	require.Equal(t, "commit abcdef signature with key F344BDDCE15F17D7 is not verified by vcs-server (reason: invalid): check that the key and the committer email are registered on your vcs-server account", analysisUpdated.Data.Error)
 	// No initiator resolved, and the untrusted key ID must not be recorded as the sign key
 	// (otherwise it would be propagated downstream and trusted to resolve a committer).

@@ -540,8 +540,12 @@ func (api *API) analyzeRepository(ctx context.Context, projectRepoID string, ana
 			return api.stopAnalysis(ctx, analysis, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to analyze vcs of type: %s", vcsProjectWithSecret.Type))
 		}
 		if analysisError != "" {
-			// The untrusted key is not recorded, so nothing downstream can rely on it.
-			analysis.Status = sdk.RepositoryAnalysisStatusSkipped
+			// The untrusted key is not recorded, so nothing downstream can rely on it. An unsigned
+			// commit is skipped so distant workflows can still run on it; an untrusted one fails.
+			analysis.Status = sdk.RepositoryAnalysisStatusError
+			if keyID == "" {
+				analysis.Status = sdk.RepositoryAnalysisStatusSkipped
+			}
 			analysis.Data.Error = analysisError
 		} else {
 			analysis.Data.SignKeyID = keyID
@@ -1401,7 +1405,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 		k, _ := project.LoadKeyByLongKeyID(ctx, db, signKeyID)
 		if k == nil {
 			// The key is not known from CDS. Let's raise an error
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("signing key %s is not registered in CDS: add it to your CDS user profile", signKeyID), nil
+			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("signing key %s is not registered in CDS: add it to your CDS user profile", signKeyID), nil
 		}
 
 		projWhoOwnTheKey, err := project.LoadByID(db, k.ProjectID)
@@ -1546,7 +1550,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 		}
 
 		if committerID == "" {
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
+			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("unable to find commiter for commit %s", sha), nil
 		}
 
 		// Retrieve user link by external ID
@@ -1555,7 +1559,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s is not linked to a CDS user: link your %s account from your CDS profile", vcsProjectWithSecret.Type, committerName, vcsProjectWithSecret.Type), nil
+			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("%s user %s is not linked to a CDS user: link your %s account from your CDS profile", vcsProjectWithSecret.Type, committerName, vcsProjectWithSecret.Type), nil
 		}
 
 		// Check if username changed
@@ -1614,7 +1618,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 	}
 
 	// This error should not happen
-	return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %q does not match any CDS user", committer), nil
+	return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("committer %q does not match any CDS user", committer), nil
 }
 
 func sortEntitiesFiles(filesContent map[string][]byte) []string {
