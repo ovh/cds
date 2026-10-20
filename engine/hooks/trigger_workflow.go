@@ -21,6 +21,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 	log.Info(ctx, "triggering workflow for event [%s] %s", hre.EventName, hre.GetFullName())
 
 	// Check if we know the user that trigger the event
+	unknownInitiatorReason := "unknown user"
 	isPushOnWorkflowDistant := hre.SignKey == "" && (hre.EventName == sdk.WorkflowHookEventNamePush)
 	if isPushOnWorkflowDistant || (hre.SignKey != "" && hre.Initiator.IsUnknown()) {
 		var req sdk.HookRetrieveUserRequest
@@ -53,12 +54,18 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		}
 		hre.SignKey = r.SignKey
 
+		// Reason shown when a hook is skipped for lack of a trusted initiator; the key fallback
+		// covers an API that does not return one.
+		switch {
+		case r.Error != "":
+			unknownInitiatorReason = r.Error
+		case hre.SignKey != "":
+			unknownInitiatorReason = fmt.Sprintf("User with key %s not found", hre.SignKey)
+		}
+
 		if hre.SignKey != "" && r.Initiator.IsUnknown() {
 			hre.Status = sdk.HookEventStatusSkipped
-			if hre.SignKey == "" {
-				hre.LastError = "Commit not signed"
-			}
-			hre.LastError = fmt.Sprintf("User with key %s not found", hre.SignKey)
+			hre.LastError = unknownInitiatorReason
 
 			for i := range hre.WorkflowHooks {
 				wh := &hre.WorkflowHooks[i]
@@ -93,7 +100,7 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		}
 		if !wh.Data.InsecureSkipSignatureVerify && initiator.IsUnknown() {
 			wh.Status = sdk.HookEventWorkflowStatusSkipped
-			wh.Error = "unknown user"
+			wh.Error = unknownInitiatorReason
 			if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 				return err
 			}

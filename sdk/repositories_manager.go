@@ -67,6 +67,8 @@ type VCSCommit struct {
 	Verified  bool      `json:"verified"`
 	Signature string    `json:"signature"`
 	KeyID     string    `json:"key_id"`
+	// VerificationReason is the VCS explanation of the Verified verdict, when it provides one.
+	VerificationReason string `json:"verification_reason,omitempty"`
 }
 
 // VCSRemote represents remotes known by the repositories manager
@@ -84,6 +86,8 @@ type VCSTag struct {
 	Hash      string    `json:"hash"` // Represent hash of commit
 	Verified  bool      `json:"verified"`
 	Signature string    `json:"signature"`
+	// VerificationReason is the VCS explanation of the Verified verdict, when it provides one.
+	VerificationReason string `json:"verification_reason,omitempty"`
 }
 
 type VCSSearch struct {

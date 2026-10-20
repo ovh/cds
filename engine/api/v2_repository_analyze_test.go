@@ -386,7 +386,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "gpg key F344BDDCE15F17D7 not found in CDS", analysisUpdated.Data.Error)
+	require.Equal(t, "signing key F344BDDCE15F17D7 is not registered in CDS: add it to your CDS user profile", analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubUserNotEnoughPerm(t *testing.T) {
@@ -611,7 +611,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "commit abcdef is not signed", analysisUpdated.Data.Error)
+	require.Equal(t, "commit abcdef is not signed, or its signature is not recognized by vcs-server: sign it with a GPG key registered on your vcs-server account", analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubAddWorkerModel(t *testing.T) {
@@ -892,7 +892,7 @@ func TestAnalyzeGithubMergeCommitNoLink(t *testing.T) {
 	t.Logf("%+v", analysisUpdated.Data)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, fmt.Sprintf("github user %s not found in CDS", githubUsername), analysisUpdated.Data.Error)
+	require.Equal(t, fmt.Sprintf("github user %s is not linked to a CDS user: link your github account from your CDS profile", githubUsername), analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubAddWorkerModelMergeCommit(t *testing.T) {
@@ -3627,9 +3627,10 @@ func TestAnalyzeGithubUnverifiedSignature(t *testing.T) {
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: testGPGCommitSignature,
-					Verified:  false,
-					Hash:      "abcdef",
+					Signature:          testGPGCommitSignature,
+					Verified:           false,
+					VerificationReason: "invalid",
+					Hash:               "abcdef",
 				}
 				*(out.(*sdk.VCSCommit)) = *commit
 				return nil, 200, nil
@@ -3641,9 +3642,27 @@ func TestAnalyzeGithubUnverifiedSignature(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "commit abcdef signature could not be verified", analysisUpdated.Data.Error)
+	require.Equal(t, "commit abcdef signature with key F344BDDCE15F17D7 is not verified by vcs-server (reason: invalid): check that the key and the committer email are registered on your vcs-server account", analysisUpdated.Data.Error)
 	// No initiator resolved, and the untrusted key ID must not be recorded as the sign key
 	// (otherwise it would be propagated downstream and trusted to resolve a committer).
 	require.Empty(t, analysisUpdated.Data.Initiator.UserID)
 	require.Empty(t, analysisUpdated.Data.SignKeyID)
+}
+
+func TestCommitSignatureUntrustedReason(t *testing.T) {
+	tests := []struct {
+		name string
+		sig  commitSignature
+		want string
+	}{
+		{"unsigned or unknown to the VCS", commitSignature{}, "commit abcdef is not signed, or its signature is not recognized by github: sign it with a GPG key registered on your github account"},
+		{"unverified with reason", commitSignature{KeyID: "F344BDDCE15F17D7", Reason: "unverified_email"}, "commit abcdef signature with key F344BDDCE15F17D7 is not verified by github (reason: unverified_email): check that the key and the committer email are registered on your github account"},
+		{"unverified without reason", commitSignature{KeyID: "F344BDDCE15F17D7"}, "commit abcdef signature with key F344BDDCE15F17D7 is not verified by github: check that the key and the committer email are registered on your github account"},
+		{"verified", commitSignature{KeyID: "F344BDDCE15F17D7", Verified: true, Reason: "valid"}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, tt.sig.untrustedReason("abcdef", "github"))
+		})
+	}
 }

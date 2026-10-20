@@ -1401,7 +1401,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 		k, _ := project.LoadKeyByLongKeyID(ctx, db, signKeyID)
 		if k == nil {
 			// The key is not known from CDS. Let's raise an error
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("gpg key %s not found in CDS", signKeyID), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("signing key %s is not registered in CDS: add it to your CDS user profile", signKeyID), nil
 		}
 
 		projWhoOwnTheKey, err := project.LoadByID(db, k.ProjectID)
@@ -1555,7 +1555,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 			if !sdk.ErrorIs(err, sdk.ErrNotFound) {
 				return nil, "", "", err
 			}
-			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s not found in CDS", vcsProjectWithSecret.Type, committerName), nil
+			return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("%s user %s is not linked to a CDS user: link your %s account from your CDS profile", vcsProjectWithSecret.Type, committerName, vcsProjectWithSecret.Type), nil
 		}
 
 		// Check if username changed
@@ -1614,7 +1614,7 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 	}
 
 	// This error should not happen
-	return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("Unknown committer: %q", committer), nil
+	return nil, sdk.RepositoryAnalysisStatusSkipped, fmt.Sprintf("committer %q does not match any CDS user", committer), nil
 }
 
 func sortEntitiesFiles(filesContent map[string][]byte) []string {
@@ -1972,22 +1972,28 @@ func (api *API) analyzeCommitSignatureThroughVcsAPI(ctx context.Context, analysi
 	if err != nil {
 		return sig.KeyID, "", err
 	}
-	return sig.KeyID, sig.untrustedReason(analysis.Commit), nil
+	return sig.KeyID, sig.untrustedReason(analysis.Commit, vcsProject.Name), nil
 }
 
 // commitSignature is the signature of a commit or tag as reported by the VCS.
 type commitSignature struct {
 	KeyID    string
 	Verified bool
+	Reason   string // VCS explanation of the verdict, when it provides one
 }
 
 // untrustedReason explains why the signature cannot identify the initiator, empty when it can.
-func (s commitSignature) untrustedReason(sha string) string {
+func (s commitSignature) untrustedReason(sha, vcsName string) string {
 	switch {
 	case s.KeyID == "":
-		return fmt.Sprintf("commit %s is not signed", sha)
+		// Bitbucket Server reports no signature at all for a key it does not know.
+		return fmt.Sprintf("commit %s is not signed, or its signature is not recognized by %s: sign it with a GPG key registered on your %s account", sha, vcsName, vcsName)
 	case !s.Verified:
-		return fmt.Sprintf("commit %s signature could not be verified", sha)
+		reason := ""
+		if s.Reason != "" {
+			reason = fmt.Sprintf(" (reason: %s)", s.Reason)
+		}
+		return fmt.Sprintf("commit %s signature with key %s is not verified by %s%s: check that the key and the committer email are registered on your %s account", sha, s.KeyID, vcsName, reason, vcsName)
 	}
 	return ""
 }
@@ -2018,7 +2024,7 @@ func retrieveSigninKey(ctx context.Context, db gorp.SqlExecutor, cache cache.Sto
 		if err != nil {
 			return sig, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to extract keyID from signature: %v", err)
 		}
-		sig.Verified = tag.Verified
+		sig.Verified, sig.Reason = tag.Verified, tag.VerificationReason
 	default:
 		vcsCommit, err := client.Commit(ctx, repoName, sha)
 		if err != nil {
@@ -2034,7 +2040,7 @@ func retrieveSigninKey(ctx context.Context, db gorp.SqlExecutor, cache cache.Sto
 				return sig, sdk.NewErrorFrom(sdk.ErrInvalidData, "unable to extract keyID from vcsCommit %q signature: %v", sha, err)
 			}
 		}
-		sig.Verified = vcsCommit.Verified
+		sig.Verified, sig.Reason = vcsCommit.Verified, vcsCommit.VerificationReason
 	}
 	return sig, nil
 }

@@ -83,17 +83,21 @@ func (api *API) postRetrieveEventUserHandler() ([]service.RbacChecker, service.H
 					return err
 				}
 				// Only a verified signature identifies the initiator.
-				if sig.KeyID == "" || !sig.Verified {
+				if reason := sig.untrustedReason(r.Commit, vcsProjectWithSecret.Name); reason != "" {
+					resp.Error = reason
 					return service.WriteJSON(w, resp, http.StatusOK)
 				}
 				r.SignKey = sig.KeyID
 				resp.SignKey = sig.KeyID
 			}
-			initiator, _, _, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Ref, r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
+			initiator, _, reason, err := findCommitter(ctx, api.Cache, api.mustDB(), r.Ref, r.Commit, r.SignKey, r.ProjectKey, *vcsProjectWithSecret, r.RepositoryName, api.Config.VCS.GPGKeys)
 			if err != nil {
 				return err
 			}
 			resp.Initiator = initiator
+			if initiator == nil {
+				resp.Error = reason
+			}
 
 			log.Debug(ctx, "postRetrieveEventUserHandler: key: %s vcs: %s, repo: %s, commit: %s => intiator: %+v", resp.SignKey, vcsProjectWithSecret.Name, r.RepositoryName, r.Commit, initiator)
 
