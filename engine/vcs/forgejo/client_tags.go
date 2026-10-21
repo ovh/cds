@@ -93,6 +93,7 @@ func (c *forgejoClient) Tag(ctx context.Context, fullname string, tagName string
 		if annotated.Verification != nil {
 			vcsTag.Signature = annotated.Verification.Signature
 			vcsTag.Verified = annotated.Verification.Verified
+			vcsTag.VerificationReason = annotated.Verification.Reason
 		}
 		return vcsTag, nil
 	} else if resp != nil && resp.StatusCode == 404 {
@@ -107,6 +108,7 @@ func (c *forgejoClient) Tag(ctx context.Context, fullname string, tagName string
 		}
 		vcsTag.Signature = commit.Signature
 		vcsTag.Verified = commit.Verified
+		vcsTag.VerificationReason = commit.VerificationReason
 		return vcsTag, nil
 	} else {
 		// Unexpected error on git/tags, return tag without signature

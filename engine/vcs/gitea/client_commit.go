@@ -97,6 +97,7 @@ func (g *giteaClient) toVCSCommit(commit *gitea.Commit) sdk.VCSCommit {
 	if commit.RepoCommit.Verification != nil && commit.RepoCommit.Verification.Signature != "" {
 		vcsCommit.Signature = commit.RepoCommit.Verification.Signature
 		vcsCommit.Verified = commit.RepoCommit.Verification.Verified
+		vcsCommit.VerificationReason = commit.RepoCommit.Verification.Reason
 	}
 	return vcsCommit
 }

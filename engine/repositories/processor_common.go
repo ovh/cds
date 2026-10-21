@@ -138,7 +138,7 @@ func (s *Service) checkCommitSignature(ctx context.Context, gitRepo repo.Repo, o
 			}
 			if publicKey == "" {
 				op.Setup.Checkout.Result.CommitVerified = false
-				op.Setup.Checkout.Result.Msg = fmt.Sprintf("commit signed but key %s not found in CDS", gpgKeyID)
+				op.Setup.Checkout.Result.Msg = fmt.Sprintf("signing key %s is not registered in CDS: add it to your CDS user profile", gpgKeyID)
 				return nil
 			}
 		}

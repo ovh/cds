@@ -92,9 +92,10 @@ func (g *githubClient) TagFromSha(ctx context.Context, fullname string, tagSha s
 			Email:       tag.Tagger.Email,
 			DisplayName: tag.Tagger.Name,
 		},
-		Hash:      tag.Object.Sha,
-		Verified:  tag.Verification.Verified,
-		Signature: tag.Verification.Signature,
+		Hash:               tag.Object.Sha,
+		Verified:           tag.Verification.Verified,
+		Signature:          tag.Verification.Signature,
+		VerificationReason: tag.Verification.Reason,
 	}, status, nil
 }
 

@@ -36,11 +36,14 @@ func (s *Service) extractDataFromForgejoPushEvent(ctx context.Context, body []by
 	}
 	if request.HeadCommit != nil && request.HeadCommit.Verification != nil {
 		extractedData.CommitVerified = request.HeadCommit.Verification.Verified
-		keyID, err := gpg.GetKeyIdFromSignature(request.HeadCommit.Verification.Signature)
-		if err != nil {
-			log.Warn(ctx, "unable to get gpg key id from signature: %v", err)
+		// The key ID is written by the signer: only keep it once Forgejo verified the signature.
+		if extractedData.CommitVerified {
+			keyID, err := gpg.GetKeyIdFromSignature(request.HeadCommit.Verification.Signature)
+			if err != nil {
+				log.Warn(ctx, "unable to get gpg key id from signature: %v", err)
+			}
+			extractedData.CommitGpgKeyID = keyID
 		}
-		extractedData.CommitGpgKeyID = keyID
 	}
 
 	return repoName, extractedData, nil

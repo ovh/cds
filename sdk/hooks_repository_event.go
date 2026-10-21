@@ -417,6 +417,8 @@ type HookRetrieveUserResponse struct {
 	DeprecatedUsername string       `json:"username"` // Deprecated
 	Initiator          *V2Initiator `json:"initiator"`
 	SignKey            string       `json:"sign_key"`
+	// Error explains why no initiator could be resolved.
+	Error string `json:"error,omitempty"`
 }
 
 type AnalysisRequest struct {

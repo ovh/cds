@@ -32,6 +32,64 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// Shared GPG test fixtures: a signed commit signature and the public key whose
+// key ID (F344BDDCE15F17D7) it advertises, reused across the analyze tests.
+const (
+	testGPGPublicKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+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
+GDFkaTe3nUJdYV4=
+=SNcy
+-----END PGP PUBLIC KEY BLOCK-----`
+
+	testGPGCommitSignature = "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----"
+)
+
 func TestSortEntitiesFiles(t *testing.T) {
 	filesContext := map[string][]byte{
 		".cds/workflows/w1.yml":           nil,
@@ -314,7 +372,7 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -327,8 +385,8 @@ func TestAnalyzeGithubGPGKeyNotFound(t *testing.T) {
 
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "gpg key F344BDDCE15F17D7 not found in CDS", analysisUpdated.Data.Error)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
+	require.Equal(t, "signing key F344BDDCE15F17D7 is not registered in CDS: add it to your CDS user profile", analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubUserNotEnoughPerm(t *testing.T) {
@@ -349,58 +407,8 @@ func TestAnalyzeGithubUserNotEnoughPerm(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	userKey := &sdk.UserGPGKey{
-		KeyID: "F344BDDCE15F17D7",
-		PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
@@ -453,7 +461,7 @@ GDFkaTe3nUJdYV4=
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -603,7 +611,7 @@ func TestAnalyzeGithubServerCommitNotSigned(t *testing.T) {
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	require.NoError(t, err)
 	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, "commit abcdef is not signed", analysisUpdated.Data.Error)
+	require.Equal(t, "commit abcdef is not signed, or its signature is not recognized by vcs-server: sign it with a GPG key registered on your vcs-server account", analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubAddWorkerModel(t *testing.T) {
@@ -624,58 +632,8 @@ func TestAnalyzeGithubAddWorkerModel(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	userKey := &sdk.UserGPGKey{
-		KeyID: "F344BDDCE15F17D7",
-		PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
@@ -742,7 +700,7 @@ GDFkaTe3nUJdYV4=
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -840,58 +798,8 @@ func TestAnalyzeGithubMergeCommitNoLink(t *testing.T) {
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
 		"vcs-server": {
 			{
-				ID: "F344BDDCE15F17D7",
-				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+				ID:        "F344BDDCE15F17D7",
+				PublicKey: testGPGPublicKey,
 			},
 		},
 	}
@@ -956,7 +864,7 @@ GDFkaTe3nUJdYV4=
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -983,8 +891,8 @@ GDFkaTe3nUJdYV4=
 	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
 	t.Logf("%+v", analysisUpdated.Data)
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, analysisUpdated.Status)
-	require.Equal(t, fmt.Sprintf("github user %s not found in CDS", githubUsername), analysisUpdated.Data.Error)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
+	require.Equal(t, fmt.Sprintf("github user %s is not linked to a CDS user: link your github account from your CDS profile", githubUsername), analysisUpdated.Data.Error)
 }
 
 func TestAnalyzeGithubAddWorkerModelMergeCommit(t *testing.T) {
@@ -995,58 +903,8 @@ func TestAnalyzeGithubAddWorkerModelMergeCommit(t *testing.T) {
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
 		"vcs-server": {
 			{
-				ID: "F344BDDCE15F17D7",
-				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+				ID:        "F344BDDCE15F17D7",
+				PublicKey: testGPGPublicKey,
 			},
 		},
 	}
@@ -1134,7 +992,7 @@ spec:
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 					Author: sdk.VCSAuthor{
@@ -1232,64 +1090,15 @@ func TestAnalyzeBitbucketMergeCommit(t *testing.T) {
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
 		"vcs-server": {
 			{
-				ID: "F344BDDCE15F17D7",
-				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-mQINBFXv+IMBEADYp5xTZ0YKvUgXvvE0SSeXg+bo8mPTTq5clIYWfdmfVjS6NL8T
-IYhnjj5MXXIoGs/Lyx+B0VUC9Jo5ObSVCViJRXGVwfHpMIW2+n4i251pGO4bUPPw
-o7SpEbvEc1tqE4P3OU26BZhZoIv3AaslMXi+v2eZjJe5Qr4BSc6FLOo5pdAm9HAZ
-7vkj7M/WKbbpoXKpfZF+DLmJsrWU/2/TVD2ZdLANAwiXSVLmLeJr0z/zVX+9o6b9
-Rz7HV3euPDCWb/t2fEI4yT8+e92QlxCtVcMpG7ZpxftQbl4z0U8kHASr38UqjTL5
-VtCHKUFD5KyrxHUxFEUingI+M8NstzObho65oK2yxzcoufHTQBo2sfL4xWqPmFj8
-hZeNSz3P6XPLQ+wdIganRGweEv+LSpbSMXIaWpiE2GjwFVRRTaffCgWvth1JRBti
-deJI5rxe7UztytDTg8Ekt5MAqTBIoxqZ24zOdbxEef4EpEiYnaa5GXMg8EHH1bJr
-aIc2nuY7Zfoz7uvqS8F5ohh69q/LbSv+gxw7aU36oogd13+8/MYPE29vfb+tIIwz
-xen0PUcPkt83EQ0RdTbG7AnrvNMXDINp+ZGz3Oks3OXehezX/syPAe7BunPU/Zfy
-wK/GDhpjsS9R+y/ZWDXX/LyQfHiHw5nIoX0m6I43BdshrQH5fyrTvJA02wARAQAB
-tCxTdGV2ZW4gR3VpaGV1eCA8c3RldmVuLmd1aWhldXhAY29ycC5vdmguY29tPokC
-OAQTAQIAIgUCVe/4gwIbAwYLCQgHAwIGFQgCCQoLBBYCAwECHgECF4AACgkQ80S9
-3OFfF9dDYw//VuE85jnUS6bFwdvkFtdbXPZxOsFDMX9tiCjYDdXfT+98AoGgZboC
-Ya/E8T5NhFjG8yGC8WOsiZZhQ/DyFr7TT+CwLvZ2JmLarEKHpL//YNr5ACp7Q8lo
-7PSAACEJx2J3s2qpEbpMrvXVOJkAbwiFUnSz8R14RMJZLCmgbA5CDKpYqCSM/1B1
-ED/WY8phhV6GknsqvG/cQiyQNQBg8PEdsyiNn79QWRGD8q5ZvWsxAuMMY7j/WSLy
-VHZJ9wR9lBM9Lf3NJ+vDoVq56WaAH30vuVJ2LzGwHOULDKSFkQZ1JPodsu+7tDAZ
-QDENAMaD1940GzmBANH/FOHD5T2VrOYMtPHMcyXJRSUOgw3MtvSuKJJliLMO0DNa
-EZG14nCcdDP7xoS9da2JddMxDmqhzuCpsPk0IVH+JSjrAKOJ7r5YE3/vWcI2dQaU
-nOYBhqST73RN2g6wF5xLt9Oi1DXYFBfdhz+oXJ1ck34MB3oPx5yzlY9Rp7N5F9a+
-gDiuE1Y1iqRX0uuoDq8b2EsZrQ4dSvpjZwWYRsDghjSATjiAcrhC70NjpG22Avwt
-0x3SPG+HQYgzYs9idQMI6lpKqoFU9QUHMsWQKuBFE0ZXJs9Q9d+zjjUCebFZ7LjN
-twZyhn8QXg5FUhLygfF6Pq8jnYMXMzAbKXm3NEC8X1/VGaZjB1Lszcq5Ag0EVe/4
-gwEQAMGVA4T9qs/a8zy10Tc8nSGAMdNzI26D0fhH2rRtjeNJs5BqGNMPu2Eg5DKR
-7rStsw58fDvdKeB116ZPXq4Hoe66H+Pw83QIwDQk/vN965fPwqz9BIgDE/xTx09w
-wVLvfKAHIFQF7znqqUYrES2gYpvirVD7knGKjVMMkB4Hil7TMcya6MTD2a9L32be
-nMfZ5sA4311TJPS+kIEeEuG+SU2w3i6YRho+atUvsxkMNzmx92ow6JDznX8Kpbr/
-PVExZObUW0+379yMKlgaZLhrgqbcwm+IOCgsM5XSs/zGb2AFACADnOdqOYToRtIt
-bdvH2Y/2fq3t3upuzbpM3fiUu0Vs2rVRe5w4luHt6ZpKdZo43blEL9MN/ZbQVYE0
-N/5/9SAizfyyOGmrNvB4EwPLpyImBre9MRcZJRvg22tFxcbnM2+SJGwfmD0FnPGe
-gIRihPgsQxrx6BOCB1JzCUCOUqZ12gy2ul2RuopGEEX8YKLWNryNN8v0ooS+PU8D
-Ii2biB9O9UYecXPVhxVP64gl48lN8psIFL+YSJ+svAErsQYGASApRF240Nor98+L
-zgHm1+60JNU1i5gYQV6RzDMUML43XYWxsVqA21mTZZSJFwC/TcmLDl9yGyIOTNG4
-kFPT/c1xibi5MGBQE8gIxdwEwfrj9iqohMt8afJfIMhcfwdzABEBAAGJAh8EGAEC
-AAkFAlXv+IMCGwwACgkQ80S93OFfF9ceWxAAprlvofJ8qkREkhNznF9YacuDru8n
-8BfWINLHKMI8zmOaijcdZVjC/+5FxC7rIx/Bc+vJCmMTTAkud0RfF4zDBPAqEv0q
-I+4lR/ATThkRmX3XJSBDeI62MJTOPHqZ13mPnof5fAdy9HFclc1vwMoBjOofJpq4
-DiQqchzR8eg0YXFDfaKptDrjvBGeffb14RjI7MeNwp5YIrEc4zZfQGZ3p3Q8oH84
-vMbWjiWp/OZH+ZBVixLWQVMrTu1jSE7Hj7FgbBJzaXGoH/NyYqTTWany06Mpltu7
-+71v/gJGgav+VxGcPoEzI83SCKdWdlLdtK5HjzpmqMixX1NaO5gfQblatmi7qLIT
-f42j7Ul9tumMOLPtKQmiuloMJHO7mUmqOZDxmbrNmb47rAmIU3KRx5oNID9rLhxe
-4tuAIsY8Lu2mU+PR5XQlgjG1J0aCunxUOZ4HhLUqJ6U+QWLUpRAq74zjPGocIv1e
-GAH2qkfaNTarBQKytsA7k6vnzHmY7KYup3c9qQjMC8XzjuKBF5oJXl3yBU2VCPaw
-qVWF89Lpz5nHVxmY2ejU/DvV7zUUAiqlVyzFmiOed5O66jVtPG4YM5x2EMwNvejk
-e9rMe4DS8qoQg4er1Z3WNcb4JOAc33HDOol1LFOH1buNN5V+KrkUo0fPWMf4nQ97
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+				ID:        "F344BDDCE15F17D7",
+				PublicKey: testGPGPublicKey,
 			},
 		},
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
+	linkBitbucketServerUser(t, db, u)
 
 	// Create VCS
 	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", sdk.VCSTypeBitbucketServer)
@@ -1717,58 +1526,8 @@ func TestAnalyzeGithubDeleteEntity(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	userKey := &sdk.UserGPGKey{
-		KeyID: "F344BDDCE15F17D7",
-		PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
@@ -1860,7 +1619,7 @@ GDFkaTe3nUJdYV4=
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -1967,58 +1726,8 @@ func TestAnalyzeGithubUpdateWorkerModelNoRight(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	userKey := &sdk.UserGPGKey{
-		KeyID: "F344BDDCE15F17D7",
-		PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
@@ -2098,7 +1807,7 @@ GDFkaTe3nUJdYV4=
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -2197,58 +1906,8 @@ func TestAnalyzeGithubAddWorkflowWithWrongTemplate(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	userKey := &sdk.UserGPGKey{
-		KeyID: "F344BDDCE15F17D7",
-		PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
@@ -2310,7 +1969,7 @@ parameters:
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -2399,58 +2058,8 @@ func TestAnalyzeGithubUpdateWorkflowNoRight(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	userKey := &sdk.UserGPGKey{
-		KeyID: "F344BDDCE15F17D7",
-		PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
@@ -2554,7 +2163,7 @@ spec:
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -2683,63 +2292,14 @@ func TestAnalyzeWrongWorkflow(t *testing.T) {
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
 		"vcs-server": {
 			{
-				ID: "F344BDDCE15F17D7",
-				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+				ID:        "F344BDDCE15F17D7",
+				PublicKey: testGPGPublicKey,
 			},
 		},
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	linkBitbucketServerUser(t, db, u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 
 	// Create VCS
@@ -2916,63 +2476,14 @@ func TestAnalyzeWorkflowWithProjectConcurrency(t *testing.T) {
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
 		"vcs-server": {
 			{
-				ID: "F344BDDCE15F17D7",
-				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-mQINBFXv+IMBEADYp5xTZ0YKvUgXvvE0SSeXg+bo8mPTTq5clIYWfdmfVjS6NL8T
-IYhnjj5MXXIoGs/Lyx+B0VUC9Jo5ObSVCViJRXGVwfHpMIW2+n4i251pGO4bUPPw
-o7SpEbvEc1tqE4P3OU26BZhZoIv3AaslMXi+v2eZjJe5Qr4BSc6FLOo5pdAm9HAZ
-7vkj7M/WKbbpoXKpfZF+DLmJsrWU/2/TVD2ZdLANAwiXSVLmLeJr0z/zVX+9o6b9
-Rz7HV3euPDCWb/t2fEI4yT8+e92QlxCtVcMpG7ZpxftQbl4z0U8kHASr38UqjTL5
-VtCHKUFD5KyrxHUxFEUingI+M8NstzObho65oK2yxzcoufHTQBo2sfL4xWqPmFj8
-hZeNSz3P6XPLQ+wdIganRGweEv+LSpbSMXIaWpiE2GjwFVRRTaffCgWvth1JRBti
-deJI5rxe7UztytDTg8Ekt5MAqTBIoxqZ24zOdbxEef4EpEiYnaa5GXMg8EHH1bJr
-aIc2nuY7Zfoz7uvqS8F5ohh69q/LbSv+gxw7aU36oogd13+8/MYPE29vfb+tIIwz
-xen0PUcPkt83EQ0RdTbG7AnrvNMXDINp+ZGz3Oks3OXehezX/syPAe7BunPU/Zfy
-wK/GDhpjsS9R+y/ZWDXX/LyQfHiHw5nIoX0m6I43BdshrQH5fyrTvJA02wARAQAB
-tCxTdGV2ZW4gR3VpaGV1eCA8c3RldmVuLmd1aWhldXhAY29ycC5vdmguY29tPokC
-OAQTAQIAIgUCVe/4gwIbAwYLCQgHAwIGFQgCCQoLBBYCAwECHgECF4AACgkQ80S9
-3OFfF9dDYw//VuE85jnUS6bFwdvkFtdbXPZxOsFDMX9tiCjYDdXfT+98AoGgZboC
-Ya/E8T5NhFjG8yGC8WOsiZZhQ/DyFr7TT+CwLvZ2JmLarEKHpL//YNr5ACp7Q8lo
-7PSAACEJx2J3s2qpEbpMrvXVOJkAbwiFUnSz8R14RMJZLCmgbA5CDKpYqCSM/1B1
-ED/WY8phhV6GknsqvG/cQiyQNQBg8PEdsyiNn79QWRGD8q5ZvWsxAuMMY7j/WSLy
-VHZJ9wR9lBM9Lf3NJ+vDoVq56WaAH30vuVJ2LzGwHOULDKSFkQZ1JPodsu+7tDAZ
-QDENAMaD1940GzmBANH/FOHD5T2VrOYMtPHMcyXJRSUOgw3MtvSuKJJliLMO0DNa
-EZG14nCcdDP7xoS9da2JddMxDmqhzuCpsPk0IVH+JSjrAKOJ7r5YE3/vWcI2dQaU
-nOYBhqST73RN2g6wF5xLt9Oi1DXYFBfdhz+oXJ1ck34MB3oPx5yzlY9Rp7N5F9a+
-gDiuE1Y1iqRX0uuoDq8b2EsZrQ4dSvpjZwWYRsDghjSATjiAcrhC70NjpG22Avwt
-0x3SPG+HQYgzYs9idQMI6lpKqoFU9QUHMsWQKuBFE0ZXJs9Q9d+zjjUCebFZ7LjN
-twZyhn8QXg5FUhLygfF6Pq8jnYMXMzAbKXm3NEC8X1/VGaZjB1Lszcq5Ag0EVe/4
-gwEQAMGVA4T9qs/a8zy10Tc8nSGAMdNzI26D0fhH2rRtjeNJs5BqGNMPu2Eg5DKR
-7rStsw58fDvdKeB116ZPXq4Hoe66H+Pw83QIwDQk/vN965fPwqz9BIgDE/xTx09w
-wVLvfKAHIFQF7znqqUYrES2gYpvirVD7knGKjVMMkB4Hil7TMcya6MTD2a9L32be
-nMfZ5sA4311TJPS+kIEeEuG+SU2w3i6YRho+atUvsxkMNzmx92ow6JDznX8Kpbr/
-PVExZObUW0+379yMKlgaZLhrgqbcwm+IOCgsM5XSs/zGb2AFACADnOdqOYToRtIt
-bdvH2Y/2fq3t3upuzbpM3fiUu0Vs2rVRe5w4luHt6ZpKdZo43blEL9MN/ZbQVYE0
-N/5/9SAizfyyOGmrNvB4EwPLpyImBre9MRcZJRvg22tFxcbnM2+SJGwfmD0FnPGe
-gIRihPgsQxrx6BOCB1JzCUCOUqZ12gy2ul2RuopGEEX8YKLWNryNN8v0ooS+PU8D
-Ii2biB9O9UYecXPVhxVP64gl48lN8psIFL+YSJ+svAErsQYGASApRF240Nor98+L
-zgHm1+60JNU1i5gYQV6RzDMUML43XYWxsVqA21mTZZSJFwC/TcmLDl9yGyIOTNG4
-kFPT/c1xibi5MGBQE8gIxdwEwfrj9iqohMt8afJfIMhcfwdzABEBAAGJAh8EGAEC
-AAkFAlXv+IMCGwwACgkQ80S93OFfF9ceWxAAprlvofJ8qkREkhNznF9YacuDru8n
-8BfWINLHKMI8zmOaijcdZVjC/+5FxC7rIx/Bc+vJCmMTTAkud0RfF4zDBPAqEv0q
-I+4lR/ATThkRmX3XJSBDeI62MJTOPHqZ13mPnof5fAdy9HFclc1vwMoBjOofJpq4
-DiQqchzR8eg0YXFDfaKptDrjvBGeffb14RjI7MeNwp5YIrEc4zZfQGZ3p3Q8oH84
-vMbWjiWp/OZH+ZBVixLWQVMrTu1jSE7Hj7FgbBJzaXGoH/NyYqTTWany06Mpltu7
-+71v/gJGgav+VxGcPoEzI83SCKdWdlLdtK5HjzpmqMixX1NaO5gfQblatmi7qLIT
-f42j7Ul9tumMOLPtKQmiuloMJHO7mUmqOZDxmbrNmb47rAmIU3KRx5oNID9rLhxe
-4tuAIsY8Lu2mU+PR5XQlgjG1J0aCunxUOZ4HhLUqJ6U+QWLUpRAq74zjPGocIv1e
-GAH2qkfaNTarBQKytsA7k6vnzHmY7KYup3c9qQjMC8XzjuKBF5oJXl3yBU2VCPaw
-qVWF89Lpz5nHVxmY2ejU/DvV7zUUAiqlVyzFmiOed5O66jVtPG4YM5x2EMwNvejk
-e9rMe4DS8qoQg4er1Z3WNcb4JOAc33HDOol1LFOH1buNN5V+KrkUo0fPWMf4nQ97
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+				ID:        "F344BDDCE15F17D7",
+				PublicKey: testGPGPublicKey,
 			},
 		},
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	linkBitbucketServerUser(t, db, u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkflow, proj1.Key, *u)
@@ -3163,63 +2674,14 @@ func TestAnalyzeWorkflowWithConcurrency(t *testing.T) {
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
 		"vcs-server": {
 			{
-				ID: "F344BDDCE15F17D7",
-				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+				ID:        "F344BDDCE15F17D7",
+				PublicKey: testGPGPublicKey,
 			},
 		},
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	linkBitbucketServerUser(t, db, u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkflow, proj1.Key, *u)
@@ -3407,63 +2869,14 @@ func TestAnalyzeWorkflowWithConcurrencyNotFound(t *testing.T) {
 	api.Config.VCS.GPGKeys = map[string][]GPGKey{
 		"vcs-server": {
 			{
-				ID: "F344BDDCE15F17D7",
-				PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+				ID:        "F344BDDCE15F17D7",
+				PublicKey: testGPGPublicKey,
 			},
 		},
 	}
 
 	u, _ := assets.InsertLambdaUser(t, db)
+	linkBitbucketServerUser(t, db, u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleRead, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkerModel, proj1.Key, *u)
 	assets.InsertRBAcProject(t, db, sdk.ProjectRoleManageWorkflow, proj1.Key, *u)
@@ -3644,58 +3057,8 @@ func TestAnalyzeGithubNonUpdateWorkerModel(t *testing.T) {
 
 	u, _ := assets.InsertLambdaUser(t, db)
 	userKey := &sdk.UserGPGKey{
-		KeyID: "F344BDDCE15F17D7",
-		PublicKey: `-----BEGIN PGP PUBLIC KEY BLOCK-----
-
-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
-GDFkaTe3nUJdYV4=
-=SNcy
------END PGP PUBLIC KEY BLOCK-----`,
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
 		AuthentifiedUserID: u.ID,
 	}
 	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
@@ -3762,7 +3125,7 @@ GDFkaTe3nUJdYV4=
 		DoAndReturn(
 			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
 				commit := &sdk.VCSCommit{
-					Signature: "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----",
+					Signature: testGPGCommitSignature,
 					Verified:  true,
 					Hash:      "abcdef",
 				}
@@ -3861,7 +3224,7 @@ GDFkaTe3nUJdYV4=
 }
 
 const testGPGKeyID = "F344BDDCE15F17D7"
-const testGPGSignature = "-----BEGIN PGP SIGNATURE-----\n\niQIzBAABCAAdFiEEfYJxMHx+E0DPuqaA80S93OFfF9cFAmME7aIACgkQ80S93OFf\nF9eFWBAAq5hOcZIx/A+8J6/NwRtXMs5OW+TJxzJb5siXdRC8Mjrm+fqwpTPPHqtB\nbb7iuiRnmY/HqCegULiw4qVxDyA3sswyDHPLcyUcfG4drJGylPW9ZYg3YeRslX2B\niQykYZyd4h3R/euYAuBKA9vMGoWnaU/Vh22A11Po1pXpPq623FTkiFOSAZrD8Hql\nEvmlhw26qHSPlhsdSKsR+/FPvpLUXlNUiYB5oq7W9qy0yOOafgwZ9r3vvxshzvkt\nvW5zG+R05thQ8icCyrWfEfIWp+TTtQX3asOopnQG9dFs2LRODLXXaHTRVRB/MWPa\nNVvUD/dIzBVyNimpik+2Uqq5jWNiXavQmqoxyL9n4A372AIH7Hu78NnfmAz7VnYo\nyVHRNBryiCcYNj5g0x/WnGsDuhQr7170ODw7QfEYJdCPxGgYuhdYovHdjcMcgWpF\ncWEtayj8bhuLTjjxEsqXTv+psxwB55N5OUvyXmNAaFLhJSEI+l1VHW14L3gZFdPT\n+VgPQtT9a1+GEjPqLvZ6wLVTcSI9uogK6NHowmyM261FtFQqLVdkOdUU8RCR8qLC\nekZWQaJutqicIZTolAQyBPBw8aQz0i+uBUgdWkoiHf/zEEudu0b06IpDq2oYFFVH\nVmCuZ3/AcXrW6T3XXcE5pu+Rvsi57O7iR8i7TIP0CaDTr2FfQWc=\n=/H7t\n-----END PGP SIGNATURE-----"
+const testGPGSignature = testGPGCommitSignature
 
 func setupFindCommitterTest(t *testing.T) (api *API, db *test.FakeTransaction, vcsProjectWithSecret sdk.VCSProject, projKey string, repoName string, cleanup func()) {
 	t.Helper()
@@ -3982,7 +3345,7 @@ func TestFindCommitter_GithubTag_VCSUser_UnknownAuthor(t *testing.T) {
 	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
 
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, status)
 	require.Contains(t, errMsg, "unable to find commiter for commit commitsha")
 	require.Nil(t, initiator)
 }
@@ -4090,7 +3453,7 @@ func TestFindCommitter_GithubUnsignedTag_CommitterNotFound(t *testing.T) {
 	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/tags/v1.0", "tagsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
 
 	require.NoError(t, err)
-	require.Equal(t, sdk.RepositoryAnalysisStatusSkipped, status)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, status)
 	require.Contains(t, errMsg, unknownGithubUsername)
 	require.Nil(t, initiator)
 }
@@ -4190,4 +3553,181 @@ func TestLoadAnalysesInProgressIdleSinceRespectsItsBound(t *testing.T) {
 	for i := 1; i < len(stuck); i++ {
 		require.False(t, stuck[i].LastModified.Before(stuck[i-1].LastModified), "stale analyses must come back oldest first")
 	}
+}
+
+// TestAnalyzeGithubUnverifiedSignature ensures that a commit carrying a signature
+// whose advertised key ID is known to CDS, but that the VCS did not verify, does not
+// resolve any initiator. The key ID in a signature is unauthenticated: trusting it
+// without verification would let anyone inherit another user's permissions.
+func TestAnalyzeGithubUnverifiedSignature(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	// Create project
+	key1 := sdk.RandomString(10)
+	proj1 := assets.InsertTestProject(t, db, api.Cache, key1, key1)
+
+	uk, err := user.LoadGPGKeyByKeyID(ctx, db, "F344BDDCE15F17D7")
+	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+		require.NoError(t, err)
+	}
+	if uk != nil {
+		require.NoError(t, user.DeleteGPGKey(db, *uk))
+	}
+
+	// Register the key matching the signature to a CDS user: without the verification
+	// gate this would make findCommitter resolve that user as the initiator.
+	u, _ := assets.InsertLambdaUser(t, db)
+	userKey := &sdk.UserGPGKey{
+		KeyID:              "F344BDDCE15F17D7",
+		PublicKey:          testGPGPublicKey,
+		AuthentifiedUserID: u.ID,
+	}
+	require.NoError(t, user.InsertGPGKey(ctx, db, userKey))
+
+	// Create VCS
+	vcsProject := assets.InsertTestVCSProject(t, db, proj1.ID, "vcs-server", "github")
+
+	repo := sdk.ProjectRepository{
+		Name:         "myrepo",
+		Created:      time.Now(),
+		VCSProjectID: vcsProject.ID,
+		CreatedBy:    "me",
+		ProjectKey:   proj1.Key,
+	}
+	require.NoError(t, repository.Insert(context.TODO(), db, &repo))
+
+	analysis := sdk.ProjectRepositoryAnalysis{
+		ID:                  "",
+		Status:              sdk.RepositoryAnalysisStatusInProgress,
+		Commit:              "abcdef",
+		ProjectKey:          proj1.Key,
+		ProjectRepositoryID: repo.ID,
+		Created:             time.Now(),
+		LastModified:        time.Now(),
+		Ref:                 "refs/heads/master",
+		VCSProjectID:        vcsProject.ID,
+	}
+	require.NoError(t, repository.InsertAnalysis(ctx, db, &analysis))
+
+	// Mock VCS
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	sHooks, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		_ = services.Delete(db, sHooks)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/repository/event/callback", gomock.Any(), gomock.Any()).AnyTimes()
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/abcdef", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				commit := &sdk.VCSCommit{
+					Signature:          testGPGCommitSignature,
+					Verified:           false,
+					VerificationReason: "invalid",
+					Hash:               "abcdef",
+				}
+				*(out.(*sdk.VCSCommit)) = *commit
+				return nil, 200, nil
+			},
+		).MaxTimes(2)
+
+	require.NoError(t, api.analyzeRepository(ctx, repo.ID, analysis.ID))
+
+	analysisUpdated, err := repository.LoadRepositoryAnalysisById(ctx, db, repo.ID, analysis.ID)
+	require.NoError(t, err)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, analysisUpdated.Status)
+	require.Equal(t, "commit abcdef signature with key F344BDDCE15F17D7 is not verified by vcs-server (reason: invalid): check that the key and the committer email are registered on your vcs-server account", analysisUpdated.Data.Error)
+	// No initiator resolved, and the untrusted key ID must not be recorded as the sign key
+	// (otherwise it would be propagated downstream and trusted to resolve a committer).
+	require.Empty(t, analysisUpdated.Data.Initiator.UserID)
+	require.Empty(t, analysisUpdated.Data.SignKeyID)
+}
+
+func TestCommitSignatureUntrustedReason(t *testing.T) {
+	tests := []struct {
+		name string
+		sig  commitSignature
+		want string
+	}{
+		{"unsigned or unknown to the VCS", commitSignature{}, "commit abcdef is not signed, or its signature is not recognized by github: sign it with a GPG key registered on your github account"},
+		{"unverified with reason", commitSignature{KeyID: "F344BDDCE15F17D7", Reason: "unverified_email"}, "commit abcdef signature with key F344BDDCE15F17D7 is not verified by github (reason: unverified_email): check that the key and the committer email are registered on your github account"},
+		{"unverified without reason", commitSignature{KeyID: "F344BDDCE15F17D7"}, "commit abcdef signature with key F344BDDCE15F17D7 is not verified by github: check that the key and the committer email are registered on your github account"},
+		{"verified", commitSignature{KeyID: "F344BDDCE15F17D7", Verified: true, Reason: "valid"}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, tt.sig.untrustedReason("abcdef", "github"))
+		})
+	}
+}
+
+// TestFindCommitter_CommitterWithoutLink ensures a commit signed by the VCS key is not attributed to a
+// CDS user from a matching username alone: the committer must be linked to that user.
+func TestFindCommitter_CommitterWithoutLink(t *testing.T) {
+	for _, vcsType := range []string{sdk.VCSTypeBitbucketServer, sdk.VCSTypeForgejo} {
+		t.Run(vcsType, func(t *testing.T) {
+			api, db, vcsProject, projKey, repoName, cleanup := setupFindCommitterTest(t)
+			defer cleanup()
+			ctx := context.TODO()
+			vcsProject.Type = vcsType
+
+			// Make sure the signing key is not registered on a CDS user by a previous test
+			uk, err := user.LoadGPGKeyByKeyID(ctx, db, testGPGKeyID)
+			if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+				require.NoError(t, err)
+			}
+			if uk != nil {
+				require.NoError(t, user.DeleteGPGKey(db, *uk))
+			}
+
+			// A CDS user with the same username as the committer, without any link
+			u, _ := assets.InsertLambdaUser(t, db)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			servicesClients := mock_services.NewMockClient(ctrl)
+			services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
+
+			servicesClients.EXPECT().
+				DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/commitsha", gomock.Any(), gomock.Any(), gomock.Any()).
+				DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+					*(out.(*sdk.VCSCommit)) = sdk.VCSCommit{
+						Hash:      "commitsha",
+						Author:    sdk.VCSAuthor{Name: u.Username, Slug: u.Username},
+						Committer: sdk.VCSAuthor{Name: u.Username, Slug: u.Username},
+					}
+					return nil, 200, nil
+				}).Times(1)
+
+			vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
+			initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/heads/master", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+
+			require.NoError(t, err)
+			require.Nil(t, initiator)
+			require.Equal(t, sdk.RepositoryAnalysisStatusError, status)
+			require.Equal(t, fmt.Sprintf("%s user %s is not linked to a CDS user", vcsType, u.Username), errMsg)
+		})
+	}
+}
+
+// linkBitbucketServerUser links the user to the Bitbucket Server account of the same name, which is
+// how a Bitbucket Server committer is mapped to a CDS user.
+func linkBitbucketServerUser(t *testing.T, db *test.FakeTransaction, u *sdk.AuthentifiedUser) {
+	require.NoError(t, link.Insert(context.TODO(), db, &sdk.UserLink{
+		AuthentifiedUserID: u.ID,
+		Type:               string(sdk.ConsumerBitbucketServer),
+		ExternalID:         u.Username,
+		Username:           u.Username,
+	}))
 }
