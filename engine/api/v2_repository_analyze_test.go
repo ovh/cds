@@ -3721,6 +3721,42 @@ func TestFindCommitter_CommitterWithoutLink(t *testing.T) {
 	}
 }
 
+// Bitbucket Server reports no slug when the committer email maps to no Bitbucket account: the git name
+// is not trusted.
+func TestFindCommitter_BitbucketServerCommitterWithoutSlug(t *testing.T) {
+	api, db, vcsProject, projKey, repoName, cleanup := setupFindCommitterTest(t)
+	defer cleanup()
+	ctx := context.TODO()
+	vcsProject.Type = sdk.VCSTypeBitbucketServer
+
+	if uk, err := user.LoadGPGKeyByKeyID(ctx, db, testGPGKeyID); err == nil && uk != nil {
+		require.NoError(t, user.DeleteGPGKey(db, *uk))
+	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client { return servicesClients }
+
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-server/repos/myrepo/commits/commitsha", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+			*(out.(*sdk.VCSCommit)) = sdk.VCSCommit{
+				Hash:      "commitsha",
+				Committer: sdk.VCSAuthor{Name: "someone", Email: "someone@example.com"},
+			}
+			return nil, 200, nil
+		}).Times(1)
+
+	vcsPublicKeys := map[string][]GPGKey{"vcs-server": {{ID: testGPGKeyID}}}
+	initiator, status, errMsg, err := findCommitter(ctx, api.Cache, db.DbMap, "refs/heads/master", "commitsha", testGPGKeyID, projKey, vcsProject, repoName, vcsPublicKeys)
+
+	require.NoError(t, err)
+	require.Nil(t, initiator)
+	require.Equal(t, sdk.RepositoryAnalysisStatusError, status)
+	require.Equal(t, "committer someone <someone@example.com> is not recognized by vcs-server: set the email of your vcs-server account in your git config", errMsg)
+}
+
 // linkBitbucketServerUser links the user to the Bitbucket Server account of the same name, which is
 // how a Bitbucket Server committer is mapped to a CDS user.
 func linkBitbucketServerUser(t *testing.T, db *test.FakeTransaction, u *sdk.AuthentifiedUser) {
