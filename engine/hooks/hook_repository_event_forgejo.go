@@ -55,6 +55,9 @@ func (s *Service) extractDataFromForgejoPullRequestCommentEvent(body []byte) (st
 	if err := sdk.JSONUnmarshal(body, &request); err != nil {
 		return "", extractedData, sdk.WrapError(err, "unable ro read gitea request: %s", string(body))
 	}
+	if request.PullRequest == nil {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing pull_request in forgejo pull_request_comment payload")
+	}
 
 	// X-Forgejo-Event: pull_request_comment
 	// X-Forgejo-Event-Type: pull_request_review_comment
@@ -82,6 +85,9 @@ func (s *Service) extractDataFromForgejoPullRequestEvent(body []byte, eventType 
 	var request ForgejoPullRequestPayload
 	if err := sdk.JSONUnmarshal(body, &request); err != nil {
 		return "", extractedData, sdk.WrapError(err, "unable ro read gitea request: %s", string(body))
+	}
+	if request.PullRequest == nil {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing pull_request in forgejo pull_request payload")
 	}
 
 	// X-Forgejo-Event: pull_request
@@ -133,6 +139,9 @@ func (s *Service) extractDataFromForgejoIssueCommentPREvent(body []byte) (string
 	if err := sdk.JSONUnmarshal(body, &request); err != nil {
 		return "", extractedData, sdk.WrapError(err, "unable ro read gitea request: %s", string(body))
 	}
+	if request.PullRequest == nil {
+		return "", extractedData, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing pull_request in forgejo issue_comment payload")
+	}
 
 	// X-Forgejo-Event: issue_comment
 	// X-Forgejo-Event-Type: pull_request_comment
@@ -150,7 +159,8 @@ func (s *Service) extractDataFromForgejoIssueCommentPREvent(body []byte) (string
 	default:
 		return "", extractedData, sdk.NewErrorFrom(sdk.ErrNotImplemented, "unknown action %q for event %q", extractedData.CDSEventType, extractedData.CDSEventName)
 	}
-	extractedData.PullRequestID = int64(request.PullRequest.ID)
+	// pull_request.id is the instance-wide database id; the PR is addressed by its number
+	extractedData.PullRequestID = int64(request.PullRequest.Number)
 	extractedData.Ref = sdk.GitRefBranchPrefix + request.PullRequest.Head.Ref
 	extractedData.Commit = request.PullRequest.Head.Sha
 	extractedData.CommitFrom = request.PullRequest.Base.Sha
