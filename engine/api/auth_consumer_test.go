@@ -113,6 +113,245 @@ func Test_postConsumerByUserHandler(t *testing.T) {
 	require.Equal(t, localConsumer.ID, *created.Consumer.ParentID)
 }
 
+// A non-admin cannot scope a consumer to a group they do not belong to.
+// See docs/content/docs/concepts/authentication.md (Groups).
+func Test_postConsumerByUserHandler_RejectForeignGroup(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	ownGroup := assets.InsertGroup(t, db)
+	foreignGroup := assets.InsertGroup(t, db)
+	u, jwtRaw := assets.InsertLambdaUser(t, db, ownGroup)
+
+	data := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     []int64{foreignGroup.ID},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
+	}
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
+		"permUsername": u.Username,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, data)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+
+	require.Equal(t, 400, rec.Code,
+		"a user must not be able to mint a consumer for a group they are not a member of; got status %d body %s",
+		rec.Code, rec.Body.String())
+}
+
+// A child of a group-restricted builtin token inherits the parent's groups, not
+// all the user's groups. See docs/content/docs/concepts/authentication.md (Groups).
+func Test_postConsumerByUserHandler_EmptyChildInheritsRestrictedParent(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	g1 := assets.InsertGroup(t, db)
+	g2 := assets.InsertGroup(t, db)
+	u, _ := assets.InsertLambdaUser(t, db, g1, g2)
+
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	// Parent builtin token restricted to g1 only, with the AccessToken scope so
+	// it can reach the consumer-creation route.
+	parentOpts := builtin.NewConsumerOptions{
+		Name:     sdk.RandomString(10),
+		Duration: 0,
+		GroupIDs: []int64{g1.ID},
+		Scopes:   sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+	}
+	parentConsumer, _, err := builtin.NewConsumer(context.TODO(), db, parentOpts, localConsumer)
+	require.NoError(t, err)
+
+	session, err := authentication.NewSession(context.TODO(), db, &parentConsumer.AuthConsumer, 5*time.Minute)
+	require.NoError(t, err)
+	parentJWT, err := authentication.NewSessionJWT(session, "")
+	require.NoError(t, err)
+
+	// Child created with no groups: it must inherit the parent's restriction (g1),
+	// not resolve to all of the user's groups (g1 and g2).
+	data := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     []int64{},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
+	}
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
+		"permUsername": u.Username,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, parentJWT, http.MethodPost, uri, data)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 201, rec.Code, "body: %s", rec.Body.String())
+
+	var created sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
+	require.Len(t, created.Consumer.AuthConsumerUser.GroupIDs, 1,
+		"a child of a group-restricted token must inherit that restriction, not widen to all the user's groups; body %s",
+		rec.Body.String())
+	require.Equal(t, g1.ID, created.Consumer.AuthConsumerUser.GroupIDs[0])
+}
+
+// A CDS admin on a first level consumer can scope a consumer to any group,
+// including ones they do not belong to. See
+// docs/content/docs/concepts/authentication.md (Groups).
+func Test_postConsumerByUserHandler_AdminCanScopeToForeignGroup(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	adminUser, jwtAdmin := assets.InsertAdminUser(t, db)
+	foreignGroup := assets.InsertGroup(t, db) // the admin is not a member of it
+
+	data := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     []int64{foreignGroup.ID},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
+	}
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
+		"permUsername": adminUser.Username,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtAdmin, http.MethodPost, uri, data)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 201, rec.Code,
+		"an admin must be able to scope a consumer to a group they are not a member of; body %s", rec.Body.String())
+
+	var created sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
+	require.Len(t, created.Consumer.AuthConsumerUser.GroupIDs, 1)
+	require.Equal(t, foreignGroup.ID, created.Consumer.AuthConsumerUser.GroupIDs[0])
+}
+
+// A child with no groups from an unrestricted parent stays a wildcard (all the
+// user's groups). See docs/content/docs/concepts/authentication.md (Groups).
+func Test_postConsumerByUserHandler_UnrestrictedParentKeepsAllGroups(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	g1 := assets.InsertGroup(t, db)
+	g2 := assets.InsertGroup(t, db)
+	u, jwtRaw := assets.InsertLambdaUser(t, db, g1, g2)
+
+	// Parent is the user's local session: it carries no group restriction.
+	data := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     []int64{},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
+	}
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
+		"permUsername": u.Username,
+	})
+	require.NotEmpty(t, uri)
+	req := assets.NewJWTAuthentifiedRequest(t, jwtRaw, http.MethodPost, uri, data)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 201, rec.Code, "body: %s", rec.Body.String())
+
+	var created sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
+	// Empty stored group list means all the user's groups; the child must keep it.
+	require.Len(t, created.Consumer.AuthConsumerUser.GroupIDs, 0,
+		"an unrestricted parent's child with no groups must keep all the user's groups (empty), not be narrowed; body %s",
+		rec.Body.String())
+}
+
+// A wildcard builtin parent (no groups) can mint a child restricted to a group
+// the user belongs to; a group outside the user's memberships is rejected.
+// See docs/content/docs/concepts/authentication.md (Groups).
+func Test_postConsumerByUserHandler_WildcardBuiltinParentCanRestrictChild(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	g1 := assets.InsertGroup(t, db)
+	g2 := assets.InsertGroup(t, db)
+	u, _ := assets.InsertLambdaUser(t, db, g1, g2)
+
+	localConsumer, err := authentication.LoadUserConsumerByTypeAndUserID(context.TODO(), db, sdk.ConsumerLocal, u.ID,
+		authentication.LoadUserConsumerOptions.WithAuthentifiedUser)
+	require.NoError(t, err)
+
+	// Parent builtin token with no group restriction (wildcard), AccessToken scope.
+	parentOpts := builtin.NewConsumerOptions{
+		Name:     sdk.RandomString(10),
+		Duration: 0,
+		Scopes:   sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+	}
+	parentConsumer, _, err := builtin.NewConsumer(context.TODO(), db, parentOpts, localConsumer)
+	require.NoError(t, err)
+	require.Len(t, parentConsumer.AuthConsumerUser.GroupIDs, 0) // wildcard parent
+
+	session, err := authentication.NewSession(context.TODO(), db, &parentConsumer.AuthConsumer, 5*time.Minute)
+	require.NoError(t, err)
+	parentJWT, err := authentication.NewSessionJWT(session, "")
+	require.NoError(t, err)
+
+	uri := api.Router.GetRoute(http.MethodPost, api.postConsumerByUserHandler, map[string]string{
+		"permUsername": u.Username,
+	})
+	require.NotEmpty(t, uri)
+
+	// Child restricted to g1, a group the user belongs to: allowed, child carries g1.
+	okData := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     []int64{g1.ID},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
+	}
+	req := assets.NewJWTAuthentifiedRequest(t, parentJWT, http.MethodPost, uri, okData)
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 201, rec.Code, "body: %s", rec.Body.String())
+
+	var created sdk.AuthConsumerCreateResponse
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &created))
+	require.Len(t, created.Consumer.AuthConsumerUser.GroupIDs, 1)
+	require.Equal(t, g1.ID, created.Consumer.AuthConsumerUser.GroupIDs[0])
+
+	// Child restricted to a group the user is not a member of: rejected.
+	foreignGroup := assets.InsertGroup(t, db)
+	koData := sdk.AuthUserConsumer{
+		AuthConsumer: sdk.AuthConsumer{
+			Name:            sdk.RandomString(10),
+			ValidityPeriods: sdk.NewAuthConsumerValidityPeriod(time.Now(), 0),
+		},
+		AuthConsumerUser: sdk.AuthUserConsumerData{
+			GroupIDs:     []int64{foreignGroup.ID},
+			ScopeDetails: sdk.NewAuthConsumerScopeDetails(sdk.AuthConsumerScopeAccessToken),
+		},
+	}
+	req = assets.NewJWTAuthentifiedRequest(t, parentJWT, http.MethodPost, uri, koData)
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	require.Equal(t, 400, rec.Code, "body: %s", rec.Body.String())
+}
+
 func Test_postAdminConsumerByUserHandler(t *testing.T) {
 	api, db, _ := newTestAPI(t)
 

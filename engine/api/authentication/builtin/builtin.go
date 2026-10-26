@@ -62,20 +62,24 @@ func NewConsumer(ctx context.Context, db gorpmapper.SqlExecutorWithTx, opts NewC
 		return nil, "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "name should be given to create a built in consumer")
 	}
 
-	// For each given group id check if it's in parent consumer group ids.
-	// When the parent is a builtin consumer even if it was created by an admin we should check groups to prevent
-	// creating child with more permission than parents.
+	// Requested groups must stay within the groups the parent grants. GetGroupIDs
+	// resolves a wildcard parent (no explicit groups) to its user's current groups.
+	// A builtin parent is always checked, even when created by an admin, so a child
+	// is never broader than its parent. See docs/content/docs/concepts/authentication.md (Groups).
 	if parentConsumer.Type == sdk.ConsumerBuiltin || !parentConsumer.Admin() {
-		// Only if parentGroupIDs aren't empty. Because empty means all groups access
-		if len(parentConsumer.AuthConsumerUser.GroupIDs) > 0 {
-			parentGroupIDs := parentConsumer.GetGroupIDs()
-			for i := range opts.GroupIDs {
-				if !sdk.IsInInt64Array(opts.GroupIDs[i], parentGroupIDs) {
-					return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", opts.GroupIDs[i])
-				}
-			}
+		parentGroupIDs := parentConsumer.GetGroupIDs()
+
+		// A wildcard child (no groups) inherits an explicit parent's groups instead
+		// of widening to all the user's groups. A wildcard parent stays a wildcard.
+		if len(parentConsumer.AuthConsumerUser.GroupIDs) > 0 && len(opts.GroupIDs) == 0 {
+			opts.GroupIDs = append([]int64(nil), parentGroupIDs...)
 		}
 
+		for i := range opts.GroupIDs {
+			if !sdk.IsInInt64Array(opts.GroupIDs[i], parentGroupIDs) {
+				return nil, "", sdk.WrapError(sdk.ErrWrongRequest, "invalid given group id %d", opts.GroupIDs[i])
+			}
+		}
 	}
 
 	// Check that given scopes are valid and if they match parent scopes
