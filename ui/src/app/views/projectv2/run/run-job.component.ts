@@ -501,6 +501,14 @@ export class RunJobComponent implements OnInit, OnChanges, OnDestroy {
         this._cd.detectChanges();
     }
 
+    async clickOpenCloseAll(closed: boolean) {
+        this.tabs[this.currentTabIndex].logBlocks.forEach(logBlock => logBlock.closed = closed);
+        if (!closed) {
+            await this.loadStepsLogs();
+        }
+        this._cd.detectChanges();
+    }
+
     receiveLogs(l: CDNLine): void {
         for (let i = 0; i < this.tabs.length; i++) {
             for (let j = 0; j < this.tabs[i].logBlocks.length; j++) {
