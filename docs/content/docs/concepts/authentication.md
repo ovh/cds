@@ -20,11 +20,22 @@ Using a child consumer you can give permission for all or a part of what its par
 
 ## Groups
 
-A consumer includes a list of groups.
-Wildcard for a first level.
-Wildcard or a list of group for a builtin consumer.
-A user can add only group if is member of it. (A cds admin can add any group inside a builtin consumer).
-A child consumer can only have groups that are in its parents.
+A consumer includes a list of groups. A first level consumer is always a wildcard.
+A builtin consumer is either a wildcard (an empty list) or an explicit list of groups.
+A wildcard resolves to the groups its user is currently a member of.
+
+When a builtin consumer is created, the requested groups are checked against the
+groups its parent consumer grants:
+
+- The parent's granted groups are its own explicit list, or, when the parent is a
+  wildcard, the groups its user is currently a member of.
+- Every explicit group requested must be one of the parent's granted groups;
+  a group outside that set is rejected. A CDS admin creating a consumer from a
+  first level (non-builtin) consumer may add any group, including `shared.infra`.
+- A request with no groups (a wildcard) inherits the parent: from a wildcard
+  parent it stays a wildcard (all the user's groups); from a parent restricted to
+  an explicit list it takes that list. A child is therefore never broader than its
+  parent.
 
 ## Scopes
 
