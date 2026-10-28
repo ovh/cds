@@ -1,0 +1,226 @@
+package microvm
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"text/template"
+
+	"github.com/rockbears/log"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/ovh/cds/engine/worker/pkg/workerruntime"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/slug"
+	"github.com/ovh/cds/sdk/telemetry"
+)
+
+// Keys of the worker secret and the guest files written from them
+const (
+	secretKeyConfig = "worker-config"
+	secretKeyScript = "boot.sh"
+	secretKeyUnit   = "cds-worker.service"
+
+	guestPathConfig = "/etc/cds/worker-config"
+	guestPathScript = "/usr/local/bin/cds-worker-boot.sh"
+	guestPathUnit   = "/etc/systemd/system/cds-worker.service"
+	guestUnit       = "cds-worker.service"
+)
+
+// The worker reads its base64 configuration from CDS_CONFIG. The guest
+// reboots at the end: Firecracker exits on a guest reboot, which ends the
+// MicroVM (a poweroff would leave the VMM running).
+// Its output goes to the serial console through the unit.
+var bootScriptTemplate = template.Must(template.New("boot").Parse(`#!/bin/bash
+if ! curl -fsSL{{if .Insecure}} -k{{end}} --retry 10 --retry-delay 5 --retry-all-errors --retry-max-time 300 "{{.API}}/download/worker/{{.OSArch}}" -o /usr/local/bin/worker; then
+  echo "unable to download the CDS worker from {{.API}}"
+  systemctl reboot
+  exit 1
+fi
+chmod +x /usr/local/bin/worker
+export CDS_CONFIG="$(cat ` + guestPathConfig + `)"
+/usr/local/bin/worker
+systemctl reboot
+`))
+
+const workerUnit = `[Unit]
+Description=CDS worker
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=` + guestPathScript + `
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
+`
+
+// SpawnWorker creates the worker secret then its MicroVM
+func (h *HatcheryMicroVM) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) error {
+	ctx, end := telemetry.Span(ctx, "HatcheryMicroVM.SpawnWorker",
+		telemetry.Tag(telemetry.TagWorkflowNodeJobRun, spawnArgs.JobID),
+		telemetry.Tag(telemetry.TagWorker, spawnArgs.WorkerName))
+	defer end()
+
+	if spawnArgs.Model.ModelV2 == nil || spawnArgs.RegisterOnly {
+		return sdk.WithStack(fmt.Errorf("hatchery microvm only spawns workers for v2 jobs"))
+	}
+
+	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
+	secret, err := h.buildSecret(spawnArgs, workerConfig)
+	if err != nil {
+		return err
+	}
+	mvm := h.buildMicroVM(spawnArgs, secret.Name)
+
+	// The secret goes first: the platform reads it before the boot
+	if _, err := h.kubeClient.CoreV1().Secrets(h.Config.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
+		return sdk.WrapError(err, "cannot create secret %s", secret.Name)
+	}
+
+	created, err := h.dynClient.Resource(microVMResource).Namespace(h.Config.Namespace).Create(ctx, mvm, metav1.CreateOptions{})
+	if err != nil {
+		if errDel := h.kubeClient.CoreV1().Secrets(h.Config.Namespace).Delete(ctx, secret.Name, metav1.DeleteOptions{}); errDel != nil {
+			log.Error(ctx, "cannot delete secret %s: %v", secret.Name, errDel)
+		}
+		return sdk.WrapError(err, "cannot create MicroVM %s", spawnArgs.WorkerName)
+	}
+
+	// The secret is garbage-collected with its MicroVM. When this fails, the
+	// orphan secrets cleanup deletes it.
+	patch := fmt.Sprintf(`{"metadata":{"ownerReferences":[{"apiVersion":%q,"kind":%q,"name":%q,"uid":%q}]}}`,
+		microVMAPIVersion, microVMKind, created.GetName(), created.GetUID())
+	if _, err := h.kubeClient.CoreV1().Secrets(h.Config.Namespace).Patch(ctx, secret.Name, types.MergePatchType, []byte(patch), metav1.PatchOptions{}); err != nil {
+		log.Warn(ctx, "cannot set the owner of secret %s: %v", secret.Name, err)
+	}
+
+	log.Debug(ctx, "hatchery> microvm> SpawnWorker> %s > MicroVM created", spawnArgs.WorkerName)
+	return nil
+}
+
+func (h *HatcheryMicroVM) labels(workerName string) map[string]string {
+	return map[string]string{
+		LABEL_HATCHERY_NAME: h.Config.Name,
+		LABEL_WORKER_NAME:   workerName,
+	}
+}
+
+func (h *HatcheryMicroVM) buildSecret(spawnArgs hatchery.SpawnArguments, workerConfig workerruntime.WorkerConfig) (*corev1.Secret, error) {
+	// Fall back to the guest arch; the API normalizes uname's spelling (x86_64 -> amd64)
+	osArch := spawnArgs.Model.ModelV2.OSArch
+	if osArch == "" {
+		osArch = "linux/$(uname -m)"
+	}
+	var script bytes.Buffer
+	if err := bootScriptTemplate.Execute(&script, struct {
+		API      string
+		Insecure bool
+		OSArch   string
+	}{
+		API:      workerConfig.APIEndpoint,
+		Insecure: workerConfig.APIEndpointInsecure,
+		OSArch:   osArch,
+	}); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	labels := h.labels(spawnArgs.WorkerName)
+	// The platform only writes guest files from Secrets carrying this label
+	labels[labelGuestFiles] = "true"
+
+	return &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      slug.Convert("cds-worker-" + spawnArgs.WorkerName),
+			Namespace: h.Config.Namespace,
+			Labels:    labels,
+		},
+		Type: corev1.SecretTypeOpaque,
+		StringData: map[string]string{
+			secretKeyConfig: workerConfig.EncodeBase64(),
+			secretKeyScript: script.String(),
+			secretKeyUnit:   workerUnit,
+		},
+	}, nil
+}
+
+func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secretName string) *unstructured.Unstructured {
+	spec := spawnArgs.Model.MicroVMSpec
+	vcpus, memory := h.size(spec)
+
+	rootfs := map[string]interface{}{
+		"url":    spec.Rootfs.URL,
+		"sha256": spec.Rootfs.SHA256,
+	}
+	if spec.Rootfs.Format != "" {
+		rootfs["format"] = spec.Rootfs.Format
+	}
+	if spec.Rootfs.Size > 0 {
+		rootfs["sizeMiB"] = int64(spec.Rootfs.Size)
+	}
+
+	egress := map[string]interface{}{"enabled": true}
+	if h.Config.EgressPolicy != "" {
+		egress["policyRef"] = map[string]interface{}{"name": h.Config.EgressPolicy}
+	}
+
+	// SSH from the bastion, for debugging only
+	networking := map[string]interface{}{
+		"egress": egress,
+		"admin":  map[string]interface{}{"enabled": len(h.Config.DebugSSHAuthorizedKeys) > 0},
+	}
+	if len(h.Config.DebugSSHAuthorizedKeys) > 0 {
+		keys := make([]interface{}, 0, len(h.Config.DebugSSHAuthorizedKeys))
+		for _, k := range h.Config.DebugSSHAuthorizedKeys {
+			keys = append(keys, k)
+		}
+		networking["sshAuthorizedKeys"] = keys
+	}
+
+	guestFile := func(path string, mode string, key string) interface{} {
+		return map[string]interface{}{
+			"path":         path,
+			"mode":         mode,
+			"secretKeyRef": map[string]interface{}{"name": secretName, "key": key},
+		}
+	}
+
+	labels := map[string]interface{}{}
+	for k, v := range h.labels(spawnArgs.WorkerName) {
+		labels[k] = v
+	}
+
+	return &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": microVMAPIVersion,
+		"kind":       microVMKind,
+		"metadata": map[string]interface{}{
+			"name":      spawnArgs.WorkerName,
+			"namespace": h.Config.Namespace,
+			"labels":    labels,
+		},
+		"spec": map[string]interface{}{
+			"vcpus":     int64(vcpus),
+			"memoryMiB": int64(memory),
+			"kernel": map[string]interface{}{
+				"url":    spec.Kernel.URL,
+				"sha256": spec.Kernel.SHA256,
+			},
+			"rootfs":     rootfs,
+			"networking": networking,
+			"guest": map[string]interface{}{
+				"files": []interface{}{
+					guestFile(guestPathConfig, "0600", secretKeyConfig),
+					guestFile(guestPathScript, "0755", secretKeyScript),
+					guestFile(guestPathUnit, "0644", secretKeyUnit),
+				},
+				"systemdUnits": []interface{}{guestUnit},
+			},
+		},
+	}}
+}
