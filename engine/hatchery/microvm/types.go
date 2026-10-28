@@ -29,6 +29,15 @@ const (
 	conditionQuotaExceeded = "QuotaExceeded"
 
 	labelGuestFiles = "microvm.poc/guest-files"
+
+	// platformBootArgs is the platform default kernel command line, which
+	// spec.bootArgs replaces
+	platformBootArgs = "console=ttyS0 reboot=k panic=1 pci=off"
+	// defaultExtraBootArgs keeps the serial console quiet (it is slow in
+	// Firecracker) and masks the units of the image a CI worker does not need
+	defaultExtraBootArgs = "quiet systemd.mask=serial-getty@ttyS0.service systemd.mask=getty@tty1.service systemd.mask=apt-daily.timer systemd.mask=apt-daily-upgrade.timer systemd.mask=unattended-upgrades.service systemd.mask=motd-news.timer systemd.mask=man-db.timer systemd.mask=logrotate.timer systemd.mask=e2scrub_all.timer systemd.mask=fstrim.timer"
+	// sshBootArgs masks the SSH server when debug SSH is off
+	sshBootArgs = "systemd.mask=ssh.service systemd.mask=ssh.socket"
 )
 
 // HatcheryConfiguration is the configuration for microvm hatchery
@@ -42,6 +51,8 @@ type HatcheryConfiguration struct {
 	EgressPolicy string `mapstructure:"egressPolicy" toml:"egressPolicy" default:"" commented:"false" comment:"Name of the MicroVMEgressPolicy (same namespace) applied to the workers. It must allow the CDS API and CDN (HTTP and TCP). The platform default policy applies when empty" json:"egressPolicy"`
 	// DebugSSHAuthorizedKeys enables the admin network of the workers with these root keys
 	DebugSSHAuthorizedKeys []string `mapstructure:"debugSSHAuthorizedKeys" toml:"debugSSHAuthorizedKeys" default:"" commented:"true" comment:"Debugging aid: SSH public keys authorized as root on every worker. When set, the admin network of the workers is enabled (SSH from the bastion). Leave empty in normal use" json:"-"`
+	// ExtraBootArgs appended to the platform default kernel command line
+	ExtraBootArgs string `mapstructure:"extraBootArgs" toml:"extraBootArgs" default:"quiet systemd.mask=serial-getty@ttyS0.service systemd.mask=getty@tty1.service systemd.mask=apt-daily.timer systemd.mask=apt-daily-upgrade.timer systemd.mask=unattended-upgrades.service systemd.mask=motd-news.timer systemd.mask=man-db.timer systemd.mask=logrotate.timer systemd.mask=e2scrub_all.timer systemd.mask=fstrim.timer" commented:"true" comment:"Kernel arguments appended to the platform default command line of the workers (systemd.mask=<unit> skips a unit of the image). The SSH server is masked too unless debugSSHAuthorizedKeys is set" json:"extraBootArgs"`
 	// DefaultVCPUs used when the worker model does not set vcpus
 	DefaultVCPUs int `mapstructure:"defaultVCPUs" toml:"defaultVCPUs" default:"2" commented:"false" comment:"Worker vCPUs when the worker model does not set them" json:"defaultVCPUs"`
 	// DefaultMemory used when the worker model does not set memory
@@ -65,4 +76,6 @@ type HatcheryMicroVM struct {
 	Config     HatcheryConfiguration
 	kubeClient kubernetes.Interface
 	dynClient  dynamic.Interface
+
+	workerBinaries workerBinaryCache
 }

@@ -22,12 +22,22 @@ For each job, the hatchery creates:
   labelled `microvm.poc/guest-files: "true"` as the platform requires;
 * a MicroVM with the kernel, rootfs and size of the worker model, the egress
   policy of the hatchery configuration, and `spec.guest` asking the platform
-  to write the Secret keys as guest files and to enable the unit.
+  to write the Secret keys as guest files and to enable the unit. When the
+  hatchery could compute its sha256, the worker binary of the model os/arch
+  is a guest file too, with the API download route as source: the platform
+  downloads it once per node and per CDS version.
 
-At boot, the unit downloads the worker binary from the CDS API
-(`/download/worker/<os>/<arch>`) and runs it. When the worker exits, the guest
+The unit starts as soon as the platform network unit (`microvm-net.service`)
+is done, without waiting for the rest of the guest boot. If the worker binary
+is missing, it downloads it from the CDS API (`/download/worker/<os>/<arch>`),
+then runs it. When the worker exits, the guest
 reboots, which ends the microVM. The Secret is owned by the MicroVM and is
 deleted with it.
+
+The kernel command line is the platform default followed by `extraBootArgs`,
+which defaults to `quiet` and `systemd.mask=` of units a CI worker does not
+need (getty, apt and maintenance timers). The SSH server is masked too unless
+`debugSSHAuthorizedKeys` is set.
 
 The guest image needs systemd, bash and curl. Its egress policy must allow the
 CDS API and the CDN (HTTP and TCP log port).

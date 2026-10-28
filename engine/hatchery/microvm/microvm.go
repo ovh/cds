@@ -124,6 +124,9 @@ func (c *HatcheryConfiguration) applyDefaults() {
 	if c.KillAwolWorkersInterval <= 0 {
 		c.KillAwolWorkersInterval = 30
 	}
+	if c.ExtraBootArgs == "" {
+		c.ExtraBootArgs = defaultExtraBootArgs
+	}
 }
 
 func initKubeClients(config HatcheryConfiguration) (kubernetes.Interface, dynamic.Interface, error) {

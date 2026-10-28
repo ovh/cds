@@ -2,8 +2,13 @@ package microvm
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -149,8 +154,41 @@ func TestCanAllocateResourcesWaitsForQuota(t *testing.T) {
 	require.True(t, can)
 }
 
+// testAPI serves the API version and the worker binaries, and counts the
+// worker downloads
+type testAPI struct {
+	*httptest.Server
+	version   string
+	worker    string
+	downloads int
+}
+
+func newTestAPI(t *testing.T) *testAPI {
+	api := &testAPI{version: "1.0.0", worker: "worker binary"}
+	api.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/mon/version":
+			_ = json.NewEncoder(w).Encode(sdk.Version{Version: api.version})
+		case "/download/worker/linux/amd64", "/download/worker/linux/arm64":
+			api.downloads++
+			_, _ = w.Write([]byte(api.worker + r.URL.Path))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(api.Close)
+	return api
+}
+
+func sha256Hex(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:])
+}
+
 func TestSpawnWorker(t *testing.T) {
 	h, kube, dyn := newTestHatchery(t)
+	api := newTestAPI(t)
+	h.Config.API.HTTP.URL = api.URL
 	h.CDNConfig.HTTPURL = "https://cds-cdn.example.org"
 	h.CDNConfig.TCPURL = "cds-cdn.example.org:8090"
 
@@ -190,19 +228,34 @@ func TestSpawnWorker(t *testing.T) {
 	_, found, _ := unstructured.NestedSlice(mvm.Object, "spec", "networking", "sshAuthorizedKeys")
 	require.False(t, found)
 
-	// The guest gets the worker config, the boot script and an enabled unit, all from the secret
+	// The guest gets the worker config, the boot script and an enabled unit
+	// from the secret, and the worker binary from the platform cache
 	secretName := "cds-worker-ubuntu-worker-1"
 	files, _, _ := unstructured.NestedSlice(mvm.Object, "spec", "guest", "files")
-	require.Len(t, files, 3)
+	require.Len(t, files, 4)
 	filesByPath := map[string]map[string]interface{}{}
 	for _, f := range files {
 		file := f.(map[string]interface{})
 		filesByPath[file["path"].(string)] = file
-		require.Equal(t, secretName, file["secretKeyRef"].(map[string]interface{})["name"])
+	}
+	for _, p := range []string{guestPathConfig, guestPathScript, guestPathUnit} {
+		require.Equal(t, secretName, filesByPath[p]["secretKeyRef"].(map[string]interface{})["name"])
 	}
 	require.Equal(t, "0600", filesByPath[guestPathConfig]["mode"], "the worker config holds the worker token")
 	require.Equal(t, "0755", filesByPath[guestPathScript]["mode"])
 	require.Equal(t, "0644", filesByPath[guestPathUnit]["mode"])
+	// The platform checks the binary it downloads against the hash of the
+	// one the API serves for the model os/arch
+	require.Equal(t, map[string]interface{}{
+		"path": "/usr/local/bin/worker",
+		"mode": "0755",
+		"source": map[string]interface{}{
+			"url":    api.URL + "/download/worker/linux/amd64",
+			"sha256": sha256Hex("worker binary/download/worker/linux/amd64"),
+		},
+	}, filesByPath[guestPathWorker])
+	bootArgs, _, _ := unstructured.NestedString(mvm.Object, "spec", "bootArgs")
+	require.Equal(t, h.bootArgs(), bootArgs)
 	units, _, _ := unstructured.NestedStringSlice(mvm.Object, "spec", "guest", "systemdUnits")
 	require.Equal(t, []string{guestUnit}, units)
 
@@ -219,8 +272,8 @@ func TestSpawnWorker(t *testing.T) {
 	// The secret is garbage-collected with its MicroVM
 	require.Equal(t, []metav1.OwnerReference{{APIVersion: microVMAPIVersion, Kind: microVMKind, Name: "ubuntu-worker-1", UID: "mvm-uid"}}, secret.OwnerReferences)
 
-	for _, f := range files {
-		key := f.(map[string]interface{})["secretKeyRef"].(map[string]interface{})["key"].(string)
+	for _, p := range []string{guestPathConfig, guestPathScript, guestPathUnit} {
+		key := filesByPath[p]["secretKeyRef"].(map[string]interface{})["key"].(string)
 		require.Contains(t, secret.StringData, key)
 	}
 
@@ -233,9 +286,12 @@ func TestSpawnWorker(t *testing.T) {
 	require.Equal(t, "worker-token", workerConfig.APIToken)
 	require.Equal(t, spawnArgs.JobID, workerConfig.RunJobID)
 
-	// The boot script downloads the worker for the model os/arch, runs it and ends the VM
+	// The boot script downloads the worker for the model os/arch when the
+	// platform did not provide it, runs it and ends the VM
 	script := secret.StringData[secretKeyScript]
-	require.Contains(t, script, `"https://cds-api.example.org/download/worker/linux/amd64"`)
+	require.Contains(t, script, "if [ ! -x /usr/local/bin/worker ]; then\n  if ! curl ")
+	require.Contains(t, script, `"`+api.URL+`/download/worker/linux/amd64"`)
+	require.Contains(t, script, "--retry-delay 1 ")
 	require.Contains(t, script, `export CDS_CONFIG="$(cat /etc/cds/worker-config)"`)
 	require.Contains(t, script, "/usr/local/bin/worker\nsystemctl reboot")
 	require.NotContains(t, script, " -k ", "TLS is verified unless the API is configured insecure")
@@ -246,7 +302,7 @@ func TestSpawnWorker(t *testing.T) {
 func TestBuildMicroVMWithoutPolicy(t *testing.T) {
 	h, _, _ := newTestHatchery(t)
 	h.Config.EgressPolicy = ""
-	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s")
+	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s", nil)
 	_, found, _ := unstructured.NestedMap(mvm.Object, "spec", "networking", "egress", "policyRef")
 	require.False(t, found)
 	enabled, _, _ := unstructured.NestedBool(mvm.Object, "spec", "networking", "egress", "enabled")
@@ -258,18 +314,109 @@ func TestBuildMicroVMWithoutPolicy(t *testing.T) {
 func TestBuildMicroVMWithDebugSSH(t *testing.T) {
 	h, _, _ := newTestHatchery(t)
 	h.Config.DebugSSHAuthorizedKeys = []string{"ssh-ed25519 AAAA debug@example"}
-	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s")
+	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s", nil)
 	admin, _, _ := unstructured.NestedBool(mvm.Object, "spec", "networking", "admin", "enabled")
 	require.True(t, admin)
 	keys, _, _ := unstructured.NestedStringSlice(mvm.Object, "spec", "networking", "sshAuthorizedKeys")
 	require.Equal(t, []string{"ssh-ed25519 AAAA debug@example"}, keys)
 	policy, _, _ := unstructured.NestedString(mvm.Object, "spec", "networking", "egress", "policyRef", "name")
 	require.Equal(t, "cds-workers", policy)
+	// The SSH server is not masked, or the keys would be useless
+	bootArgs, _, _ := unstructured.NestedString(mvm.Object, "spec", "bootArgs")
+	require.NotContains(t, bootArgs, "ssh")
+}
+
+// The worker unit must not wait for the whole boot: only for the platform
+// network unit, and it must still be stopped at shutdown for the reboot
+// that ends the VM
+func TestWorkerUnit(t *testing.T) {
+	require.Contains(t, workerUnit, "\nDefaultDependencies=no\n")
+	require.Contains(t, workerUnit, "\nWants=microvm-net.service\n")
+	require.Contains(t, workerUnit, "\nAfter=microvm-net.service local-fs.target\n")
+	require.Contains(t, workerUnit, "\nConflicts=shutdown.target\n")
+	require.Contains(t, workerUnit, "\nBefore=shutdown.target\n")
+	require.NotContains(t, workerUnit, "network-online.target")
+}
+
+func TestBootArgs(t *testing.T) {
+	h, _, _ := newTestHatchery(t)
+	// The platform default is kept: the serial console of the worker output,
+	// and the reboot that ends the VM
+	args := h.bootArgs()
+	require.True(t, strings.HasPrefix(args, "console=ttyS0 reboot=k panic=1 pci=off quiet "), args)
+	for _, unit := range []string{"serial-getty@ttyS0.service", "apt-daily.timer", "unattended-upgrades.service", "ssh.service", "ssh.socket"} {
+		require.Contains(t, strings.Fields(args), "systemd.mask="+unit)
+	}
+	// Never mask what the platform needs
+	for _, unit := range []string{"microvm-net", "journald", "udev"} {
+		require.NotContains(t, args, unit)
+	}
+
+	h.Config.ExtraBootArgs = "quiet systemd.mask=foo.service"
+	require.Equal(t, "console=ttyS0 reboot=k panic=1 pci=off quiet systemd.mask=foo.service systemd.mask=ssh.service systemd.mask=ssh.socket", h.bootArgs())
+
+	// Left out of the configuration file: the default applies
+	cfg := HatcheryConfiguration{}
+	cfg.applyDefaults()
+	require.Equal(t, defaultExtraBootArgs, cfg.ExtraBootArgs)
+}
+
+// The worker binary is downloaded once per API build and os/arch, and again
+// when the API is upgraded
+func TestWorkerSHA256CachedPerBuild(t *testing.T) {
+	h, _, _ := newTestHatchery(t)
+	api := newTestAPI(t)
+	ctx := context.TODO()
+
+	sum, err := h.workerSHA256(ctx, api.URL, false, "linux/amd64")
+	require.NoError(t, err)
+	require.Equal(t, sha256Hex("worker binary/download/worker/linux/amd64"), sum)
+	sum, err = h.workerSHA256(ctx, api.URL, false, "linux/amd64")
+	require.NoError(t, err)
+	require.Equal(t, sha256Hex("worker binary/download/worker/linux/amd64"), sum)
+	require.Equal(t, 1, api.downloads)
+
+	sum, err = h.workerSHA256(ctx, api.URL, false, "linux/arm64")
+	require.NoError(t, err)
+	require.Equal(t, sha256Hex("worker binary/download/worker/linux/arm64"), sum)
+	require.Equal(t, 2, api.downloads)
+
+	api.version = "1.0.1"
+	api.worker = "new worker binary"
+	sum, err = h.workerSHA256(ctx, api.URL, false, "linux/amd64")
+	require.NoError(t, err)
+	require.Equal(t, sha256Hex("new worker binary/download/worker/linux/amd64"), sum)
+	require.Equal(t, 3, api.downloads)
+}
+
+// Without the hash the MicroVM is spawned as before: the boot script
+// downloads the worker
+func TestSpawnWorkerWithoutWorkerHash(t *testing.T) {
+	h, kube, dyn := newTestHatchery(t)
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(api.Close)
+	h.Config.API.HTTP.URL = api.URL
+
+	require.NoError(t, h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{WorkerName: "w1", Model: testModel(testSpec()), JobID: sdk.UUID()}))
+
+	mvm, err := dyn.Resource(microVMResource).Namespace("cds-workers").Get(context.TODO(), "w1", metav1.GetOptions{})
+	require.NoError(t, err)
+	files, _, _ := unstructured.NestedSlice(mvm.Object, "spec", "guest", "files")
+	require.Len(t, files, 3)
+	for _, f := range files {
+		require.NotEqual(t, guestPathWorker, f.(map[string]interface{})["path"])
+	}
+	secret, err := kube.CoreV1().Secrets("cds-workers").Get(context.TODO(), "cds-worker-w1", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Contains(t, secret.StringData[secretKeyScript], `"`+api.URL+`/download/worker/linux/amd64"`)
 }
 
 // A MicroVM that cannot be created must not leave its secret behind
 func TestSpawnWorkerDeletesSecretWhenMicroVMCreationFails(t *testing.T) {
 	h, kube, dyn := newTestHatchery(t)
+	h.Config.API.HTTP.URL = newTestAPI(t).URL
 	dyn.PrependReactor("create", "microvms", func(action k8stesting.Action) (bool, runtime.Object, error) {
 		return true, nil, sdk.NewErrorFrom(sdk.ErrForbidden, "denied")
 	})

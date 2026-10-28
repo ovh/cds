@@ -29,28 +29,48 @@ const (
 	guestPathScript = "/usr/local/bin/cds-worker-boot.sh"
 	guestPathUnit   = "/etc/systemd/system/cds-worker.service"
 	guestUnit       = "cds-worker.service"
+	guestPathWorker = "/usr/local/bin/worker"
 )
 
-// The worker reads its base64 configuration from CDS_CONFIG. The guest
-// reboots at the end: Firecracker exits on a guest reboot, which ends the
-// MicroVM (a poweroff would leave the VMM running).
+// The worker binary comes from the platform cache; it is downloaded from
+// the API only when the platform could not provide it. The worker reads its
+// base64 configuration from CDS_CONFIG. The guest reboots at the end:
+// Firecracker exits on a guest reboot, which ends the MicroVM (a poweroff
+// would leave the VMM running).
 // Its output goes to the serial console through the unit.
 var bootScriptTemplate = template.Must(template.New("boot").Parse(`#!/bin/bash
-if ! curl -fsSL{{if .Insecure}} -k{{end}} --retry 60 --retry-delay 1 --retry-all-errors --retry-max-time 60 "{{.API}}/download/worker/{{.OSArch}}" -o /usr/local/bin/worker; then
-  echo "unable to download the CDS worker from {{.API}}"
-  systemctl reboot
-  exit 1
+if [ ! -x ` + guestPathWorker + ` ]; then
+  if ! curl -fsSL{{if .Insecure}} -k{{end}} --retry 60 --retry-delay 1 --retry-all-errors --retry-max-time 60 "{{.API}}/download/worker/{{.OSArch}}" -o ` + guestPathWorker + `; then
+    echo "unable to download the CDS worker from {{.API}}"
+    systemctl reboot
+    exit 1
+  fi
+  chmod +x ` + guestPathWorker + `
 fi
-chmod +x /usr/local/bin/worker
 export CDS_CONFIG="$(cat ` + guestPathConfig + `)"
-/usr/local/bin/worker
+` + guestPathWorker + `
 systemctl reboot
 `))
 
+// The worker starts as soon as the platform unit configured the NICs, the
+// routes and resolv.conf, instead of waiting for network-online.target and
+// basic.target. Without the default dependencies, the unit keeps those it
+// needs: local filesystems (and /tmp), and being stopped at shutdown so that
+// the reboot of the boot script goes through. microvm-net.service keeps its
+// own default dependencies, so it starts after sysinit.target (journald,
+// tmpfiles). Wants rather than Requires: when the network unit fails, the
+// worker still starts, fails to reach the API and ends the VM instead of
+// leaving it idle until the registration timeout.
+// The platform links the enabled units into multi-user.target.wants
+// whatever their install section: that only queues the unit at boot, its
+// ordering comes from After.
 const workerUnit = `[Unit]
 Description=CDS worker
-Wants=network-online.target
-After=network-online.target
+DefaultDependencies=no
+Wants=microvm-net.service
+After=microvm-net.service local-fs.target
+Conflicts=shutdown.target
+Before=shutdown.target
 
 [Service]
 Type=simple
@@ -78,7 +98,7 @@ func (h *HatcheryMicroVM) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	if err != nil {
 		return err
 	}
-	mvm := h.buildMicroVM(spawnArgs, secret.Name)
+	mvm := h.buildMicroVM(spawnArgs, secret.Name, h.workerBinary(ctx, spawnArgs, workerConfig))
 
 	// The secret goes first: the platform reads it before the boot
 	if _, err := h.kubeClient.CoreV1().Secrets(h.Config.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
@@ -150,7 +170,41 @@ func (h *HatcheryMicroVM) buildSecret(spawnArgs hatchery.SpawnArguments, workerC
 	}, nil
 }
 
-func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secretName string) *unstructured.Unstructured {
+// workerBinary is the worker binary the platform downloads and caches
+type workerBinary struct {
+	URL    string
+	SHA256 string
+}
+
+// workerBinary returns the worker binary of the model os/arch, nil when its
+// hash is unavailable: the boot script then downloads it.
+func (h *HatcheryMicroVM) workerBinary(ctx context.Context, spawnArgs hatchery.SpawnArguments, workerConfig workerruntime.WorkerConfig) *workerBinary {
+	osArch := spawnArgs.Model.ModelV2.OSArch
+	if osArch == "" {
+		return nil
+	}
+	sum, err := h.workerSHA256(ctx, workerConfig.APIEndpoint, workerConfig.APIEndpointInsecure, osArch)
+	if err != nil {
+		log.Warn(ctx, "hatchery> microvm> cannot compute the sha256 of the worker %s, the worker downloads it at boot: %v", osArch, err)
+		return nil
+	}
+	return &workerBinary{URL: workerDownloadURL(workerConfig.APIEndpoint, osArch), SHA256: sum}
+}
+
+// bootArgs is the platform default command line with the configured extra
+// arguments, and the SSH server masked unless debugging is configured
+func (h *HatcheryMicroVM) bootArgs() string {
+	args := platformBootArgs
+	if h.Config.ExtraBootArgs != "" {
+		args += " " + h.Config.ExtraBootArgs
+	}
+	if len(h.Config.DebugSSHAuthorizedKeys) == 0 {
+		args += " " + sshBootArgs
+	}
+	return args
+}
+
+func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secretName string, worker *workerBinary) *unstructured.Unstructured {
 	spec := spawnArgs.Model.MicroVMSpec
 	vcpus, memory := h.size(spec)
 
@@ -191,6 +245,19 @@ func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secret
 		}
 	}
 
+	files := []interface{}{
+		guestFile(guestPathConfig, "0600", secretKeyConfig),
+		guestFile(guestPathScript, "0755", secretKeyScript),
+		guestFile(guestPathUnit, "0644", secretKeyUnit),
+	}
+	if worker != nil {
+		files = append(files, map[string]interface{}{
+			"path":   guestPathWorker,
+			"mode":   "0755",
+			"source": map[string]interface{}{"url": worker.URL, "sha256": worker.SHA256},
+		})
+	}
+
 	labels := map[string]interface{}{}
 	for k, v := range h.labels(spawnArgs.WorkerName) {
 		labels[k] = v
@@ -212,13 +279,10 @@ func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secret
 				"sha256": spec.Kernel.SHA256,
 			},
 			"rootfs":     rootfs,
+			"bootArgs":   h.bootArgs(),
 			"networking": networking,
 			"guest": map[string]interface{}{
-				"files": []interface{}{
-					guestFile(guestPathConfig, "0600", secretKeyConfig),
-					guestFile(guestPathScript, "0755", secretKeyScript),
-					guestFile(guestPathUnit, "0644", secretKeyUnit),
-				},
+				"files":        files,
 				"systemdUnits": []interface{}{guestUnit},
 			},
 		},
