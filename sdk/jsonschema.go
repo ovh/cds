@@ -14,11 +14,13 @@ func GetWorkerModelJsonSchema() *jsonschema.Schema {
 	wmDocker := reflector.Reflect(&V2WorkerModelDockerSpec{})
 	wmOpenstack := reflector.Reflect(&V2WorkerModelOpenstackSpec{})
 	wmVSphere := reflector.Reflect(&V2WorkerModelVSphereSpec{})
+	wmMicroVM := reflector.Reflect(&V2WorkerModelMicroVMSpec{})
 
 	if wmSchema.Definitions == nil {
 		wmSchema.Definitions = make(map[string]*jsonschema.Schema)
 	}
 	wmSchema.Definitions["V2WorkerModelVSphereSpec"] = wmVSphere
+	wmSchema.Definitions["V2WorkerModelMicroVMSpec"] = wmMicroVM
 	wmSchema.Definitions["V2WorkerModelOpenstackSpec"] = wmOpenstack
 	wmSchema.Definitions["V2WorkerModelDockerSpec"] = wmDocker
 

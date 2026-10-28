@@ -111,6 +111,23 @@ func (e *EntityWithObject) Interpolate(ctx context.Context) error {
 		if err != nil {
 			return WrapError(err, "unable to marshal vsphere spec")
 		}
+	case WorkerModelTypeMicroVM:
+		var microvmSpec V2WorkerModelMicroVMSpec
+		if err := json.Unmarshal(e.Model.Spec, &microvmSpec); err != nil {
+			return WrapError(err, "unable to unmarshal microvm spec")
+		}
+		microvmSpec.Kernel.URL, err = ap.InterpolateToString(ctx, microvmSpec.Kernel.URL)
+		if err != nil {
+			return WithStack(err)
+		}
+		microvmSpec.Rootfs.URL, err = ap.InterpolateToString(ctx, microvmSpec.Rootfs.URL)
+		if err != nil {
+			return WithStack(err)
+		}
+		e.Model.Spec, err = json.Marshal(microvmSpec)
+		if err != nil {
+			return WrapError(err, "unable to marshal microvm spec")
+		}
 	case WorkerModelTypeOpenstack:
 		var openstackSpec V2WorkerModelOpenstackSpec
 		if err := json.Unmarshal(e.Model.Spec, &openstackSpec); err != nil {

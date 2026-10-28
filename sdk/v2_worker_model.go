@@ -10,14 +10,15 @@ const (
 	WorkerModelTypeOpenstack = "openstack"
 	WorkerModelTypeDocker    = "docker"
 	WorkerModelTypeVSphere   = "vsphere"
+	WorkerModelTypeMicroVM   = "microvm"
 )
 
 type V2WorkerModel struct {
 	Name        string          `json:"name" cli:"name" jsonschema:"minLength=1,example=my-worker-model" jsonschema_extras:"order=1" jsonschema_description:"Name of the worker model"`
 	Description string          `json:"description,omitempty" jsonschema:"example=Worker model for building Go applications" jsonschema_extras:"order=2" jsonschema_description:"Description of the worker model"`
 	OSArch      string          `json:"osarch" jsonschema:"example=linux/amd64" jsonschema_extras:"order=3" jsonschema_description:"OS/Arch of the worker model"`
-	Type        string          `json:"type" cli:"type" jsonschema:"enum=docker,enum=openstack,enum=vsphere,example=docker" jsonschema_extras:"order=4" jsonschema_description:"Type of worker model: docker, openstack, vsphere"`
-	Spec        json.RawMessage `json:"spec" jsonschema_allof_type:"type=docker:#/$defs/V2WorkerModelDockerSpec,type=openstack:#/$defs/V2WorkerModelOpenstackSpec,type=vsphere:#/$defs/V2WorkerModelVSphereSpec" jsonschema_extras:"order=5" jsonschema_description:"Specification of the worker model"`
+	Type        string          `json:"type" cli:"type" jsonschema:"enum=docker,enum=openstack,enum=vsphere,enum=microvm,example=docker" jsonschema_extras:"order=4" jsonschema_description:"Type of worker model: docker, openstack, vsphere, microvm"`
+	Spec        json.RawMessage `json:"spec" jsonschema_allof_type:"type=docker:#/$defs/V2WorkerModelDockerSpec,type=openstack:#/$defs/V2WorkerModelOpenstackSpec,type=vsphere:#/$defs/V2WorkerModelVSphereSpec,type=microvm:#/$defs/V2WorkerModelMicroVMSpec" jsonschema_extras:"order=5" jsonschema_description:"Specification of the worker model"`
 }
 
 type V2WorkerModelDockerSpec struct {
@@ -37,6 +38,27 @@ type V2WorkerModelVSphereSpec struct {
 	Flavor   string `json:"flavor,omitempty" jsonschema:"example=large" jsonschema_description:"Flavor to use for CPU/RAM sizing"`
 	Username string `json:"username,omitempty" jsonschema:"example=admin" jsonschema_description:"Username to connect to the VM"`
 	Password string `json:"password,omitempty" jsonschema:"example=${{ secrets.VSPHERE_PASSWORD }}" jsonschema_description:"Username password to connect to the VM"`
+}
+
+// V2WorkerModelMicroVMSpec describes a Firecracker microVM. The network
+// policy of the VM is not part of the model: the hatchery sets it.
+type V2WorkerModelMicroVMSpec struct {
+	Kernel V2WorkerModelMicroVMArtifact `json:"kernel" jsonschema_extras:"order=1" jsonschema_description:"Guest kernel"`
+	Rootfs V2WorkerModelMicroVMRootfs   `json:"rootfs" jsonschema_extras:"order=2" jsonschema_description:"Guest root filesystem"`
+	VCPUs  int                          `json:"vcpus,omitempty" jsonschema:"minimum=1,maximum=32,example=2" jsonschema_extras:"order=3" jsonschema_description:"Number of vCPUs, the hatchery default when unset"`
+	Memory int                          `json:"memory,omitempty" jsonschema:"minimum=128,example=2048" jsonschema_extras:"order=4" jsonschema_description:"Guest memory in MiB, the hatchery default when unset"`
+}
+
+type V2WorkerModelMicroVMArtifact struct {
+	URL    string `json:"url" jsonschema:"pattern=^https?://,example=https://example.org/vmlinux" jsonschema_description:"URL of the kernel"`
+	SHA256 string `json:"sha256" jsonschema:"pattern=^[0-9a-f]{64}$" jsonschema_description:"SHA-256 of the kernel, lowercase hex"`
+}
+
+type V2WorkerModelMicroVMRootfs struct {
+	URL    string `json:"url" jsonschema:"pattern=^https?://,example=https://example.org/rootfs.ext4" jsonschema_description:"URL of the image"`
+	SHA256 string `json:"sha256" jsonschema:"pattern=^[0-9a-f]{64}$" jsonschema_description:"SHA-256 of the image, lowercase hex"`
+	Format string `json:"format,omitempty" jsonschema:"enum=ext4,enum=squashfs,example=ext4" jsonschema_description:"Image format: ext4 (default) or squashfs"`
+	Size   int    `json:"size,omitempty" jsonschema:"minimum=64,example=4096" jsonschema_description:"Size in MiB of the ext4 image built from a squashfs image"`
 }
 
 func (wm V2WorkerModel) GetName() string {

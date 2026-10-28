@@ -783,6 +783,13 @@ func getWorkerModelV2(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2Q
 			return nil, sdk.WrapError(err, "unable to get openstack spec")
 		}
 		workerStarterModel.OpenstackSpec = openstackSpec
+	case sdk.WorkerModelTypeMicroVM:
+		// The microvm hatchery builds the boot script itself, from the API URL
+		var microvmSpec sdk.V2WorkerModelMicroVMSpec
+		if err := json.Unmarshal(jobInf.Model.Spec, &microvmSpec); err != nil {
+			return nil, sdk.WrapError(err, "unable to get microvm spec")
+		}
+		workerStarterModel.MicroVMSpec = microvmSpec
 	}
 
 	var mem int64

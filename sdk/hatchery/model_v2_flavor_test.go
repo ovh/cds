@@ -2,6 +2,7 @@ package hatchery_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/rockbears/yaml"
@@ -106,4 +107,30 @@ func TestCanRunJobWithModelV2VSphereFlavorComesFromTheSpec(t *testing.T) {
 	require.Nil(t, model, "a vsphere model is not converted to a model v1")
 	require.NotNil(t, starterModel)
 	require.Equal(t, "small", starterModel.VSphereSpec.Flavor, "the flavor requirement does not override the spec")
+}
+
+// A v2 job with a microvm model hands its spec to the hatchery, which sizes
+// and boots the VM from it.
+func TestGetWorkerModelV2MicroVM(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	h := mock_hatchery.NewMockInterfaceWithModels(ctrl)
+	h.EXPECT().ModelType().Return(sdk.WorkerModelTypeMicroVM).AnyTimes()
+
+	spec := sdk.V2WorkerModelMicroVMSpec{
+		Kernel: sdk.V2WorkerModelMicroVMArtifact{URL: "https://example.org/vmlinux", SHA256: "abc"},
+		Rootfs: sdk.V2WorkerModelMicroVMRootfs{URL: "https://example.org/rootfs.ext4", SHA256: "def"},
+		VCPUs:  4,
+		Memory: 4096,
+	}
+	raw, err := json.Marshal(spec)
+	require.NoError(t, err)
+
+	starterModel, err := hatchery.GetWorkerModelV2ForTest(context.TODO(), h, sdk.V2QueueJobInfo{
+		Model: sdk.V2WorkerModel{Name: "my-model", Type: sdk.WorkerModelTypeMicroVM, OSArch: "linux/amd64", Spec: raw},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, starterModel)
+	require.Equal(t, spec, starterModel.MicroVMSpec)
 }

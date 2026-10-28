@@ -140,6 +140,7 @@ type WorkerStarterWorkerModel struct {
 	DockerSpec    V2WorkerModelDockerSpec
 	OpenstackSpec V2WorkerModelOpenstackSpec
 	VSphereSpec   V2WorkerModelVSphereSpec
+	MicroVMSpec   V2WorkerModelMicroVMSpec
 	Commit        string
 	Flavor        string
 	Memory        int64

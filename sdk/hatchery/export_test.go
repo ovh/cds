@@ -15,3 +15,8 @@ func CanRunJobWithModelV2ForTest(ctx context.Context, h InterfaceWithModels, req
 		requirements: requirements,
 	}, workerModelV2)
 }
+
+// GetWorkerModelV2ForTest exposes getWorkerModelV2 to the external test package.
+func GetWorkerModelV2ForTest(ctx context.Context, h InterfaceWithModels, jobInf sdk.V2QueueJobInfo) (*sdk.WorkerStarterWorkerModel, error) {
+	return getWorkerModelV2(ctx, h, jobInf)
+}
