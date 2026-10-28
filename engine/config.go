@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/gorpmapper"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
+	"github.com/ovh/cds/engine/hatchery/microvm"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
@@ -53,7 +54,7 @@ func configBootstrap(args []string) Configuration {
 	if len(args) == 0 {
 		args = []string{
 			"api", "ui", "migrate", "hooks", "vcs", "repositories", "elasticsearch", "cdn",
-			"hatchery:local", "hatchery:kubernetes", "hatchery:openstack", "hatchery:swarm", "hatchery:vsphere",
+			"hatchery:local", "hatchery:kubernetes", "hatchery:openstack", "hatchery:swarm", "hatchery:vsphere", "hatchery:microvm",
 		}
 	}
 
@@ -130,6 +131,11 @@ func configBootstrap(args []string) Configuration {
 			conf.Hatchery.VSphere.GuestCredentials = []vsphere.GuestCredential{{
 				ModelVMWare: "debian12",
 			}}
+		case sdk.TypeHatchery + ":microvm":
+			conf.Hatchery.MicroVM = &microvm.HatcheryConfiguration{}
+			defaults.SetDefaults(conf.Hatchery.MicroVM)
+			conf.Hatchery.MicroVM.Name = "cds-hatchery-microvm-" + namesgenerator.GetRandomNameCDS()
+			conf.Hatchery.MicroVM.HTTP.Port = 8086
 		case sdk.TypeHooks:
 			conf.Hooks = &hooks.Configuration{}
 			defaults.SetDefaults(conf.Hooks)
@@ -536,6 +542,14 @@ func configSetStartupData(conf *Configuration) (string, error) {
 			var a kubernetes.CustomAnnotation
 			defaults.SetDefaults(&a)
 			conf.Hatchery.Kubernetes.CustomAnnotations = append(conf.Hatchery.Kubernetes.CustomAnnotations, a)
+		}
+
+		// The microvm hatchery is v2 only: its token is a hatchery consumer
+		// token created on the API, not a startup consumer
+		if h.MicroVM != nil {
+			privateKey, _ := jws.NewRandomRSAKey()
+			privateKeyPEM, _ := jws.ExportPrivateKey(privateKey)
+			h.MicroVM.RSAPrivateKey = string(privateKeyPEM)
 		}
 	}
 

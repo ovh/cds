@@ -6,6 +6,7 @@ import (
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
+	"github.com/ovh/cds/engine/hatchery/microvm"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
@@ -53,4 +54,5 @@ type HatcheryConfiguration struct {
 	Openstack  *openstack.HatcheryConfiguration  `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/docs/integrations/openstack/" json:"openstack"`
 	Swarm      *swarm.HatcheryConfiguration      `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/docs/integrations/swarm/" json:"swarm"`
 	VSphere    *vsphere.HatcheryConfiguration    `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/docs/integrations/vsphere/" json:"vshpere"`
+	MicroVM    *microvm.HatcheryConfiguration    `toml:"microvm" comment:"Hatchery MicroVM (v2 only). Doc: https://ovh.github.io/cds/docs/components/hatchery/microvm/" json:"microvm"`
 }

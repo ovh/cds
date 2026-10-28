@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
+	"github.com/ovh/cds/engine/hatchery/microvm"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
@@ -189,6 +190,14 @@ See $ engine config command for more details.
 				}
 				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: vsphere.New(), cfg: *conf.Hatchery.VSphere})
 				names = append(names, conf.Hatchery.VSphere.Name)
+				types = append(types, sdk.TypeHatchery)
+
+			case sdk.TypeHatchery + ":microvm":
+				if conf.Hatchery.MicroVM == nil {
+					sdk.Exit("Unable to start: missing service %s configuration", a)
+				}
+				serviceConfs = append(serviceConfs, serviceConf{arg: a, service: microvm.New(), cfg: *conf.Hatchery.MicroVM})
+				names = append(names, conf.Hatchery.MicroVM.Name)
 				types = append(types, sdk.TypeHatchery)
 
 			case sdk.TypeHooks:

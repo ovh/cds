@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/cdn"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
+	"github.com/ovh/cds/engine/hatchery/microvm"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
@@ -175,6 +176,14 @@ var configCheckCmd = &cobra.Command{
 			fmt.Printf("checking hatchery:vsphere configuration...\n")
 			if err := vsphere.New().CheckConfiguration(*conf.Hatchery.VSphere); err != nil {
 				fmt.Printf("hatchery:vsphere Configuration: %v\n", err)
+				hasError = true
+			}
+		}
+
+		if conf.Hatchery != nil && conf.Hatchery.MicroVM != nil && conf.Hatchery.MicroVM.API.HTTP.URL != "" {
+			fmt.Printf("checking hatchery:microvm configuration...\n")
+			if err := microvm.New().CheckConfiguration(*conf.Hatchery.MicroVM); err != nil {
+				fmt.Printf("hatchery:microvm Configuration: %v\n", err)
 				hasError = true
 			}
 		}
