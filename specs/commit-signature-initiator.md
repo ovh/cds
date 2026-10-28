@@ -110,6 +110,7 @@ A skipped workflow or a failed analysis carries the reason, worded so the user k
 | Key unknown to CDS | `signing key <key> is not registered in CDS: add it to your CDS user profile` |
 | VCS account not linked (GitHub) | `github user <name> is not linked to a CDS user: link your github account from your CDS profile` |
 | VCS account not linked (Bitbucket Server, Forgejo) | `<vcs type> user <name> is not linked to a CDS user` |
+| Committer email mapped to no Bitbucket Server account | `committer <name> <<email>> is not recognized by <vcs>: set the email of your <vcs> account in your git config` |
 | Committer unknown to CDS | `committer "<name>" does not match any CDS user` |
 
 The key ID appears in messages for diagnosis only.

@@ -1467,6 +1467,10 @@ func findCommitter(ctx context.Context, cache cache.Store, db *gorp.DbMap, ref, 
 			return nil, sdk.RepositoryAnalysisStatusError, "", err
 		}
 		committer = commit.Committer.Slug
+		// No slug: the committer email maps to no Bitbucket account, the git name cannot be trusted
+		if committer == "" {
+			return nil, sdk.RepositoryAnalysisStatusError, fmt.Sprintf("committer %s <%s> is not recognized by %s: set the email of your %s account in your git config", commit.Committer.Name, commit.Committer.Email, vcsProjectWithSecret.Name, vcsProjectWithSecret.Name), nil
+		}
 		if initiator := vcsAccountInitiator(possibleVCSGPGUSers, vcsProjectWithSecret.Name, committer); initiator != nil {
 			return initiator, "", "", nil
 		}
