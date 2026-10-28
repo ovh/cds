@@ -36,7 +36,7 @@ const (
 // MicroVM (a poweroff would leave the VMM running).
 // Its output goes to the serial console through the unit.
 var bootScriptTemplate = template.Must(template.New("boot").Parse(`#!/bin/bash
-if ! curl -fsSL{{if .Insecure}} -k{{end}} --retry 10 --retry-delay 5 --retry-all-errors --retry-max-time 300 "{{.API}}/download/worker/{{.OSArch}}" -o /usr/local/bin/worker; then
+if ! curl -fsSL{{if .Insecure}} -k{{end}} --retry 60 --retry-delay 1 --retry-all-errors --retry-max-time 60 "{{.API}}/download/worker/{{.OSArch}}" -o /usr/local/bin/worker; then
   echo "unable to download the CDS worker from {{.API}}"
   systemctl reboot
   exit 1
