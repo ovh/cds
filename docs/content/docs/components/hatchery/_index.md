@@ -16,6 +16,7 @@ There are 6 modes for hatcheries:
  * [Kubernetes]({{< relref "/docs/integrations/kubernetes/kubernetes_compute.md" >}}): The hatchery connects to a Kubernetes cluster and starts workers inside containers.
  * [OpenStack]({{< relref "/docs/integrations/openstack/openstack_compute.md" >}}): Hatchery starts workers on OpenStack virtual machines using OpenStack Nova.
  * [vSphere]({{< relref "/docs/integrations/vsphere.md" >}}): Hatchery starts workers on vSphere datacenter using VMware vSphere.
+ * [MicroVM]({{< relref "microvm.md" >}}): Hatchery starts v2 workers in Firecracker microVMs managed through a Kubernetes `MicroVM` resource.
 
 
 ## Admin hatchery

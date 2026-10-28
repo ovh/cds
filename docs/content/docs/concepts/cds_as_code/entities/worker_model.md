@@ -87,3 +87,37 @@ Fields:
 * <span style="color:red">*</span>`spec.image`: vSphere template name
 * <span style="color:red">*</span>`spec.username`: username to use to connect to the VM
 * <span style="color:red">*</span>`spec.password`: password to use to connect to the VM. <b>The field must be encrypted with [cdsctl]({{< relref "/docs/components/cdsctl/encrypt/_index.md" >}})</b>
+
+## MicroVM
+
+```yaml
+name: my-worker-model-name
+description: my description
+osarch: linux/amd64
+type: microvm
+spec:
+  kernel:
+    url: https://example.org/vmlinux
+    sha256: 0123...cdef
+  rootfs:
+    url: https://example.org/ubuntu.squashfs
+    sha256: 0123...cdef
+    format: squashfs
+    size: 4096
+  vcpus: 2
+  memory: 2048
+```
+
+Fields:
+
+* <span style="color:red">*</span>`name`: Name of the worker model
+* `description`: Description of the worker model
+* <span style="color:red">*</span>`osarch`: OS and architecture of the model
+* <span style="color:red">*</span>`type`: Type of worker model
+* <span style="color:red">*</span>`spec.kernel.url`, `spec.kernel.sha256`: guest kernel and its SHA-256 (lowercase hex)
+* <span style="color:red">*</span>`spec.rootfs.url`, `spec.rootfs.sha256`: guest root filesystem and its SHA-256. The image needs systemd, bash and curl
+* `spec.rootfs.format`: `ext4` (default) or `squashfs`
+* `spec.rootfs.size`: size in MiB of the ext4 image built from a squashfs image
+* `spec.vcpus`, `spec.memory` (MiB): size of the VM, the hatchery defaults when unset
+
+The URLs accept `${{ git.ref_name }}` and `${{ git.sha }}`. The network policy of the VM is set by the [hatchery]({{< relref "/docs/components/hatchery/microvm.md" >}}), not by the model.
