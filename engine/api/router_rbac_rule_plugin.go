@@ -15,6 +15,10 @@ func (api *API) pluginRead(ctx context.Context, _ map[string]string) error {
 	if getWorker(ctx) != nil {
 		return nil
 	}
+	// Hatcheries that preload plugin binaries in their workers
+	if getHatcheryConsumer(ctx) != nil {
+		return nil
+	}
 
 	return sdk.WithStack(sdk.ErrForbidden)
 }
