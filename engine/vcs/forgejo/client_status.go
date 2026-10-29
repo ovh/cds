@@ -37,16 +37,7 @@ func (f *forgejoClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildS
 		forgejoStatus.Description = buildStatus.Description
 	}
 
-	switch buildStatus.Status {
-	case sdk.StatusChecking, sdk.StatusPending, sdk.StatusBuilding:
-		forgejoStatus.State = StatusPending
-	case sdk.StatusSuccess:
-		forgejoStatus.State = StatusSuccess
-	case sdk.StatusFail:
-		forgejoStatus.State = StatusFailure
-	default:
-		forgejoStatus.State = StatusPending
-	}
+	forgejoStatus.State = getForgejoStateFromStatus(sdk.V2WorkflowRunStatus(buildStatus.Status))
 
 	owner, repoName, err := getRepo(buildStatus.RepositoryFullname)
 	if err != nil {
@@ -63,6 +54,23 @@ func (f *forgejoClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBuildS
 
 	log.Debug(ctx, "SetStatus> Status %d %s created at %v", s.ID, s.URL, s.Created)
 	return nil
+}
+
+// getForgejoStateFromStatus maps a workflow run status to a Forgejo state. Only success lets a required
+// check pass: a skipped run is reported as warning so it blocks without showing as a failure.
+func getForgejoStateFromStatus(status sdk.V2WorkflowRunStatus) CommitStatusState {
+	switch status {
+	case sdk.V2WorkflowRunStatusCrafting, sdk.V2WorkflowRunStatusBlocked, sdk.V2WorkflowRunStatusBuilding:
+		return StatusPending
+	case sdk.V2WorkflowRunStatusSuccess:
+		return StatusSuccess
+	case sdk.V2WorkflowRunStatusFail, sdk.V2WorkflowRunStatusStopped, sdk.V2WorkflowRunStatusCancelled:
+		return StatusFailure
+	case sdk.V2WorkflowRunStatusSkipped:
+		return StatusWarning
+	default:
+		return StatusPending
+	}
 }
 
 func (f *forgejoClient) ListStatuses(ctx context.Context, fullname string, ref string) ([]sdk.VCSCommitStatus, error) {
