@@ -7,6 +7,7 @@ import (
 
 	hatcheryCommon "github.com/ovh/cds/engine/hatchery"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 )
 
 const (
@@ -47,6 +48,11 @@ const (
 // HatcheryConfiguration is the configuration for microvm hatchery
 type HatcheryConfiguration struct {
 	service.HatcheryCommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
+	// ModelType is the worker model type the hatchery registers with: the API
+	// only sends it the jobs of that type
+	ModelType string `mapstructure:"modelType" toml:"modelType" default:"microvm" commented:"true" comment:"Worker model type run by the hatchery: microvm (the model is a VM image) or docker (each job runs its docker image in a microVM booted from dockerBase). One hatchery per type" json:"modelType"`
+	// DockerBase is the VM image running the docker jobs
+	DockerBase DockerBaseConfig `mapstructure:"dockerBase" toml:"dockerBase" commented:"true" comment:"Guest kernel and rootfs, with Docker, of the microVMs running docker jobs. Required when modelType is docker" json:"dockerBase"`
 	// KubernetesConfigFile Kubernetes config file in yaml, in-cluster configuration when empty
 	KubernetesConfigFile string `mapstructure:"kubernetesConfigFile" toml:"kubernetesConfigFile" default:"" commented:"true" comment:"Kubernetes config file in yaml. The in-cluster configuration is used when empty" json:"kubernetesConfigFile"`
 	// Namespace is the kubernetes namespace in which MicroVMs are created
@@ -60,7 +66,7 @@ type HatcheryConfiguration struct {
 	// PreloadedPlugins are written in the worker basedir from the platform cache
 	PreloadedPlugins []string `mapstructure:"preloadedPlugins" toml:"preloadedPlugins" default:"" commented:"true" comment:"Plugins whose binary the platform caches on its nodes and writes in the worker basedir, so that the worker does not download them at each job (script runs the run steps)" json:"preloadedPlugins"`
 	// Flavors are the worker sizes jobs and worker models choose from
-	Flavors []FlavorConfig `mapstructure:"flavors" toml:"flavors" commented:"true" comment:"Worker sizes. A job chooses one with runs-on.flavor, a worker model with spec.flavor. Defaults to XS (1 vCPU, 4096 MiB, 10 GiB), S (2, 8192, 20), M (4, 16384, 50) and L (6, 24576, 100)" json:"flavors"`
+	Flavors []FlavorConfig `mapstructure:"flavors" toml:"flavors" commented:"true" comment:"Worker sizes. A job chooses one with runs-on.flavor, or gets the smallest one holding runs-on.memory; a microvm worker model with spec.flavor. Defaults to XS (1 vCPU, 4096 MiB, 10 GiB), S (2, 8192, 20), M (4, 16384, 50) and L (6, 24576, 100)" json:"flavors"`
 	// DefaultFlavor used when neither the job nor the worker model sets one
 	DefaultFlavor string `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"XS" commented:"true" comment:"Flavor of the workers whose job and worker model set none" json:"defaultFlavor"`
 	// RegistrationTimeout delay after which a booted MicroVM without a registered worker is deleted
@@ -78,6 +84,25 @@ type FlavorConfig struct {
 	MemoryMiB int    `mapstructure:"memoryMiB" toml:"memoryMiB" json:"memoryMiB"`
 	// DiskGiB is raised to the rootfs size of the worker model when smaller
 	DiskGiB int `mapstructure:"diskGiB" toml:"diskGiB" json:"diskGiB"`
+}
+
+// DockerBaseConfig is the base image of the microVMs running docker jobs:
+// a guest with Docker, booted like a microvm worker model
+type DockerBaseConfig struct {
+	KernelURL     string `mapstructure:"kernelURL" toml:"kernelURL" json:"kernelURL"`
+	KernelSHA256  string `mapstructure:"kernelSHA256" toml:"kernelSHA256" json:"kernelSHA256"`
+	RootfsURL     string `mapstructure:"rootfsURL" toml:"rootfsURL" json:"rootfsURL"`
+	RootfsSHA256  string `mapstructure:"rootfsSHA256" toml:"rootfsSHA256" json:"rootfsSHA256"`
+	RootfsFormat  string `mapstructure:"rootfsFormat" toml:"rootfsFormat" default:"squashfs" comment:"squashfs or ext4" json:"rootfsFormat"`
+	RootfsSizeMiB int    `mapstructure:"rootfsSizeMiB" toml:"rootfsSizeMiB" comment:"Size of the ext4 image built from a squashfs rootfs" json:"rootfsSizeMiB"`
+}
+
+// spec is the base image as a microvm worker model spec
+func (c DockerBaseConfig) spec() sdk.V2WorkerModelMicroVMSpec {
+	return sdk.V2WorkerModelMicroVMSpec{
+		Kernel: sdk.V2WorkerModelMicroVMArtifact{URL: c.KernelURL, SHA256: c.KernelSHA256},
+		Rootfs: sdk.V2WorkerModelMicroVMRootfs{URL: c.RootfsURL, SHA256: c.RootfsSHA256, Format: c.RootfsFormat, Size: c.RootfsSizeMiB},
+	}
 }
 
 // defaultFlavors apply when the configuration sets none

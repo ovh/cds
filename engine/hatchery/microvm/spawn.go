@@ -37,14 +37,9 @@ const (
 	guestWorkerBasedir = "/var/lib/cds-worker"
 )
 
-// The worker binary comes from the platform cache; it is downloaded from
-// the API only when the platform could not provide it. The worker reads its
-// base64 configuration from CDS_CONFIG. The guest reboots at the end:
-// Firecracker exits on a guest reboot, which ends the MicroVM (a poweroff
-// would leave the VMM running).
-// Its output goes to the serial console through the unit.
-var bootScriptTemplate = template.Must(template.New("boot").Parse(`#!/bin/bash
-if [ ! -x ` + guestPathWorker + ` ]; then
+// workerDownloadScript downloads the worker when the platform did not
+// provide it
+const workerDownloadScript = `if [ ! -x ` + guestPathWorker + ` ]; then
   if ! curl -fsSL{{if .Insecure}} -k{{end}} --retry 60 --retry-delay 1 --retry-all-errors --retry-max-time 60 "{{.API}}/download/worker/{{.OSArch}}" -o ` + guestPathWorker + `; then
     echo "unable to download the CDS worker from {{.API}}"
     systemctl reboot
@@ -52,7 +47,28 @@ if [ ! -x ` + guestPathWorker + ` ]; then
   fi
   chmod +x ` + guestPathWorker + `
 fi
-export CDS_CONFIG="$(cat ` + guestPathConfig + `)"
+`
+
+// bootScriptData fills the boot script templates; the image fields are
+// those of docker workers
+type bootScriptData struct {
+	API      string
+	Insecure bool
+	OSArch   string
+	Image    string
+	Basedir  string
+	Registry string
+	Username string
+}
+
+// The worker binary comes from the platform cache; it is downloaded from
+// the API only when the platform could not provide it. The worker reads its
+// base64 configuration from CDS_CONFIG. The guest reboots at the end:
+// Firecracker exits on a guest reboot, which ends the MicroVM (a poweroff
+// would leave the VMM running).
+// Its output goes to the serial console through the unit.
+var bootScriptTemplate = template.Must(template.New("boot").Parse(`#!/bin/bash
+` + workerDownloadScript + `export CDS_CONFIG="$(cat ` + guestPathConfig + `)"
 ` + guestPathWorker + `
 systemctl reboot
 `))
@@ -97,18 +113,20 @@ func (h *HatcheryMicroVM) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	if spawnArgs.Model.ModelV2 == nil || spawnArgs.RegisterOnly {
 		return sdk.WithStack(fmt.Errorf("hatchery microvm only spawns workers for v2 jobs"))
 	}
+	if h.ModelType() == sdk.WorkerModelTypeDocker && len(spawnArgs.Services) > 0 {
+		return sdk.NewErrorFrom(sdk.ErrInvalidData, "job services are not supported by the hatchery microvm")
+	}
 
-	flavorName := spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor)
-	flavor := h.Config.flavor(flavorName)
-	if flavor == nil {
-		return sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery configuration", flavorName))
+	flavor, err := h.Config.workerFlavor(spawnArgs.Model, spawnArgs.Requirements)
+	if err != nil {
+		return sdk.WithStack(err)
 	}
 
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 	if workerConfig.Basedir == "" {
 		workerConfig.Basedir = guestWorkerBasedir
 	}
-	secret, err := h.buildSecret(spawnArgs, workerConfig)
+	secret, err := h.buildSecret(spawnArgs, workerConfig, *flavor)
 	if err != nil {
 		return err
 	}
@@ -116,10 +134,15 @@ func (h *HatcheryMicroVM) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	mvm := h.buildMicroVM(spawnArgs, *flavor, secret.Name, h.workerBinary(ctx, spawnArgs, workerConfig), plugins)
 
 	if sdk.IsValidUUID(spawnArgs.JobID) {
+		size := fmt.Sprintf("flavor %q (%d vCPUs, %d MiB RAM, %d MiB disk)", flavor.Name, flavor.VCPUs, flavor.MemoryMiB, diskMiB(*flavor, h.vmSpec(spawnArgs.Model)))
+		message := fmt.Sprintf("Worker %q will use %s", spawnArgs.WorkerName, size)
+		if h.ModelType() == sdk.WorkerModelTypeDocker {
+			message = fmt.Sprintf("Worker %q will run image %q with %s", spawnArgs.WorkerName, spawnArgs.Model.DockerSpec.Image, size)
+		}
 		flavorInfo := sdk.V2SendJobRunInfo{
 			Level:   sdk.WorkflowRunInfoLevelInfo,
 			Time:    time.Now(),
-			Message: fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MiB RAM, %d MiB disk)", spawnArgs.WorkerName, flavor.Name, flavor.VCPUs, flavor.MemoryMiB, diskMiB(*flavor, spawnArgs.Model.MicroVMSpec)),
+			Message: message,
 		}
 		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, flavorInfo); err != nil {
 			log.ErrorWithStackTrace(ctx, err)
@@ -158,23 +181,46 @@ func (h *HatcheryMicroVM) labels(workerName string) map[string]string {
 	}
 }
 
-func (h *HatcheryMicroVM) buildSecret(spawnArgs hatchery.SpawnArguments, workerConfig workerruntime.WorkerConfig) (*corev1.Secret, error) {
+func (h *HatcheryMicroVM) buildSecret(spawnArgs hatchery.SpawnArguments, workerConfig workerruntime.WorkerConfig, flavor FlavorConfig) (*corev1.Secret, error) {
 	// Fall back to the guest arch; the API normalizes uname's spelling (x86_64 -> amd64)
 	osArch := spawnArgs.Model.ModelV2.OSArch
 	if osArch == "" {
 		osArch = "linux/$(uname -m)"
 	}
-	var script bytes.Buffer
-	if err := bootScriptTemplate.Execute(&script, struct {
-		API      string
-		Insecure bool
-		OSArch   string
-	}{
+	data := bootScriptData{
 		API:      workerConfig.APIEndpoint,
 		Insecure: workerConfig.APIEndpointInsecure,
 		OSArch:   osArch,
-	}); err != nil {
-		return nil, sdk.WithStack(err)
+	}
+
+	var stringData map[string]string
+	if h.ModelType() == sdk.WorkerModelTypeDocker {
+		script, err := dockerBootScript(spawnArgs, workerConfig, data)
+		if err != nil {
+			return nil, err
+		}
+		env, err := dockerEnvFile(spawnArgs, workerConfig, flavor)
+		if err != nil {
+			return nil, err
+		}
+		stringData = map[string]string{
+			secretKeyEnv:    env,
+			secretKeyScript: script,
+			secretKeyUnit:   workerUnit,
+		}
+		if registryLogin(spawnArgs.Model) {
+			stringData[secretKeyRegistryPassword] = spawnArgs.Model.DockerSpec.Password
+		}
+	} else {
+		var script bytes.Buffer
+		if err := bootScriptTemplate.Execute(&script, data); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		stringData = map[string]string{
+			secretKeyConfig: workerConfig.EncodeBase64(),
+			secretKeyScript: script.String(),
+			secretKeyUnit:   workerUnit,
+		}
 	}
 
 	labels := h.labels(spawnArgs.WorkerName)
@@ -187,12 +233,8 @@ func (h *HatcheryMicroVM) buildSecret(spawnArgs hatchery.SpawnArguments, workerC
 			Namespace: h.Config.Namespace,
 			Labels:    labels,
 		},
-		Type: corev1.SecretTypeOpaque,
-		StringData: map[string]string{
-			secretKeyConfig: workerConfig.EncodeBase64(),
-			secretKeyScript: script.String(),
-			secretKeyUnit:   workerUnit,
-		},
+		Type:       corev1.SecretTypeOpaque,
+		StringData: stringData,
 	}, nil
 }
 
@@ -237,7 +279,7 @@ func diskMiB(flavor FlavorConfig, spec sdk.V2WorkerModelMicroVMSpec) int {
 }
 
 func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, flavor FlavorConfig, secretName string, worker *workerBinary, plugins []interface{}) *unstructured.Unstructured {
-	spec := spawnArgs.Model.MicroVMSpec
+	spec := h.vmSpec(spawnArgs.Model)
 
 	rootfs := map[string]interface{}{
 		"url":    spec.Rootfs.URL,
@@ -276,11 +318,19 @@ func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, flavor
 		}
 	}
 
-	files := []interface{}{
-		guestFile(guestPathConfig, "0600", secretKeyConfig),
+	var files []interface{}
+	if h.ModelType() == sdk.WorkerModelTypeDocker {
+		files = append(files, guestFile(guestPathEnv, "0600", secretKeyEnv))
+		if registryLogin(spawnArgs.Model) {
+			files = append(files, guestFile(guestPathRegistryPassword, "0600", secretKeyRegistryPassword))
+		}
+	} else {
+		files = append(files, guestFile(guestPathConfig, "0600", secretKeyConfig))
+	}
+	files = append(files,
 		guestFile(guestPathScript, "0755", secretKeyScript),
 		guestFile(guestPathUnit, "0644", secretKeyUnit),
-	}
+	)
 	if worker != nil {
 		files = append(files, map[string]interface{}{
 			"path":   guestPathWorker,

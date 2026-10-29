@@ -2,6 +2,7 @@ package microvm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -92,7 +93,7 @@ func (h *HatcheryMicroVM) ApplyConfiguration(cfg interface{}) error {
 	}
 	h.Common.Common.Region = h.Config.Provision.Region
 	h.Common.Common.IgnoreJobWithNoRegion = h.Config.Provision.IgnoreJobWithNoRegion
-	// Sent at signin: the API only dispatches microvm jobs to this hatchery
+	// Sent at signin: the API only dispatches the jobs of this type to the hatchery
 	h.Common.Common.ModelType = h.ModelType()
 
 	return nil
@@ -101,6 +102,12 @@ func (h *HatcheryMicroVM) ApplyConfiguration(cfg interface{}) error {
 // applyDefaults supplies the fallbacks of the keys left out of the
 // configuration file: struct defaults only apply when a config is generated.
 func (c *HatcheryConfiguration) applyDefaults() {
+	if c.ModelType == "" {
+		c.ModelType = sdk.WorkerModelTypeMicroVM
+	}
+	if c.DockerBase.RootfsFormat == "" {
+		c.DockerBase.RootfsFormat = "squashfs"
+	}
 	if len(c.OSArch) == 0 {
 		c.OSArch = []string{"linux/amd64"}
 	}
@@ -208,6 +215,18 @@ func (h *HatcheryMicroVM) CheckConfiguration(cfg interface{}) error {
 
 	// The flavors are checked as the hatchery uses them, defaults included
 	hconfig.applyDefaults()
+	switch hconfig.ModelType {
+	case sdk.WorkerModelTypeMicroVM:
+	case sdk.WorkerModelTypeDocker:
+		// Checked as the API checks a microvm worker model
+		base := sdk.V2WorkerModel{Name: "dockerBase", OSArch: hconfig.OSArch[0], Type: sdk.WorkerModelTypeMicroVM}
+		base.Spec, _ = json.Marshal(hconfig.DockerBase.spec())
+		if errs := base.LintYamlDefinition(); len(errs) > 0 {
+			return sdk.WithStack(fmt.Errorf("invalid dockerBase, required with modelType docker: %v", errs))
+		}
+	default:
+		return sdk.WithStack(fmt.Errorf("invalid modelType %q: microvm or docker", hconfig.ModelType))
+	}
 	for i, f := range hconfig.Flavors {
 		if f.Name == "" || f.VCPUs <= 0 || f.MemoryMiB <= 0 || f.DiskGiB < 0 {
 			return sdk.WithStack(fmt.Errorf("invalid flavor %q: a flavor needs a name, vcpus and memoryMiB", f.Name))
@@ -245,9 +264,9 @@ func (h *HatcheryMicroVM) Configuration() service.HatcheryCommonConfiguration {
 	return h.Config.HatcheryCommonConfiguration
 }
 
-// ModelType returns type of hatchery
-func (*HatcheryMicroVM) ModelType() string {
-	return sdk.WorkerModelTypeMicroVM
+// ModelType returns the configured worker model type
+func (h *HatcheryMicroVM) ModelType() string {
+	return h.Config.ModelType
 }
 
 // WorkerModelsEnabled returns no v1 worker model: the hatchery is v2 only
@@ -265,27 +284,34 @@ func (h *HatcheryMicroVM) NeedRegistration(_ context.Context, _ *sdk.Model) bool
 	return false
 }
 
-// CanSpawn only accepts v2 microvm models whose flavor is configured
+// CanSpawn only accepts v2 models of the configured type whose flavor is
+// configured
 func (h *HatcheryMicroVM) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "microvm.CanSpawn")
 	defer end()
 
-	if model.ModelV2 == nil || model.ModelV2.Type != sdk.WorkerModelTypeMicroVM {
-		log.Debug(ctx, "CanSpawn> Job %s: only v2 microvm worker models are supported", jobID)
+	if model.ModelV2 == nil || model.ModelV2.Type != h.ModelType() {
+		log.Warn(ctx, "CanSpawn> Job %s: only v2 %s worker models are supported", jobID, h.ModelType())
 		return false
 	}
 	if !slices.Contains(h.Config.OSArch, model.ModelV2.OSArch) {
-		log.Debug(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, model.ModelV2.OSArch, h.Config.OSArch)
+		log.Warn(ctx, "CanSpawn> Job %s with worker model %s cannot be spawned. Got osarch %s and want %s", jobID, model.ModelV2.Name, model.ModelV2.OSArch, h.Config.OSArch)
 		return false
 	}
-	spec := model.MicroVMSpec
-	if spec.Kernel.URL == "" || spec.Rootfs.URL == "" {
-		log.Warn(ctx, "CanSpawn> Job %s: worker model %s has no kernel or rootfs", jobID, model.ModelV2.Name)
-		return false
+	if h.ModelType() == sdk.WorkerModelTypeDocker {
+		if model.DockerSpec.Image == "" {
+			log.Warn(ctx, "CanSpawn> Job %s: worker model %s has no image", jobID, model.ModelV2.Name)
+			return false
+		}
+	} else {
+		spec := model.MicroVMSpec
+		if spec.Kernel.URL == "" || spec.Rootfs.URL == "" {
+			log.Warn(ctx, "CanSpawn> Job %s: worker model %s has no kernel or rootfs", jobID, model.ModelV2.Name)
+			return false
+		}
 	}
-	// No fallback on another size: the job would run with less than it asked for
-	if flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor); h.Config.flavor(flavorName) == nil {
-		log.Warn(ctx, "CanSpawn> Job %s: unknown flavor %q, the hatchery knows %s", jobID, flavorName, h.Config.flavorNames())
+	if _, err := h.Config.workerFlavor(model, requirements); err != nil {
+		log.Warn(ctx, "CanSpawn> Job %s: %v", jobID, err)
 		return false
 	}
 	return true
@@ -306,6 +332,37 @@ func (h *HatcheryMicroVM) CanAllocateResources(ctx context.Context, _ sdk.Worker
 		}
 	}
 	return true, nil
+}
+
+// workerFlavor returns the flavor of a worker, the first set among: the job
+// flavor (and for a microvm model, the model flavor), the smallest flavor
+// holding the job memory, the default flavor. No fallback on another size:
+// the job would run with less than it asked for.
+func (c *HatcheryConfiguration) workerFlavor(model sdk.WorkerStarterWorkerModel, requirements []sdk.Requirement) (*FlavorConfig, error) {
+	if name := model.GetFlavor(requirements, ""); name != "" {
+		if f := c.flavor(name); f != nil {
+			return f, nil
+		}
+		return nil, fmt.Errorf("unknown flavor %q, the hatchery knows %s", name, c.flavorNames())
+	}
+	// runs-on.memory, in MiB as the swarm hatchery reads it
+	if model.Memory > 0 {
+		var smallest *FlavorConfig
+		for i := range c.Flavors {
+			f := &c.Flavors[i]
+			if int64(f.MemoryMiB) >= model.Memory && (smallest == nil || f.MemoryMiB < smallest.MemoryMiB) {
+				smallest = f
+			}
+		}
+		if smallest == nil {
+			return nil, fmt.Errorf("no flavor has %d MiB of memory, the hatchery knows %s", model.Memory, c.flavorNames())
+		}
+		return smallest, nil
+	}
+	if f := c.flavor(c.DefaultFlavor); f != nil {
+		return f, nil
+	}
+	return nil, fmt.Errorf("unknown flavor %q, the hatchery knows %s", c.DefaultFlavor, c.flavorNames())
 }
 
 // flavor returns the flavor of a name, case-insensitive, nil when unknown
