@@ -11,8 +11,21 @@ does not talk to Firecracker: it creates a `MicroVM` custom resource
 this resource schedules, boots and stops the VM. Kubernetes quotas of the
 namespace bound the number and the size of the workers.
 
-The hatchery only handles v2 jobs whose worker model has the type `microvm`
-(see [worker model]({{< relref "/docs/concepts/cds_as_code/entities/worker_model.md" >}})).
+The hatchery handles the v2 jobs of one worker model type, `modelType` in
+its configuration (see
+[worker model]({{< relref "/docs/concepts/cds_as_code/entities/worker_model.md" >}})):
+
+* `microvm` (default): the worker model is a VM image, and the worker runs in
+  it;
+* `docker`: the worker model is a docker image, and the worker runs in a
+  container of that image, inside a microVM booted from a base image of the
+  hatchery configuration. See [Docker mode](#docker-mode).
+
+The hatchery registers with this type, and the API sends a hatchery only the
+jobs of the type it registers with. A hatchery therefore runs a single type:
+run one instance per type, with its own name, side by side in the same
+namespace if needed. Each instance only sees the MicroVMs and Secrets
+labelled with its name.
 
 ## How a worker starts
 
@@ -73,15 +86,18 @@ configuration declares them; without any, it uses:
 A worker gets the first flavor set among:
 
 1. the job flavor, `runs-on.flavor`;
-2. the worker model flavor, `spec.flavor`;
-3. the hatchery `defaultFlavor`, `XS` by default.
+2. the worker model flavor, `spec.flavor` (microvm models only);
+3. the smallest flavor with at least `runs-on.memory` MiB of memory;
+4. the hatchery `defaultFlavor`, `XS` by default.
 
 Names are case-insensitive. The hatchery does not take a job whose flavor it
-does not know, and logs a warning naming the flavor and the known ones: another
-hatchery may know it. The job page shows the flavor the worker got.
+does not know, or whose memory no flavor has, and logs a warning naming the
+flavor or the memory and the known flavors: another hatchery may know it. The
+job page shows the flavor the worker got.
 
-The VM disk is the flavor disk, raised to `spec.rootfs.size` of the model when
-that is larger: the platform does not convert an image to a smaller disk.
+The VM disk is the flavor disk, raised to `spec.rootfs.size` of the model
+(`dockerBase.rootfsSizeMiB` in docker mode) when that is larger: the platform
+does not convert an image to a smaller disk.
 
 ```yaml
 jobs:
@@ -89,6 +105,88 @@ jobs:
     runs-on:
       model: my-microvm-model
       flavor: M
+```
+
+## Docker mode
+
+With `modelType = "docker"`, the hatchery runs v2 worker models of type
+`docker`, the models the swarm hatchery runs, each job in its own disposable
+microVM.
+
+Every MicroVM boots the base image of `dockerBase`: a guest kernel and a
+rootfs with Docker, checked like the kernel and rootfs of a microvm worker
+model. The reference image is a Debian guest with Docker CE, socket-activated
+(the first docker command starts the daemon), iptables legacy, and a Docker
+bridge MTU taken from the guest NIC. Its egress policy must also allow the
+registries of the job images.
+
+The MicroVM gets the flavor size, the egress policy, the boot arguments, the
+worker binary and the preloaded plugins as in microvm mode, and the same
+systemd unit, ordered after the platform network unit. Its boot script:
+
+1. downloads the worker binary if the platform did not provide it;
+2. when the model has a `username`, logs in to the registry of the image
+   (`docker.io` when the image names none) with the password read from a
+   root-only guest file, through `--password-stdin`: the password is only in
+   the Secret, never in the MicroVM, the boot script or a command line;
+3. pulls the image, with up to five attempts against transient registry
+   errors;
+4. runs the image with `docker run --rm --network host`, the worker binary of
+   the VM mounted read-only at `/usr/local/bin/worker` as entrypoint, and the
+   worker basedir mounted at the same path, so that the worker finds the
+   preloaded plugins;
+5. reboots when the container exits, which ends the microVM.
+
+A login or pull failure prints a line naming the image and the error on the
+serial console, then ends the microVM.
+
+The container gets the environment the swarm hatchery gives a v2 docker
+worker: the `provision.injectEnvVars` of the hatchery, `CDS_MODEL_MEMORY` (the
+flavor memory), `CDS_CONFIG`, then the `envs` of the model, from a root-only
+env file. Values must fit on one line. The container has no memory or CPU
+limit: the microVM is the limit.
+
+The basedir is world-writable with the sticky bit (mode `1777`) and the
+preloaded plugins readable and executable by all, so that an image running
+as a non-root user works too.
+
+Differences with the swarm hatchery:
+
+* the swarm hatchery runs `curl .../download/worker && ./worker` in the
+  container, so the image needs curl and a shell. Here the worker is a static
+  binary mounted from the VM: any linux/amd64 image works, even without curl
+  or a shell. An image without CA certificates (`ubuntu`, `debian` without
+  `ca-certificates`) works too: the CA bundle of the VM is mounted read-only
+  in `/etc/cds/certs` and `SSL_CERT_DIR` lists it after the default
+  directories, so the image's own CAs still count (a model env
+  `SSL_CERT_DIR` replaces the list);
+* job services (`services` of a job) are not supported: they need a network
+  of containers with name resolution this mode does not build. The hatchery
+  refuses to spawn a worker for a job with services, and the job page shows
+  the error;
+* the job has no Docker access, as with swarm: the Docker socket of the VM is
+  not mounted in the container;
+* the container shares the network of the VM (`--network host`), hence its
+  egress policy and MTU.
+
+```toml
+[hatchery.microvm]
+  modelType = "docker"
+  namespace = "cds-workers"
+  egressPolicy = "cds-workers"
+
+  [hatchery.microvm.dockerBase]
+    kernelURL = "https://example.org/vmlinux"
+    kernelSHA256 = "<sha256>"
+    rootfsURL = "https://example.org/rootfs-debian.squashfs"
+    rootfsSHA256 = "<sha256>"
+    # squashfs (default) or ext4
+    rootfsFormat = "squashfs"
+    # size of the ext4 image built from the squashfs image
+    rootfsSizeMiB = 8192
+
+  [hatchery.microvm.commonConfiguration]
+    name = "my-microvm-docker-hatchery"
 ```
 
 ## Lifecycle
