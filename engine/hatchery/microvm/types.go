@@ -34,8 +34,12 @@ const (
 	// spec.bootArgs replaces
 	platformBootArgs = "console=ttyS0 reboot=k panic=1 pci=off"
 	// defaultExtraBootArgs keeps the serial console quiet (it is slow in
-	// Firecracker) and masks the units of the image a CI worker does not need
-	defaultExtraBootArgs = "quiet systemd.mask=serial-getty@ttyS0.service systemd.mask=getty@tty1.service systemd.mask=apt-daily.timer systemd.mask=apt-daily-upgrade.timer systemd.mask=unattended-upgrades.service systemd.mask=motd-news.timer systemd.mask=man-db.timer systemd.mask=logrotate.timer systemd.mask=e2scrub_all.timer systemd.mask=fstrim.timer"
+	// Firecracker), skips the probe of the PS/2 controller the VM does not
+	// have and the clock checks a VM does not need, seeds the kernel random
+	// generator from the CPU instead of waiting for entropy (about 1 s of
+	// kernel boot in all), and masks the units of the image a CI worker does
+	// not need
+	defaultExtraBootArgs = "quiet i8042.noaux i8042.nomux i8042.nopnp i8042.dumbkbd tsc=reliable no_timer_check random.trust_cpu=on systemd.mask=serial-getty@ttyS0.service systemd.mask=getty@tty1.service systemd.mask=apt-daily.timer systemd.mask=apt-daily-upgrade.timer systemd.mask=unattended-upgrades.service systemd.mask=motd-news.timer systemd.mask=man-db.timer systemd.mask=logrotate.timer systemd.mask=e2scrub_all.timer systemd.mask=fstrim.timer"
 	// sshBootArgs masks the SSH server when debug SSH is off
 	sshBootArgs = "systemd.mask=ssh.service systemd.mask=ssh.socket"
 )
@@ -52,7 +56,7 @@ type HatcheryConfiguration struct {
 	// DebugSSHAuthorizedKeys enables the admin network of the workers with these root keys
 	DebugSSHAuthorizedKeys []string `mapstructure:"debugSSHAuthorizedKeys" toml:"debugSSHAuthorizedKeys" default:"" commented:"true" comment:"Debugging aid: SSH public keys authorized as root on every worker. When set, the admin network of the workers is enabled (SSH from the bastion). Leave empty in normal use" json:"-"`
 	// ExtraBootArgs appended to the platform default kernel command line
-	ExtraBootArgs string `mapstructure:"extraBootArgs" toml:"extraBootArgs" default:"quiet systemd.mask=serial-getty@ttyS0.service systemd.mask=getty@tty1.service systemd.mask=apt-daily.timer systemd.mask=apt-daily-upgrade.timer systemd.mask=unattended-upgrades.service systemd.mask=motd-news.timer systemd.mask=man-db.timer systemd.mask=logrotate.timer systemd.mask=e2scrub_all.timer systemd.mask=fstrim.timer" commented:"true" comment:"Kernel arguments appended to the platform default command line of the workers (systemd.mask=<unit> skips a unit of the image). The SSH server is masked too unless debugSSHAuthorizedKeys is set" json:"extraBootArgs"`
+	ExtraBootArgs string `mapstructure:"extraBootArgs" toml:"extraBootArgs" default:"quiet i8042.noaux i8042.nomux i8042.nopnp i8042.dumbkbd tsc=reliable no_timer_check random.trust_cpu=on systemd.mask=serial-getty@ttyS0.service systemd.mask=getty@tty1.service systemd.mask=apt-daily.timer systemd.mask=apt-daily-upgrade.timer systemd.mask=unattended-upgrades.service systemd.mask=motd-news.timer systemd.mask=man-db.timer systemd.mask=logrotate.timer systemd.mask=e2scrub_all.timer systemd.mask=fstrim.timer" commented:"true" comment:"Kernel arguments appended to the platform default command line of the workers (systemd.mask=<unit> skips a unit of the image). The SSH server is masked too unless debugSSHAuthorizedKeys is set" json:"extraBootArgs"`
 	// PreloadedPlugins are written in the worker basedir from the platform cache
 	PreloadedPlugins []string `mapstructure:"preloadedPlugins" toml:"preloadedPlugins" default:"" commented:"true" comment:"Plugins whose binary the platform caches on its nodes and writes in the worker basedir, so that the worker does not download them at each job (script runs the run steps)" json:"preloadedPlugins"`
 	// Flavors are the worker sizes jobs and worker models choose from

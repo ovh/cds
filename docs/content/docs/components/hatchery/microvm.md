@@ -44,8 +44,10 @@ reboots, which ends the microVM. The Secret is owned by the MicroVM and is
 deleted with it.
 
 The kernel command line is the platform default followed by `extraBootArgs`,
-which defaults to `quiet` and `systemd.mask=` of units a CI worker does not
-need (getty, apt and maintenance timers). The SSH server is masked too unless
+which defaults to `quiet`, kernel arguments that skip what a microVM does not
+need at boot (`i8042.*` for the absent PS/2 controller, `tsc=reliable`,
+`no_timer_check`, `random.trust_cpu=on`), and `systemd.mask=` of units a CI
+worker does not need (getty, apt and maintenance timers). The SSH server is masked too unless
 `debugSSHAuthorizedKeys` is set.
 
 The guest image needs systemd, bash and curl. Its egress policy must allow the
