@@ -30,6 +30,10 @@ const (
 	guestPathUnit   = "/etc/systemd/system/cds-worker.service"
 	guestUnit       = "cds-worker.service"
 	guestPathWorker = "/usr/local/bin/worker"
+	// guestWorkerBasedir is the worker basedir unless the hatchery configures
+	// one. Not /tmp: systemd-tmpfiles empties it at boot, preloaded plugins
+	// included.
+	guestWorkerBasedir = "/var/lib/cds-worker"
 )
 
 // The worker binary comes from the platform cache; it is downloaded from
@@ -94,11 +98,15 @@ func (h *HatcheryMicroVM) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 	}
 
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
+	if workerConfig.Basedir == "" {
+		workerConfig.Basedir = guestWorkerBasedir
+	}
 	secret, err := h.buildSecret(spawnArgs, workerConfig)
 	if err != nil {
 		return err
 	}
-	mvm := h.buildMicroVM(spawnArgs, secret.Name, h.workerBinary(ctx, spawnArgs, workerConfig))
+	plugins := h.pluginFiles(ctx, spawnArgs.Model.ModelV2.OSArch, workerConfig.Basedir, workerConfig.APIEndpoint, workerConfig.APIEndpointInsecure)
+	mvm := h.buildMicroVM(spawnArgs, secret.Name, h.workerBinary(ctx, spawnArgs, workerConfig), plugins)
 
 	// The secret goes first: the platform reads it before the boot
 	if _, err := h.kubeClient.CoreV1().Secrets(h.Config.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
@@ -204,7 +212,7 @@ func (h *HatcheryMicroVM) bootArgs() string {
 	return args
 }
 
-func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secretName string, worker *workerBinary) *unstructured.Unstructured {
+func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secretName string, worker *workerBinary, plugins []interface{}) *unstructured.Unstructured {
 	spec := spawnArgs.Model.MicroVMSpec
 	vcpus, memory := h.size(spec)
 
@@ -257,6 +265,7 @@ func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secret
 			"source": map[string]interface{}{"url": worker.URL, "sha256": worker.SHA256},
 		})
 	}
+	files = append(files, plugins...)
 
 	labels := map[string]interface{}{}
 	for k, v := range h.labels(spawnArgs.WorkerName) {

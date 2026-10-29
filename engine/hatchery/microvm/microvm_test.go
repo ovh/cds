@@ -3,6 +3,7 @@ package microvm
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -154,17 +155,19 @@ func TestCanAllocateResourcesWaitsForQuota(t *testing.T) {
 	require.True(t, can)
 }
 
-// testAPI serves the API version and the worker binaries, and counts the
-// worker downloads
+// testAPI serves the API version, the worker binaries and the script
+// plugin binary, and counts their downloads
 type testAPI struct {
 	*httptest.Server
-	version   string
-	worker    string
-	downloads int
+	version         string
+	worker          string
+	downloads       int
+	plugin          string
+	pluginDownloads int
 }
 
 func newTestAPI(t *testing.T) *testAPI {
-	api := &testAPI{version: "1.0.0", worker: "worker binary"}
+	api := &testAPI{version: "1.0.0", worker: "worker binary", plugin: "script plugin"}
 	api.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/mon/version":
@@ -172,6 +175,9 @@ func newTestAPI(t *testing.T) *testAPI {
 		case "/download/worker/linux/amd64", "/download/worker/linux/arm64":
 			api.downloads++
 			_, _ = w.Write([]byte(api.worker + r.URL.Path))
+		case "/download/plugin/script/binary/linux/amd64":
+			api.pluginDownloads++
+			_, _ = w.Write([]byte(api.plugin))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -185,12 +191,36 @@ func sha256Hex(s string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+func sha512Hex(s string) string {
+	sum := sha512.Sum512([]byte(s))
+	return hex.EncodeToString(sum[:])
+}
+
+// mockPluginInfos makes the API publish the script plugin binary of
+// content under the name script-linux-amd64, or fail with err
+func mockPluginInfos(t *testing.T, h *HatcheryMicroVM, content string, err error) {
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+	mockClient := mock_cdsclient.NewMockHatcheryServiceClient(ctrl)
+	call := mockClient.EXPECT().PluginsGet("script").AnyTimes()
+	if err != nil {
+		call.Return(nil, err)
+	} else {
+		call.Return(&sdk.GRPCPlugin{Name: "script", Binaries: []sdk.GRPCPluginBinary{
+			{OS: "linux", Arch: "arm64", Name: "script-linux-arm64", Perm: 0o755, SHA512sum: sha512Hex("arm64 " + content)},
+			{OS: "linux", Arch: "amd64", Name: "script-linux-amd64", Perm: 0o755, SHA512sum: sha512Hex(content)},
+		}}, nil)
+	}
+	h.Clientv2 = mockClient
+}
+
 func TestSpawnWorker(t *testing.T) {
 	h, kube, dyn := newTestHatchery(t)
 	api := newTestAPI(t)
 	h.Config.API.HTTP.URL = api.URL
 	h.CDNConfig.HTTPURL = "https://cds-cdn.example.org"
 	h.CDNConfig.TCPURL = "cds-cdn.example.org:8090"
+	mockPluginInfos(t, h, api.plugin, nil)
 
 	// The fake dynamic client does not set the UID the API server would
 	dyn.PrependReactor("create", "microvms", func(action k8stesting.Action) (bool, runtime.Object, error) {
@@ -229,10 +259,11 @@ func TestSpawnWorker(t *testing.T) {
 	require.False(t, found)
 
 	// The guest gets the worker config, the boot script and an enabled unit
-	// from the secret, and the worker binary from the platform cache
+	// from the secret, the worker binary and the script plugin from the
+	// platform cache
 	secretName := "cds-worker-ubuntu-worker-1"
 	files, _, _ := unstructured.NestedSlice(mvm.Object, "spec", "guest", "files")
-	require.Len(t, files, 4)
+	require.Len(t, files, 5)
 	filesByPath := map[string]map[string]interface{}{}
 	for _, f := range files {
 		file := f.(map[string]interface{})
@@ -254,6 +285,16 @@ func TestSpawnWorker(t *testing.T) {
 			"sha256": sha256Hex("worker binary/download/worker/linux/amd64"),
 		},
 	}, filesByPath[guestPathWorker])
+	// The worker uses a plugin found in its basedir under the published name
+	// instead of downloading it at the first step of the job
+	require.Equal(t, map[string]interface{}{
+		"path": "/var/lib/cds-worker/script-linux-amd64",
+		"mode": "0755",
+		"source": map[string]interface{}{
+			"url":    api.URL + "/download/plugin/script/binary/linux/amd64",
+			"sha256": sha256Hex("script plugin"),
+		},
+	}, filesByPath["/var/lib/cds-worker/script-linux-amd64"])
 	bootArgs, _, _ := unstructured.NestedString(mvm.Object, "spec", "bootArgs")
 	require.Equal(t, h.bootArgs(), bootArgs)
 	units, _, _ := unstructured.NestedStringSlice(mvm.Object, "spec", "guest", "systemdUnits")
@@ -285,6 +326,8 @@ func TestSpawnWorker(t *testing.T) {
 	require.Equal(t, "ubuntu-worker-1", workerConfig.Name)
 	require.Equal(t, "worker-token", workerConfig.APIToken)
 	require.Equal(t, spawnArgs.JobID, workerConfig.RunJobID)
+	// Not /tmp, emptied at boot with the preloaded plugins
+	require.Equal(t, "/var/lib/cds-worker", workerConfig.Basedir)
 
 	// The boot script downloads the worker for the model os/arch when the
 	// platform did not provide it, runs it and ends the VM
@@ -302,7 +345,7 @@ func TestSpawnWorker(t *testing.T) {
 func TestBuildMicroVMWithoutPolicy(t *testing.T) {
 	h, _, _ := newTestHatchery(t)
 	h.Config.EgressPolicy = ""
-	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s", nil)
+	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s", nil, nil)
 	_, found, _ := unstructured.NestedMap(mvm.Object, "spec", "networking", "egress", "policyRef")
 	require.False(t, found)
 	enabled, _, _ := unstructured.NestedBool(mvm.Object, "spec", "networking", "egress", "enabled")
@@ -314,7 +357,7 @@ func TestBuildMicroVMWithoutPolicy(t *testing.T) {
 func TestBuildMicroVMWithDebugSSH(t *testing.T) {
 	h, _, _ := newTestHatchery(t)
 	h.Config.DebugSSHAuthorizedKeys = []string{"ssh-ed25519 AAAA debug@example"}
-	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s", nil)
+	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s", nil, nil)
 	admin, _, _ := unstructured.NestedBool(mvm.Object, "spec", "networking", "admin", "enabled")
 	require.True(t, admin)
 	keys, _, _ := unstructured.NestedStringSlice(mvm.Object, "spec", "networking", "sshAuthorizedKeys")
@@ -389,8 +432,8 @@ func TestWorkerSHA256CachedPerBuild(t *testing.T) {
 	require.Equal(t, 3, api.downloads)
 }
 
-// Without the hash the MicroVM is spawned as before: the boot script
-// downloads the worker
+// Without the hashes the MicroVM is spawned as before: the boot script
+// downloads the worker, the worker downloads its plugins
 func TestSpawnWorkerWithoutWorkerHash(t *testing.T) {
 	h, kube, dyn := newTestHatchery(t)
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -398,6 +441,7 @@ func TestSpawnWorkerWithoutWorkerHash(t *testing.T) {
 	}))
 	t.Cleanup(api.Close)
 	h.Config.API.HTTP.URL = api.URL
+	mockPluginInfos(t, h, "script plugin", nil)
 
 	require.NoError(t, h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{WorkerName: "w1", Model: testModel(testSpec()), JobID: sdk.UUID()}))
 
@@ -413,10 +457,60 @@ func TestSpawnWorkerWithoutWorkerHash(t *testing.T) {
 	require.Contains(t, secret.StringData[secretKeyScript], `"`+api.URL+`/download/worker/linux/amd64"`)
 }
 
+// A plugin is downloaded by the hatchery once per published binary, and
+// again when the API publishes another one
+func TestPluginSHA256(t *testing.T) {
+	h, _, _ := newTestHatchery(t)
+	api := newTestAPI(t)
+	ctx := context.TODO()
+
+	for i := 0; i < 2; i++ {
+		sum, err := h.pluginSHA256(ctx, api.URL, false, "script", "linux/amd64", sha512Hex("script plugin"))
+		require.NoError(t, err)
+		require.Equal(t, sha256Hex("script plugin"), sum)
+	}
+	require.Equal(t, 1, api.pluginDownloads)
+
+	api.plugin = "new script plugin"
+	sum, err := h.pluginSHA256(ctx, api.URL, false, "script", "linux/amd64", sha512Hex("new script plugin"))
+	require.NoError(t, err)
+	require.Equal(t, sha256Hex("new script plugin"), sum)
+	require.Equal(t, 2, api.pluginDownloads)
+}
+
+// A plugin that cannot be checked against its published sha512 is left out:
+// preloading a binary the worker would reject only delays the job
+func TestSpawnWorkerWithoutPreloadedPlugin(t *testing.T) {
+	for name, infosErr := range map[string]error{
+		"descriptor unavailable": sdk.NewErrorFrom(sdk.ErrNotFound, "no plugin"),
+		"binary replaced":        nil,
+	} {
+		t.Run(name, func(t *testing.T) {
+			h, _, dyn := newTestHatchery(t)
+			api := newTestAPI(t)
+			h.Config.API.HTTP.URL = api.URL
+			// The descriptor publishes another content than the one served
+			mockPluginInfos(t, h, "older script plugin", infosErr)
+
+			require.NoError(t, h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{WorkerName: "w1", Model: testModel(testSpec()), JobID: sdk.UUID()}))
+
+			mvm, err := dyn.Resource(microVMResource).Namespace("cds-workers").Get(context.TODO(), "w1", metav1.GetOptions{})
+			require.NoError(t, err)
+			files, _, _ := unstructured.NestedSlice(mvm.Object, "spec", "guest", "files")
+			require.Len(t, files, 4)
+			for _, f := range files {
+				require.NotContains(t, f.(map[string]interface{})["path"], "script")
+			}
+			require.Empty(t, h.pluginBinaries.sha256s, "a rejected binary is not cached")
+		})
+	}
+}
+
 // A MicroVM that cannot be created must not leave its secret behind
 func TestSpawnWorkerDeletesSecretWhenMicroVMCreationFails(t *testing.T) {
 	h, kube, dyn := newTestHatchery(t)
 	h.Config.API.HTTP.URL = newTestAPI(t).URL
+	mockPluginInfos(t, h, "script plugin", nil)
 	dyn.PrependReactor("create", "microvms", func(action k8stesting.Action) (bool, runtime.Object, error) {
 		return true, nil, sdk.NewErrorFrom(sdk.ErrForbidden, "denied")
 	})

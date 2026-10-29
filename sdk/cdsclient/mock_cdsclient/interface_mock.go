@@ -2839,6 +2839,21 @@ func (mr *MockHatcheryServiceClientMockRecorder) Heartbeat(ctx, mon any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heartbeat", reflect.TypeOf((*MockHatcheryServiceClient)(nil).Heartbeat), ctx, mon)
 }
 
+// PluginsGet mocks base method.
+func (m *MockHatcheryServiceClient) PluginsGet(arg0 string) (*sdk.GRPCPlugin, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PluginsGet", arg0)
+	ret0, _ := ret[0].(*sdk.GRPCPlugin)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PluginsGet indicates an expected call of PluginsGet.
+func (mr *MockHatcheryServiceClientMockRecorder) PluginsGet(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PluginsGet", reflect.TypeOf((*MockHatcheryServiceClient)(nil).PluginsGet), arg0)
+}
+
 // V2ConfigCDN mocks base method.
 func (m *MockHatcheryServiceClient) V2ConfigCDN() (sdk.CDNConfig, error) {
 	m.ctrl.T.Helper()

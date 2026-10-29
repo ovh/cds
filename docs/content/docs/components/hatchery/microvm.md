@@ -25,7 +25,15 @@ For each job, the hatchery creates:
   to write the Secret keys as guest files and to enable the unit. When the
   hatchery could compute its sha256, the worker binary of the model os/arch
   is a guest file too, with the API download route as source: the platform
-  downloads it once per node and per CDS version.
+  downloads it once per node and per CDS version. The binaries of the
+  `preloadedPlugins` (default `script`, which runs the `run` steps) are guest
+  files the same way, written in the worker basedir under their published
+  name: the worker checks their sha512 and does not download them at the
+  first step. A plugin the hatchery cannot check against its published
+  sha512 is left to the worker.
+
+The worker basedir is `/var/lib/cds-worker` unless `provision.workerBasedir`
+is set: `/tmp` is emptied at boot.
 
 The unit starts as soon as the platform network unit (`microvm-net.service`)
 is done, without waiting for the rest of the guest boot. If the worker binary

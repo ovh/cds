@@ -243,6 +243,7 @@ type HatcheryServiceClient interface {
 	V2QueueClient
 	V2WorkerList(ctx context.Context) ([]sdk.V2Worker, error)
 	V2ConfigCDN() (sdk.CDNConfig, error)
+	PluginsGet(string) (*sdk.GRPCPlugin, error)
 }
 
 // ProjectClientV2 exposes project related functions

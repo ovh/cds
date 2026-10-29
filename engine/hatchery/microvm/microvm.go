@@ -127,6 +127,9 @@ func (c *HatcheryConfiguration) applyDefaults() {
 	if c.ExtraBootArgs == "" {
 		c.ExtraBootArgs = defaultExtraBootArgs
 	}
+	if c.PreloadedPlugins == nil {
+		c.PreloadedPlugins = []string{"script"}
+	}
 }
 
 func initKubeClients(config HatcheryConfiguration) (kubernetes.Interface, dynamic.Interface, error) {
