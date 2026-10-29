@@ -58,7 +58,7 @@ func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookReposit
 			}
 			if !foundAnl {
 				hreAnl.FindRetryCount++
-				if hreAnl.FindRetryCount > s.Cfg.OldRepositoryEventRetry {
+				if hreAnl.FindRetryCount > s.Cfg.AnalysisCheckMaxRetry {
 					hreAnl.Status = sdk.RepositoryAnalysisStatusError
 					hreAnl.AnalyzeID = ""
 					hreAnl.Error = "unable to find analysis"
@@ -82,7 +82,7 @@ func (s *Service) triggerCheckAnalyses(ctx context.Context, hre *sdk.HookReposit
 			hreAnl.Status = apiAnalysis.Status
 			if hreAnl.Status == sdk.RepositoryAnalysisStatusInProgress {
 				hreAnl.FindRetryCount++
-				if hreAnl.FindRetryCount > s.Cfg.OldRepositoryEventRetry {
+				if hreAnl.FindRetryCount > s.Cfg.AnalysisCheckMaxRetry {
 					hreAnl.Status = sdk.RepositoryAnalysisStatusError
 					hreAnl.Error = "analysis is too long"
 				} else {
