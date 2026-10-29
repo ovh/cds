@@ -41,8 +41,6 @@ func newTestHatchery(t *testing.T, objs ...runtime.Object) (*HatcheryMicroVM, *k
 	h.Config.Namespace = "cds-workers"
 	h.Config.API.HTTP.URL = "https://cds-api.example.org"
 	h.Config.EgressPolicy = "cds-workers"
-	h.Config.MaxVCPUs = 4
-	h.Config.MaxMemory = 4096
 	h.Config.applyDefaults()
 	h.ServiceInstance = &sdk.Service{CanonicalService: sdk.CanonicalService{ID: 1, Name: "my-hatchery"}}
 
@@ -66,8 +64,6 @@ func testSpec() sdk.V2WorkerModelMicroVMSpec {
 	return sdk.V2WorkerModelMicroVMSpec{
 		Kernel: sdk.V2WorkerModelMicroVMArtifact{URL: "https://example.org/vmlinux", SHA256: testSHA},
 		Rootfs: sdk.V2WorkerModelMicroVMRootfs{URL: "https://example.org/rootfs.squashfs", SHA256: testSHA, Format: "squashfs", Size: 4096},
-		VCPUs:  2,
-		Memory: 1024,
 	}
 }
 
@@ -108,16 +104,21 @@ func TestCanSpawn(t *testing.T) {
 
 	require.True(t, h.CanSpawn(ctx, testModel(testSpec()), "job", nil))
 
-	// The model size defaults to the hatchery defaults, which fit the maximum
-	require.True(t, h.CanSpawn(ctx, testModel(sdk.V2WorkerModelMicroVMSpec{Kernel: testSpec().Kernel, Rootfs: testSpec().Rootfs}), "job", nil))
-
-	// A model asking for more than the hatchery allows is left to another hatchery
-	tooManyCPUs := testSpec()
-	tooManyCPUs.VCPUs = 8
-	require.False(t, h.CanSpawn(ctx, testModel(tooManyCPUs), "job", nil))
-	tooMuchMemory := testSpec()
-	tooMuchMemory.Memory = 8192
-	require.False(t, h.CanSpawn(ctx, testModel(tooMuchMemory), "job", nil))
+	// A flavor the hatchery does not know is refused rather than replaced
+	// by another size, from the job as from the model, whatever its case
+	unknownJobFlavor := testModel(testSpec())
+	unknownJobFlavor.Flavor = "XXL"
+	require.False(t, h.CanSpawn(ctx, unknownJobFlavor, "job", nil))
+	unknownModelFlavor := testSpec()
+	unknownModelFlavor.Flavor = "XXL"
+	require.False(t, h.CanSpawn(ctx, testModel(unknownModelFlavor), "job", nil))
+	knownJobFlavor := testModel(testSpec())
+	knownJobFlavor.Flavor = "m"
+	require.True(t, h.CanSpawn(ctx, knownJobFlavor, "job", nil))
+	// A known job flavor makes an unknown model flavor irrelevant
+	overridden := testModel(unknownModelFlavor)
+	overridden.Flavor = "L"
+	require.True(t, h.CanSpawn(ctx, overridden, "job", nil))
 
 	// Only v2 microvm models
 	docker := testModel(testSpec())
@@ -197,11 +198,18 @@ func sha512Hex(s string) string {
 }
 
 // mockPluginInfos makes the API publish the script plugin binary of
-// content under the name script-linux-amd64, or fail with err
-func mockPluginInfos(t *testing.T, h *HatcheryMicroVM, content string, err error) {
+// content under the name script-linux-amd64, or fail with err. It returns
+// the job infos the hatchery pushes.
+func mockPluginInfos(t *testing.T, h *HatcheryMicroVM, content string, err error) *[]sdk.V2SendJobRunInfo {
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
 	mockClient := mock_cdsclient.NewMockHatcheryServiceClient(ctrl)
+	jobInfos := new([]sdk.V2SendJobRunInfo)
+	mockClient.EXPECT().V2QueuePushJobInfo(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().
+		DoAndReturn(func(_ context.Context, _, _ string, info sdk.V2SendJobRunInfo) error {
+			*jobInfos = append(*jobInfos, info)
+			return nil
+		})
 	call := mockClient.EXPECT().PluginsGet("script").AnyTimes()
 	if err != nil {
 		call.Return(nil, err)
@@ -212,6 +220,7 @@ func mockPluginInfos(t *testing.T, h *HatcheryMicroVM, content string, err error
 		}}, nil)
 	}
 	h.Clientv2 = mockClient
+	return jobInfos
 }
 
 func TestSpawnWorker(t *testing.T) {
@@ -220,7 +229,7 @@ func TestSpawnWorker(t *testing.T) {
 	h.Config.API.HTTP.URL = api.URL
 	h.CDNConfig.HTTPURL = "https://cds-cdn.example.org"
 	h.CDNConfig.TCPURL = "cds-cdn.example.org:8090"
-	mockPluginInfos(t, h, api.plugin, nil)
+	jobInfos := mockPluginInfos(t, h, api.plugin, nil)
 
 	// The fake dynamic client does not set the UID the API server would
 	dyn.PrependReactor("create", "microvms", func(action k8stesting.Action) (bool, runtime.Object, error) {
@@ -229,10 +238,12 @@ func TestSpawnWorker(t *testing.T) {
 		return false, nil, nil
 	})
 
+	model := testModel(testSpec())
+	model.Flavor = "S"
 	spawnArgs := hatchery.SpawnArguments{
 		WorkerName:  "ubuntu-worker-1",
 		WorkerToken: "worker-token",
-		Model:       testModel(testSpec()),
+		Model:       model,
 		JobID:       sdk.UUID(),
 	}
 	require.NoError(t, h.SpawnWorker(context.TODO(), spawnArgs))
@@ -243,10 +254,12 @@ func TestSpawnWorker(t *testing.T) {
 	// Labels let the hatchery find its workers back
 	require.Equal(t, map[string]string{LABEL_HATCHERY_NAME: "my-hatchery", LABEL_WORKER_NAME: "ubuntu-worker-1"}, mvm.GetLabels())
 
-	// Size and boot artifacts come from the worker model
+	// The size is the one of the job flavor, the boot artifacts come from
+	// the worker model
 	spec := mvm.Object["spec"].(map[string]interface{})
 	require.Equal(t, int64(2), spec["vcpus"])
-	require.Equal(t, int64(1024), spec["memoryMiB"])
+	require.Equal(t, int64(8192), spec["memoryMiB"])
+	require.Equal(t, int64(20*1024), spec["diskMiB"])
 	require.Equal(t, map[string]interface{}{"url": "https://example.org/vmlinux", "sha256": testSHA}, spec["kernel"])
 	require.Equal(t, map[string]interface{}{"url": "https://example.org/rootfs.squashfs", "sha256": testSHA, "format": "squashfs", "sizeMiB": int64(4096)}, spec["rootfs"])
 
@@ -339,13 +352,63 @@ func TestSpawnWorker(t *testing.T) {
 	require.Contains(t, script, "/usr/local/bin/worker\nsystemctl reboot")
 	require.NotContains(t, script, " -k ", "TLS is verified unless the API is configured insecure")
 	require.Contains(t, secret.StringData[secretKeyUnit], "ExecStart="+guestPathScript)
+
+	// The job page tells which size the worker got
+	require.Len(t, *jobInfos, 1)
+	require.Equal(t, `Worker "ubuntu-worker-1" will use flavor "S" (2 vCPUs, 8192 MiB RAM, 20480 MiB disk)`, (*jobInfos)[0].Message)
+}
+
+// The worker gets the model flavor when the job sets none, the hatchery
+// default flavor when neither does
+func TestBuildMicroVMFlavorSize(t *testing.T) {
+	withModelFlavor := testSpec()
+	withModelFlavor.Flavor = "M"
+	for name, tt := range map[string]struct {
+		spec                sdk.V2WorkerModelMicroVMSpec
+		vcpus, memory, disk int64
+	}{
+		"model flavor":   {spec: withModelFlavor, vcpus: 4, memory: 16384, disk: 50 * 1024},
+		"default flavor": {spec: testSpec(), vcpus: 1, memory: 4096, disk: 10 * 1024},
+	} {
+		t.Run(name, func(t *testing.T) {
+			h, _, dyn := newTestHatchery(t)
+			h.Config.API.HTTP.URL = newTestAPI(t).URL
+			mockPluginInfos(t, h, "script plugin", nil)
+			require.NoError(t, h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{WorkerName: "w1", Model: testModel(tt.spec), JobID: sdk.UUID()}))
+			mvm, err := dyn.Resource(microVMResource).Namespace("cds-workers").Get(context.TODO(), "w1", metav1.GetOptions{})
+			require.NoError(t, err)
+			spec := mvm.Object["spec"].(map[string]interface{})
+			require.Equal(t, tt.vcpus, spec["vcpus"])
+			require.Equal(t, tt.memory, spec["memoryMiB"])
+			require.Equal(t, tt.disk, spec["diskMiB"])
+		})
+	}
+}
+
+// The platform converts the rootfs to an image of its size: a flavor disk
+// smaller than that would be refused, so the rootfs size wins
+func TestBuildMicroVMDiskNeverSmallerThanRootfs(t *testing.T) {
+	h, _, _ := newTestHatchery(t)
+	spec := testSpec()
+	spec.Rootfs.Size = 30000
+	xs := *h.Config.flavor("XS")
+	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(spec)}, xs, "s", nil, nil)
+	disk, _, _ := unstructured.NestedInt64(mvm.Object, "spec", "diskMiB")
+	require.Equal(t, int64(30000), disk)
+	sizeMiB, _, _ := unstructured.NestedInt64(mvm.Object, "spec", "rootfs", "sizeMiB")
+	require.Equal(t, int64(30000), sizeMiB)
+
+	// A flavor without disk gets the rootfs size
+	mvm = h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, FlavorConfig{Name: "nodisk", VCPUs: 1, MemoryMiB: 1024}, "s", nil, nil)
+	disk, _, _ = unstructured.NestedInt64(mvm.Object, "spec", "diskMiB")
+	require.Equal(t, int64(4096), disk)
 }
 
 // Without a configured policy the MicroVM gets the platform default policy
 func TestBuildMicroVMWithoutPolicy(t *testing.T) {
 	h, _, _ := newTestHatchery(t)
 	h.Config.EgressPolicy = ""
-	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s", nil, nil)
+	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, defaultFlavors[0], "s", nil, nil)
 	_, found, _ := unstructured.NestedMap(mvm.Object, "spec", "networking", "egress", "policyRef")
 	require.False(t, found)
 	enabled, _, _ := unstructured.NestedBool(mvm.Object, "spec", "networking", "egress", "enabled")
@@ -357,7 +420,7 @@ func TestBuildMicroVMWithoutPolicy(t *testing.T) {
 func TestBuildMicroVMWithDebugSSH(t *testing.T) {
 	h, _, _ := newTestHatchery(t)
 	h.Config.DebugSSHAuthorizedKeys = []string{"ssh-ed25519 AAAA debug@example"}
-	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, "s", nil, nil)
+	mvm := h.buildMicroVM(hatchery.SpawnArguments{WorkerName: "w", Model: testModel(testSpec())}, defaultFlavors[0], "s", nil, nil)
 	admin, _, _ := unstructured.NestedBool(mvm.Object, "spec", "networking", "admin", "enabled")
 	require.True(t, admin)
 	keys, _, _ := unstructured.NestedStringSlice(mvm.Object, "spec", "networking", "sshAuthorizedKeys")
@@ -619,4 +682,18 @@ func TestCheckConfiguration(t *testing.T) {
 
 	cfg.API.TokenV2 = "v2-token"
 	require.NoError(t, h.CheckConfiguration(cfg))
+
+	// A default flavor that does not exist would make every job without a
+	// flavor unspawnable: refused at startup instead
+	cfg.Flavors = []FlavorConfig{{Name: "large", VCPUs: 8, MemoryMiB: 32768, DiskGiB: 100}}
+	err = h.CheckConfiguration(cfg)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), `defaultFlavor "XS" is not among the flavors large`)
+	cfg.DefaultFlavor = "LARGE"
+	require.NoError(t, h.CheckConfiguration(cfg))
+
+	cfg.Flavors = append(cfg.Flavors, FlavorConfig{Name: "small", VCPUs: 1})
+	err = h.CheckConfiguration(cfg)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), `invalid flavor "small"`)
 }

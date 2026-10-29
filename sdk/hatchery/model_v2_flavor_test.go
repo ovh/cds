@@ -121,8 +121,7 @@ func TestGetWorkerModelV2MicroVM(t *testing.T) {
 	spec := sdk.V2WorkerModelMicroVMSpec{
 		Kernel: sdk.V2WorkerModelMicroVMArtifact{URL: "https://example.org/vmlinux", SHA256: "abc"},
 		Rootfs: sdk.V2WorkerModelMicroVMRootfs{URL: "https://example.org/rootfs.ext4", SHA256: "def"},
-		VCPUs:  4,
-		Memory: 4096,
+		Flavor: "M",
 	}
 	raw, err := json.Marshal(spec)
 	require.NoError(t, err)

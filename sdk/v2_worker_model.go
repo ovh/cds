@@ -45,8 +45,7 @@ type V2WorkerModelVSphereSpec struct {
 type V2WorkerModelMicroVMSpec struct {
 	Kernel V2WorkerModelMicroVMArtifact `json:"kernel" jsonschema_extras:"order=1" jsonschema_description:"Guest kernel"`
 	Rootfs V2WorkerModelMicroVMRootfs   `json:"rootfs" jsonschema_extras:"order=2" jsonschema_description:"Guest root filesystem"`
-	VCPUs  int                          `json:"vcpus,omitempty" jsonschema:"minimum=1,maximum=32,example=2" jsonschema_extras:"order=3" jsonschema_description:"Number of vCPUs, the hatchery default when unset"`
-	Memory int                          `json:"memory,omitempty" jsonschema:"minimum=128,example=2048" jsonschema_extras:"order=4" jsonschema_description:"Guest memory in MiB, the hatchery default when unset"`
+	Flavor string                       `json:"flavor,omitempty" jsonschema:"example=S" jsonschema_extras:"order=3" jsonschema_description:"Default flavor (vCPUs, memory, disk) among those of the hatchery, the hatchery default flavor when unset"`
 }
 
 type V2WorkerModelMicroVMArtifact struct {

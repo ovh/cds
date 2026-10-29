@@ -55,20 +55,33 @@ type HatcheryConfiguration struct {
 	ExtraBootArgs string `mapstructure:"extraBootArgs" toml:"extraBootArgs" default:"quiet systemd.mask=serial-getty@ttyS0.service systemd.mask=getty@tty1.service systemd.mask=apt-daily.timer systemd.mask=apt-daily-upgrade.timer systemd.mask=unattended-upgrades.service systemd.mask=motd-news.timer systemd.mask=man-db.timer systemd.mask=logrotate.timer systemd.mask=e2scrub_all.timer systemd.mask=fstrim.timer" commented:"true" comment:"Kernel arguments appended to the platform default command line of the workers (systemd.mask=<unit> skips a unit of the image). The SSH server is masked too unless debugSSHAuthorizedKeys is set" json:"extraBootArgs"`
 	// PreloadedPlugins are written in the worker basedir from the platform cache
 	PreloadedPlugins []string `mapstructure:"preloadedPlugins" toml:"preloadedPlugins" default:"" commented:"true" comment:"Plugins whose binary the platform caches on its nodes and writes in the worker basedir, so that the worker does not download them at each job (script runs the run steps)" json:"preloadedPlugins"`
-	// DefaultVCPUs used when the worker model does not set vcpus
-	DefaultVCPUs int `mapstructure:"defaultVCPUs" toml:"defaultVCPUs" default:"2" commented:"false" comment:"Worker vCPUs when the worker model does not set them" json:"defaultVCPUs"`
-	// DefaultMemory used when the worker model does not set memory
-	DefaultMemory int `mapstructure:"defaultMemory" toml:"defaultMemory" default:"2048" commented:"false" comment:"Worker memory in MiB when the worker model does not set it" json:"defaultMemory"`
-	// MaxVCPUs a worker model may ask for
-	MaxVCPUs int `mapstructure:"maxVCPUs" toml:"maxVCPUs" default:"8" commented:"false" comment:"Maximum vCPUs of a worker. Jobs whose model asks for more are not taken" json:"maxVCPUs"`
-	// MaxMemory a worker model may ask for
-	MaxMemory int `mapstructure:"maxMemory" toml:"maxMemory" default:"16384" commented:"false" comment:"Maximum memory in MiB of a worker. Jobs whose model asks for more are not taken" json:"maxMemory"`
+	// Flavors are the worker sizes jobs and worker models choose from
+	Flavors []FlavorConfig `mapstructure:"flavors" toml:"flavors" commented:"true" comment:"Worker sizes. A job chooses one with runs-on.flavor, a worker model with spec.flavor. Defaults to XS (1 vCPU, 4096 MiB, 10 GiB), S (2, 8192, 20), M (4, 16384, 50) and L (6, 24576, 100)" json:"flavors"`
+	// DefaultFlavor used when neither the job nor the worker model sets one
+	DefaultFlavor string `mapstructure:"defaultFlavor" toml:"defaultFlavor" default:"XS" commented:"true" comment:"Flavor of the workers whose job and worker model set none" json:"defaultFlavor"`
 	// RegistrationTimeout delay after which a booted MicroVM without a registered worker is deleted
 	RegistrationTimeout int `mapstructure:"registrationTimeout" toml:"registrationTimeout" default:"600" commented:"true" comment:"Delete a MicroVM whose worker is not registered after this delay (seconds), counted from the boot, or from the creation while not booted" json:"registrationTimeout"`
 	// QuotaPendingTimeout delay after which a MicroVM refused by the namespace quota is deleted
 	QuotaPendingTimeout int `mapstructure:"quotaPendingTimeout" toml:"quotaPendingTimeout" default:"1800" commented:"true" comment:"Delete a MicroVM still refused by the namespace quota after this delay (seconds). No new MicroVM is created while one is refused" json:"quotaPendingTimeout"`
 	// KillAwolWorkersInterval used by killAwolWorkers to remove unused workers
 	KillAwolWorkersInterval int `mapstructure:"killAwolWorkersInterval" toml:"killAwolWorkersInterval" default:"30" commented:"true" comment:"Kill awol worker interval (seconds)" json:"killAwolWorkersInterval"`
+}
+
+// FlavorConfig is a worker size
+type FlavorConfig struct {
+	Name      string `mapstructure:"name" toml:"name" json:"name"`
+	VCPUs     int    `mapstructure:"vcpus" toml:"vcpus" json:"vcpus"`
+	MemoryMiB int    `mapstructure:"memoryMiB" toml:"memoryMiB" json:"memoryMiB"`
+	// DiskGiB is raised to the rootfs size of the worker model when smaller
+	DiskGiB int `mapstructure:"diskGiB" toml:"diskGiB" json:"diskGiB"`
+}
+
+// defaultFlavors apply when the configuration sets none
+var defaultFlavors = []FlavorConfig{
+	{Name: "XS", VCPUs: 1, MemoryMiB: 4096, DiskGiB: 10},
+	{Name: "S", VCPUs: 2, MemoryMiB: 8192, DiskGiB: 20},
+	{Name: "M", VCPUs: 4, MemoryMiB: 16384, DiskGiB: 50},
+	{Name: "L", VCPUs: 6, MemoryMiB: 24576, DiskGiB: 100},
 }
 
 // HatcheryMicroVM spawns v2 workers in Firecracker microVMs managed through

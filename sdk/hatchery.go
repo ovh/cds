@@ -170,6 +170,9 @@ func (w WorkerStarterWorkerModel) GetFlavor(reqs RequirementList, defaultFlavor 
 		if w.VSphereSpec.Flavor != "" {
 			return w.VSphereSpec.Flavor
 		}
+		if w.MicroVMSpec.Flavor != "" {
+			return w.MicroVMSpec.Flavor
+		}
 		for _, r := range reqs {
 			if r.Type == FlavorRequirement && r.Value != "" {
 				return r.Value

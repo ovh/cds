@@ -77,13 +77,12 @@ func TestWorkerMicroVMModelOK(t *testing.T) {
         sha256: `+microVMSHA+`
         format: squashfs
         size: 4096
-      vcpus: 2
-      memory: 2048
+      flavor: S
 `)
 	require.Nil(t, errs)
 }
 
-// The size is optional: the hatchery applies its defaults.
+// The flavor is optional: the hatchery applies its default flavor.
 func TestWorkerMicroVMModelWithoutSizeOK(t *testing.T) {
 	errs := lintMicroVMModel(t, `
       kernel:
@@ -150,7 +149,9 @@ func TestWorkerMicroVMModelInvalid(t *testing.T) {
 			wantErr: "format must be one of the following",
 		},
 		{
-			name: "too many vcpus",
+			// The flavor is the only sizing: a model still setting its vCPUs
+			// must not be silently booted with another size
+			name: "size outside of the flavor",
 			spec: `
       kernel:
         url: https://example.org/vmlinux
@@ -158,9 +159,9 @@ func TestWorkerMicroVMModelInvalid(t *testing.T) {
       rootfs:
         url: https://example.org/rootfs.ext4
         sha256: ` + microVMSHA + `
-      vcpus: 64
+      vcpus: 2
 `,
-			wantErr: "less than or equal to 32",
+			wantErr: "Additional property vcpus is not allowed",
 		},
 	}
 	for _, tt := range tests {
@@ -179,7 +180,7 @@ func TestEntityInterpolateMicroVMModel(t *testing.T) {
 		Entity: Entity{Ref: GitRefBranchPrefix + "main", Commit: "abcdef"},
 		Model: V2WorkerModel{
 			Type: WorkerModelTypeMicroVM,
-			Spec: json.RawMessage(`{"kernel":{"url":"https://example.org/${{ git.ref_name }}/vmlinux","sha256":"` + microVMSHA + `"},"rootfs":{"url":"https://example.org/${{ git.sha }}/rootfs.ext4","sha256":"` + microVMSHA + `"},"vcpus":2,"memory":1024}`),
+			Spec: json.RawMessage(`{"kernel":{"url":"https://example.org/${{ git.ref_name }}/vmlinux","sha256":"` + microVMSHA + `"},"rootfs":{"url":"https://example.org/${{ git.sha }}/rootfs.ext4","sha256":"` + microVMSHA + `"},"flavor":"S"}`),
 		},
 	}
 	require.NoError(t, e.Interpolate(context.TODO()))
@@ -189,8 +190,7 @@ func TestEntityInterpolateMicroVMModel(t *testing.T) {
 	require.Equal(t, "https://example.org/main/vmlinux", spec.Kernel.URL)
 	require.Equal(t, "https://example.org/abcdef/rootfs.ext4", spec.Rootfs.URL)
 	require.Equal(t, microVMSHA, spec.Kernel.SHA256)
-	require.Equal(t, 2, spec.VCPUs)
-	require.Equal(t, 1024, spec.Memory)
+	require.Equal(t, "S", spec.Flavor)
 }
 
 func TestWorkerDockerModelOK(t *testing.T) {

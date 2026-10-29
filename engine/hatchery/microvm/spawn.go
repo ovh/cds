@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"text/template"
+	"time"
 
 	"github.com/rockbears/log"
 	corev1 "k8s.io/api/core/v1"
@@ -97,6 +98,12 @@ func (h *HatcheryMicroVM) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return sdk.WithStack(fmt.Errorf("hatchery microvm only spawns workers for v2 jobs"))
 	}
 
+	flavorName := spawnArgs.Model.GetFlavor(spawnArgs.Requirements, h.Config.DefaultFlavor)
+	flavor := h.Config.flavor(flavorName)
+	if flavor == nil {
+		return sdk.WithStack(fmt.Errorf("flavor %q not found in hatchery configuration", flavorName))
+	}
+
 	workerConfig := h.GenerateWorkerConfig(ctx, h, spawnArgs)
 	if workerConfig.Basedir == "" {
 		workerConfig.Basedir = guestWorkerBasedir
@@ -106,7 +113,18 @@ func (h *HatcheryMicroVM) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return err
 	}
 	plugins := h.pluginFiles(ctx, spawnArgs.Model.ModelV2.OSArch, workerConfig.Basedir, workerConfig.APIEndpoint, workerConfig.APIEndpointInsecure)
-	mvm := h.buildMicroVM(spawnArgs, secret.Name, h.workerBinary(ctx, spawnArgs, workerConfig), plugins)
+	mvm := h.buildMicroVM(spawnArgs, *flavor, secret.Name, h.workerBinary(ctx, spawnArgs, workerConfig), plugins)
+
+	if sdk.IsValidUUID(spawnArgs.JobID) {
+		flavorInfo := sdk.V2SendJobRunInfo{
+			Level:   sdk.WorkflowRunInfoLevelInfo,
+			Time:    time.Now(),
+			Message: fmt.Sprintf("Worker %q will use flavor %q (%d vCPUs, %d MiB RAM, %d MiB disk)", spawnArgs.WorkerName, flavor.Name, flavor.VCPUs, flavor.MemoryMiB, diskMiB(*flavor, spawnArgs.Model.MicroVMSpec)),
+		}
+		if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, flavorInfo); err != nil {
+			log.ErrorWithStackTrace(ctx, err)
+		}
+	}
 
 	// The secret goes first: the platform reads it before the boot
 	if _, err := h.kubeClient.CoreV1().Secrets(h.Config.Namespace).Create(ctx, secret, metav1.CreateOptions{}); err != nil {
@@ -212,9 +230,14 @@ func (h *HatcheryMicroVM) bootArgs() string {
 	return args
 }
 
-func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secretName string, worker *workerBinary, plugins []interface{}) *unstructured.Unstructured {
+// diskMiB is the disk of the flavor, raised to the rootfs size of the model:
+// the platform refuses a disk smaller than the image it converts
+func diskMiB(flavor FlavorConfig, spec sdk.V2WorkerModelMicroVMSpec) int {
+	return max(flavor.DiskGiB*1024, spec.Rootfs.Size)
+}
+
+func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, flavor FlavorConfig, secretName string, worker *workerBinary, plugins []interface{}) *unstructured.Unstructured {
 	spec := spawnArgs.Model.MicroVMSpec
-	vcpus, memory := h.size(spec)
 
 	rootfs := map[string]interface{}{
 		"url":    spec.Rootfs.URL,
@@ -272,6 +295,26 @@ func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secret
 		labels[k] = v
 	}
 
+	vmSpec := map[string]interface{}{
+		"vcpus":     int64(flavor.VCPUs),
+		"memoryMiB": int64(flavor.MemoryMiB),
+		"kernel": map[string]interface{}{
+			"url":    spec.Kernel.URL,
+			"sha256": spec.Kernel.SHA256,
+		},
+		"rootfs":     rootfs,
+		"bootArgs":   h.bootArgs(),
+		"networking": networking,
+		"guest": map[string]interface{}{
+			"files":        files,
+			"systemdUnits": []interface{}{guestUnit},
+		},
+	}
+	// Unset, the platform keeps the rootfs size
+	if disk := diskMiB(flavor, spec); disk > 0 {
+		vmSpec["diskMiB"] = int64(disk)
+	}
+
 	return &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": microVMAPIVersion,
 		"kind":       microVMKind,
@@ -280,20 +323,6 @@ func (h *HatcheryMicroVM) buildMicroVM(spawnArgs hatchery.SpawnArguments, secret
 			"namespace": h.Config.Namespace,
 			"labels":    labels,
 		},
-		"spec": map[string]interface{}{
-			"vcpus":     int64(vcpus),
-			"memoryMiB": int64(memory),
-			"kernel": map[string]interface{}{
-				"url":    spec.Kernel.URL,
-				"sha256": spec.Kernel.SHA256,
-			},
-			"rootfs":     rootfs,
-			"bootArgs":   h.bootArgs(),
-			"networking": networking,
-			"guest": map[string]interface{}{
-				"files":        files,
-				"systemdUnits": []interface{}{guestUnit},
-			},
-		},
+		"spec": vmSpec,
 	}}
 }

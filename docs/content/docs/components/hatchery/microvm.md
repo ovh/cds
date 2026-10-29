@@ -20,7 +20,8 @@ For each job, the hatchery creates:
 
 * a Secret holding the worker configuration, a boot script and a systemd unit,
   labelled `microvm.poc/guest-files: "true"` as the platform requires;
-* a MicroVM with the kernel, rootfs and size of the worker model, the egress
+* a MicroVM with the kernel and rootfs of the worker model, the vCPUs, memory
+  and disk of its [flavor](#flavors), the egress
   policy of the hatchery configuration, and `spec.guest` asking the platform
   to write the Secret keys as guest files and to enable the unit. When the
   hatchery could compute its sha256, the worker binary of the model os/arch
@@ -55,6 +56,39 @@ Workers have no SSH access. As a debugging aid, setting
 network of every new worker and authorizes these keys for root (SSH from the
 bastion). Remove it once done.
 
+## Flavors
+
+A flavor is a worker size: vCPUs, memory and disk. The hatchery
+configuration declares them; without any, it uses:
+
+| Flavor | vCPUs | Memory (MiB) | Disk (GiB) |
+|--------|-------|--------------|------------|
+| XS     | 1     | 4096         | 10         |
+| S      | 2     | 8192         | 20         |
+| M      | 4     | 16384        | 50         |
+| L      | 6     | 24576        | 100        |
+
+A worker gets the first flavor set among:
+
+1. the job flavor, `runs-on.flavor`;
+2. the worker model flavor, `spec.flavor`;
+3. the hatchery `defaultFlavor`, `XS` by default.
+
+Names are case-insensitive. The hatchery does not take a job whose flavor it
+does not know, and logs a warning naming the flavor and the known ones: another
+hatchery may know it. The job page shows the flavor the worker got.
+
+The VM disk is the flavor disk, raised to `spec.rootfs.size` of the model when
+that is larger: the platform does not convert an image to a smaller disk.
+
+```yaml
+jobs:
+  build:
+    runs-on:
+      model: my-microvm-model
+      flavor: M
+```
+
 ## Lifecycle
 
 The hatchery lists its MicroVMs by label and deletes:
@@ -87,13 +121,22 @@ set at least:
   namespace = "cds-workers"
   # MicroVMEgressPolicy applied to every worker
   egressPolicy = "cds-workers"
-  # Size used when the model does not set it, and maximum size accepted
-  defaultVCPUs = 2
-  defaultMemory = 2048
-  maxVCPUs = 8
-  maxMemory = 16384
+  # Worker sizes, the four default flavors when none is declared
+  defaultFlavor = "S"
   # Out of the cluster only; the in-cluster configuration is used when empty
   # kubernetesConfigFile = "/etc/cds/kubeconfig"
+
+  [[hatchery.microvm.flavors]]
+    name = "S"
+    vcpus = 2
+    memoryMiB = 8192
+    diskGiB = 20
+
+  [[hatchery.microvm.flavors]]
+    name = "L"
+    vcpus = 6
+    memoryMiB = 24576
+    diskGiB = 100
 
   [hatchery.microvm.commonConfiguration]
     name = "my-microvm-hatchery"

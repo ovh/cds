@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -103,17 +104,11 @@ func (c *HatcheryConfiguration) applyDefaults() {
 	if len(c.OSArch) == 0 {
 		c.OSArch = []string{"linux/amd64"}
 	}
-	if c.DefaultVCPUs <= 0 {
-		c.DefaultVCPUs = 2
+	if len(c.Flavors) == 0 {
+		c.Flavors = slices.Clone(defaultFlavors)
 	}
-	if c.DefaultMemory <= 0 {
-		c.DefaultMemory = 2048
-	}
-	if c.MaxVCPUs <= 0 {
-		c.MaxVCPUs = 8
-	}
-	if c.MaxMemory <= 0 {
-		c.MaxMemory = 16384
+	if c.DefaultFlavor == "" {
+		c.DefaultFlavor = "XS"
 	}
 	if c.RegistrationTimeout <= 0 {
 		c.RegistrationTimeout = 600
@@ -211,11 +206,20 @@ func (h *HatcheryMicroVM) CheckConfiguration(cfg interface{}) error {
 		return sdk.WithStack(fmt.Errorf("missing valid kubernetes namespace"))
 	}
 
-	if hconfig.DefaultVCPUs > hconfig.MaxVCPUs && hconfig.MaxVCPUs > 0 {
-		return sdk.WithStack(fmt.Errorf("defaultVCPUs %d is greater than maxVCPUs %d", hconfig.DefaultVCPUs, hconfig.MaxVCPUs))
+	// The flavors are checked as the hatchery uses them, defaults included
+	hconfig.applyDefaults()
+	for i, f := range hconfig.Flavors {
+		if f.Name == "" || f.VCPUs <= 0 || f.MemoryMiB <= 0 || f.DiskGiB < 0 {
+			return sdk.WithStack(fmt.Errorf("invalid flavor %q: a flavor needs a name, vcpus and memoryMiB", f.Name))
+		}
+		for _, other := range hconfig.Flavors[:i] {
+			if strings.EqualFold(other.Name, f.Name) {
+				return sdk.WithStack(fmt.Errorf("flavor %q is declared twice", f.Name))
+			}
+		}
 	}
-	if hconfig.DefaultMemory > hconfig.MaxMemory && hconfig.MaxMemory > 0 {
-		return sdk.WithStack(fmt.Errorf("defaultMemory %d is greater than maxMemory %d", hconfig.DefaultMemory, hconfig.MaxMemory))
+	if hconfig.flavor(hconfig.DefaultFlavor) == nil {
+		return sdk.WithStack(fmt.Errorf("defaultFlavor %q is not among the flavors %s", hconfig.DefaultFlavor, hconfig.flavorNames()))
 	}
 
 	return nil
@@ -261,8 +265,8 @@ func (h *HatcheryMicroVM) NeedRegistration(_ context.Context, _ *sdk.Model) bool
 	return false
 }
 
-// CanSpawn only accepts v2 microvm models whose size fits the configured maximum
-func (h *HatcheryMicroVM) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, _ []sdk.Requirement) bool {
+// CanSpawn only accepts v2 microvm models whose flavor is configured
+func (h *HatcheryMicroVM) CanSpawn(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) bool {
 	ctx, end := telemetry.Span(ctx, "microvm.CanSpawn")
 	defer end()
 
@@ -279,9 +283,9 @@ func (h *HatcheryMicroVM) CanSpawn(ctx context.Context, model sdk.WorkerStarterW
 		log.Warn(ctx, "CanSpawn> Job %s: worker model %s has no kernel or rootfs", jobID, model.ModelV2.Name)
 		return false
 	}
-	vcpus, memory := h.size(spec)
-	if vcpus > h.Config.MaxVCPUs || memory > h.Config.MaxMemory {
-		log.Warn(ctx, "CanSpawn> Job %s: worker model %s asks for %d vCPUs and %d MiB, the hatchery allows %d vCPUs and %d MiB", jobID, model.ModelV2.Name, vcpus, memory, h.Config.MaxVCPUs, h.Config.MaxMemory)
+	// No fallback on another size: the job would run with less than it asked for
+	if flavorName := model.GetFlavor(requirements, h.Config.DefaultFlavor); h.Config.flavor(flavorName) == nil {
+		log.Warn(ctx, "CanSpawn> Job %s: unknown flavor %q, the hatchery knows %s", jobID, flavorName, h.Config.flavorNames())
 		return false
 	}
 	return true
@@ -304,17 +308,22 @@ func (h *HatcheryMicroVM) CanAllocateResources(ctx context.Context, _ sdk.Worker
 	return true, nil
 }
 
-// size returns the vCPUs and memory of a worker, the model values or the defaults
-func (h *HatcheryMicroVM) size(spec sdk.V2WorkerModelMicroVMSpec) (int, int) {
-	vcpus := spec.VCPUs
-	if vcpus == 0 {
-		vcpus = h.Config.DefaultVCPUs
+// flavor returns the flavor of a name, case-insensitive, nil when unknown
+func (c *HatcheryConfiguration) flavor(name string) *FlavorConfig {
+	for i := range c.Flavors {
+		if strings.EqualFold(c.Flavors[i].Name, name) {
+			return &c.Flavors[i]
+		}
 	}
-	memory := spec.Memory
-	if memory == 0 {
-		memory = h.Config.DefaultMemory
+	return nil
+}
+
+func (c *HatcheryConfiguration) flavorNames() string {
+	names := make([]string, 0, len(c.Flavors))
+	for _, f := range c.Flavors {
+		names = append(names, f.Name)
 	}
-	return vcpus, memory
+	return strings.Join(names, ", ")
 }
 
 func (h *HatcheryMicroVM) routines(ctx context.Context) {

@@ -104,8 +104,7 @@ spec:
     sha256: 0123...cdef
     format: squashfs
     size: 4096
-  vcpus: 2
-  memory: 2048
+  flavor: S
 ```
 
 Fields:
@@ -117,7 +116,7 @@ Fields:
 * <span style="color:red">*</span>`spec.kernel.url`, `spec.kernel.sha256`: guest kernel and its SHA-256 (lowercase hex)
 * <span style="color:red">*</span>`spec.rootfs.url`, `spec.rootfs.sha256`: guest root filesystem and its SHA-256. The image needs systemd, bash and curl
 * `spec.rootfs.format`: `ext4` (default) or `squashfs`
-* `spec.rootfs.size`: size in MiB of the ext4 image built from a squashfs image
-* `spec.vcpus`, `spec.memory` (MiB): size of the VM, the hatchery defaults when unset
+* `spec.rootfs.size`: size in MiB of the ext4 image built from a squashfs image. The VM disk is never smaller
+* `spec.flavor`: flavor (vCPUs, memory, disk) among the [hatchery flavors]({{< relref "/docs/components/hatchery/microvm.md#flavors" >}}), used when the job does not set `runs-on.flavor`. The hatchery default flavor when unset
 
 The URLs accept `${{ git.ref_name }}` and `${{ git.sha }}`. The network policy of the VM is set by the [hatchery]({{< relref "/docs/components/hatchery/microvm.md" >}}), not by the model.
