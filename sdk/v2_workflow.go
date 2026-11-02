@@ -562,7 +562,8 @@ func (w *V2WorkflowHookData) Scan(src interface{}) error {
 }
 
 type V2JobStrategy struct {
-	Matrix map[string]interface{} `json:"matrix" jsonschema_description:"Matrix values for the job"`
+	Matrix      map[string]interface{} `json:"matrix" jsonschema_description:"Matrix values for the job"`
+	MaxParallel int64                  `json:"max-parallel,omitempty" jsonschema:"minimum=1" jsonschema_description:"Maximum number of matrix permutations running in parallel. Unset, the default of the CDS instance applies (20 unless configured otherwise); it cannot exceed the maximum of the instance (40 unless configured otherwise)"`
 }
 
 type V2JobConcurrency struct{}
@@ -610,6 +611,24 @@ func (w V2Workflow) LintWorkflowRunData() []error {
 
 // checkJobsTemplateReference returns an error for each job combining `from` with
 // concrete content (steps or runs-on).
+// checkJobsMaxParallel rejects a max-parallel without a matrix to apply to, or combined with a concurrency since the
+// matrix would then need two rules
+func (w V2Workflow) checkJobsMaxParallel() []error {
+	var errs []error
+	for jobID, j := range w.Jobs {
+		if j.Strategy == nil || j.Strategy.MaxParallel == 0 {
+			continue
+		}
+		if len(j.Strategy.Matrix) == 0 {
+			errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: max-parallel requires a matrix", w.Name, jobID))
+		}
+		if j.Concurrency != "" {
+			errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: max-parallel cannot be combined with concurrency", w.Name, jobID))
+		}
+	}
+	return errs
+}
+
 func (w V2Workflow) checkJobsTemplateReference() []error {
 	var errs []error
 	for jobID, j := range w.Jobs {
@@ -629,6 +648,7 @@ func (w V2Workflow) lintStructure() []error {
 			errs = append(errs, NewErrorFrom(ErrInvalidData, "workflow %s job %s: retry must be 0, 1 or 2", w.Name, j.Name))
 		}
 	}
+	errs = append(errs, w.checkJobsMaxParallel()...)
 
 	if err := w.CheckSemver(); err != nil {
 		errs = append(errs, err)

@@ -273,7 +273,7 @@ func (api *API) craftWorkflowRunV2(ctx context.Context, id string) error {
 		// Lint workflow. Create tmp workflow without FROM to check workflow structure
 		tmpWkf := run.WorkflowData.Workflow
 		tmpWkf.From = ""
-		if errsLint := Lint(ctx, api.mustDB(), api.Cache, tmpWkf, wref.ef, p.Key, api.WorkerModelDockerImageWhiteList); errsLint != nil {
+		if errsLint := Lint(ctx, api.mustDB(), api.Cache, tmpWkf, wref.ef, p.Key, api.WorkerModelDockerImageWhiteList, api.matrixParallelism().Max); errsLint != nil {
 			//run.Status = sdk.V2WorkflowRunStatusFail
 			msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
 			for _, e := range errsLint {
@@ -791,7 +791,7 @@ func checkJobTemplate(ctx context.Context, db *gorp.DbMap, store cache.Store, wr
 	wrefTemplate.project = wref.project
 
 	// Lint generated workflow. Project-scoped resources belong to the run's project.
-	if errsLint := Lint(ctx, db, store, tmpWorkflow, wrefTemplate.ef, wref.run.ProjectKey, nil); errsLint != nil {
+	if errsLint := Lint(ctx, db, store, tmpWorkflow, wrefTemplate.ef, wref.run.ProjectKey, nil, 0); errsLint != nil {
 		//run.Status = sdk.V2WorkflowRunStatusFail
 		msgs := make([]sdk.V2WorkflowRunInfo, 0, len(errsLint))
 		for _, e := range errsLint {

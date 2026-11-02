@@ -1728,7 +1728,9 @@ func (api *API) handleEntitiesFiles(ctx context.Context, ef *EntityFinder, files
 // project-scoped resources (integrations, concurrencies). They differ when a run uses a template
 // hosted in another project: entities resolve against the template's location, but integrations
 // and concurrencies belong to the run's project.
-func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store, o T, ef *EntityFinder, ownerProjectKey string, wmDockerImageWhiteList []regexp.Regexp) []error {
+// Lint checks an entity against the project resources; matrixMaxParallelism bounds the max-parallel of the jobs, 0 for
+// no bound.
+func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store, o T, ef *EntityFinder, ownerProjectKey string, wmDockerImageWhiteList []regexp.Regexp, matrixMaxParallelism int64) []error {
 	// 1. Static lint
 	if err := o.LintYamlDefinition(); err != nil {
 		return err
@@ -1823,6 +1825,10 @@ func Lint[T sdk.Lintable](ctx context.Context, db *gorp.DbMap, store cache.Store
 					if msg != "" {
 						err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "%s", msg))
 					}
+				}
+
+				if j.Strategy != nil && matrixMaxParallelism > 0 && j.Strategy.MaxParallel > matrixMaxParallelism {
+					err = append(err, sdk.NewErrorFrom(sdk.ErrInvalidData, "workflow %s job %s: max-parallel %d is above the maximum of %d", x.Name, jobID, j.Strategy.MaxParallel, matrixMaxParallelism))
 				}
 
 				// Check concurrency
@@ -1930,7 +1936,7 @@ func ReadEntityFile[T sdk.Lintable](ctx context.Context, api *API, directory, fi
 	}
 	var entities []sdk.EntityWithObject
 	for _, o := range *out {
-		if err := Lint(ctx, api.mustDB(), api.Cache, o, ef, ef.currentProject, api.WorkerModelDockerImageWhiteList); err != nil {
+		if err := Lint(ctx, api.mustDB(), api.Cache, o, ef, ef.currentProject, api.WorkerModelDockerImageWhiteList, api.matrixParallelism().Max); err != nil {
 			return nil, err
 		}
 		eo := sdk.EntityWithObject{

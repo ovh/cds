@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 
@@ -84,6 +85,34 @@ func TestV2WorkflowLintJobTemplateReference(t *testing.T) {
 		w := V2Workflow{Name: "w", From: "proj/vcs/my/repo/tmpl", Jobs: map[string]V2Job{"myjob": jobFromAndRunsOn}}
 		require.Empty(t, w.LintYamlDefinition())
 		require.Empty(t, w.LintWorkflowRunData())
+	})
+}
+
+func TestV2WorkflowLintMaxParallel(t *testing.T) {
+	matrix := map[string]interface{}{"os": []interface{}{"linux", "windows"}}
+	steps := []ActionStep{{Run: "echo"}}
+
+	t.Run("max-parallel on a matrix job", func(t *testing.T) {
+		w := V2Workflow{Name: "w", Jobs: map[string]V2Job{"myjob": {Strategy: &V2JobStrategy{Matrix: matrix, MaxParallel: 2}, Steps: steps}}}
+		require.Empty(t, w.LintYamlDefinition())
+	})
+	t.Run("max-parallel requires a matrix", func(t *testing.T) {
+		w := V2Workflow{Name: "w", Jobs: map[string]V2Job{"myjob": {Strategy: &V2JobStrategy{MaxParallel: 2}, Steps: steps}}}
+		errs := w.LintYamlDefinition()
+		require.NotEmpty(t, errs)
+		require.Contains(t, fmt.Sprint(errs), "max-parallel requires a matrix")
+	})
+	t.Run("max-parallel cannot be combined with concurrency", func(t *testing.T) {
+		w := V2Workflow{Name: "w", Concurrencies: []WorkflowConcurrency{{Name: "cc"}}, Jobs: map[string]V2Job{"myjob": {Concurrency: "cc", Strategy: &V2JobStrategy{Matrix: matrix, MaxParallel: 2}, Steps: steps}}}
+		errs := w.LintYamlDefinition()
+		require.Len(t, errs, 1)
+		require.Contains(t, errs[0].Error(), "max-parallel cannot be combined with concurrency")
+	})
+	t.Run("max-parallel must be at least 1", func(t *testing.T) {
+		w := V2Workflow{Name: "w", Jobs: map[string]V2Job{"myjob": {Strategy: &V2JobStrategy{Matrix: matrix, MaxParallel: -1}, Steps: steps}}}
+		errs := w.LintYamlDefinition()
+		require.NotEmpty(t, errs)
+		require.Contains(t, errs[0].Error(), "max-parallel")
 	})
 }
 

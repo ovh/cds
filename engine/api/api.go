@@ -251,6 +251,8 @@ type Configuration struct {
 		JobWaitingTimeout                int64  `toml:"jobWaitingTimeout" comment:"Timeout delay for waiting job (in seconds)" json:"jobWaitingTimeout" default:"3600"`
 		JobSchedulingTimeout             int64  `toml:"jobSchedulingTimeout" comment:"Timeout delay for job scheduling (in seconds)" json:"jobSchedulingTimeout" default:"600"`
 		JobSchedulingMaxErrors           int64  `toml:"jobSchedulingMaxErrors" comment:"Number of scheduling error before failing the job" json:"jobSchedulingMaxErrors" default:"5"`
+		MatrixDefaultParallelism         int64  `toml:"matrixDefaultParallelism" comment:"Number of permutations of a matrix job allowed to run in parallel when the job has no concurrency" json:"matrixDefaultParallelism" default:"20"`
+		MatrixMaxParallelism             int64  `toml:"matrixMaxParallelism" comment:"Number of permutations of a matrix job allowed to run in parallel whatever the concurrency of the job" json:"matrixMaxParallelism" default:"40"`
 		RunRetentionScheduling           int64  `toml:"runRetentionScheduling" comment:"Time in hour between 2 run of the workflow run purge" json:"runRetentionScheduling" default:"1"`
 		RunRetentionGracePeriod          int64  `toml:"runRetentionGracePeriod" comment:"Time in hour a terminated workflow run is protected from the retention count, so that it can still be consulted" json:"runRetentionGracePeriod" default:"24"`
 		WorkflowRunMaxRetention          int64  `toml:"workflowRunMaxRetention" comment:"Workflow run max retention in days" json:"workflowRunMaxRetention" default:"1095"`
