@@ -26,8 +26,10 @@ func (g *giteaClient) PullRequest(ctx context.Context, repo string, id string) (
 	}
 
 	ret = sdk.VCSPullRequest{
-		ID:    int(pr.Index),
-		State: string(pr.State),
+		ID:     int(pr.Index),
+		State:  string(pr.State),
+		Merged: pr.HasMerged,
+		Closed: pr.State == gitea.StateClosed,
 		Head: sdk.VCSPushEvent{
 			Branch: sdk.VCSBranch{
 				DisplayID:    pr.Head.Ref,
@@ -52,8 +54,10 @@ func (g *giteaClient) PullRequests(ctx context.Context, repo string, opts sdk.VC
 	ret := make([]sdk.VCSPullRequest, 0)
 	for _, pr := range prs {
 		ret = append(ret, sdk.VCSPullRequest{
-			ID:    int(pr.Index),
-			State: string(pr.State),
+			ID:     int(pr.Index),
+			State:  string(pr.State),
+			Merged: pr.HasMerged,
+			Closed: pr.State == gitea.StateClosed,
 			Head: sdk.VCSPushEvent{
 				Branch: sdk.VCSBranch{
 					DisplayID:    pr.Head.Ref,
@@ -65,7 +69,8 @@ func (g *giteaClient) PullRequests(ctx context.Context, repo string, opts sdk.VC
 	return ret, nil
 }
 
-// PullRequestComment push a new comment on a pull request
+// PullRequestComment push a new comment on a pull request; posted as an issue comment because
+// a review created without event stays pending, hence hidden from everyone but its author.
 func (g *giteaClient) PullRequestComment(ctx context.Context, repo string, prRequest sdk.VCSPullRequestCommentRequest) error {
 	t := strings.Split(repo, "/")
 	if len(t) != 2 {
@@ -74,10 +79,10 @@ func (g *giteaClient) PullRequestComment(ctx context.Context, repo string, prReq
 
 	log.Debug(ctx, "PullRequestComment> trying post comment %s", prRequest.Message)
 
-	opt := gitea.CreatePullReviewOptions{
+	opt := gitea.CreateIssueCommentOption{
 		Body: prRequest.Message,
 	}
-	s, _, err := g.client.CreatePullReview(t[0], t[1], int64(prRequest.ID), opt)
+	s, _, err := g.client.CreateIssueComment(t[0], t[1], int64(prRequest.ID), opt)
 	if err != nil {
 		return sdk.WrapError(err, "unable to create pull-request comment on repo:%v id:%v", repo, prRequest.ID)
 	}

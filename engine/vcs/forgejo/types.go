@@ -17,8 +17,8 @@ const (
 // StateType is the state of an issue / PR (open, closed).
 type StateType string
 
-// ReviewStateType is the state of a review.
-type ReviewStateType string
+// StateClosed is the state of a closed issue / PR, merged or not.
+const StateClosed StateType = "closed"
 
 // --- User ---
 
@@ -277,39 +277,18 @@ type PullRequest struct {
 	Flow                int64         `json:"flow"`
 }
 
-// --- Pull Review ---
+// --- Issue Comment ---
 
-// PullReview represents a pull request review.
-type PullReview struct {
-	ID                int64           `json:"id"`
-	Reviewer          *User           `json:"user"`
-	State             ReviewStateType `json:"state"`
-	Body              string          `json:"body"`
-	CommitID          string          `json:"commit_id"`
-	Stale             bool            `json:"stale"`
-	Official          bool            `json:"official"`
-	Dismissed         bool            `json:"dismissed"`
-	CodeCommentsCount int             `json:"comments_count"`
-	Submitted         time.Time       `json:"submitted_at"`
-	Updated           time.Time       `json:"updated_at"`
-	HTMLURL           string          `json:"html_url"`
-	HTMLPullURL       string          `json:"pull_request_url"`
+// Comment represents a comment on an issue or a pull request.
+type Comment struct {
+	ID      int64  `json:"id"`
+	HTMLURL string `json:"html_url"`
+	Body    string `json:"body"`
 }
 
-// CreatePullReviewOptions are options to create a pull review.
-type CreatePullReviewOptions struct {
-	State    ReviewStateType           `json:"event"`
-	Body     string                    `json:"body"`
-	CommitID string                    `json:"commit_id"`
-	Comments []CreatePullReviewComment `json:"comments"`
-}
-
-// CreatePullReviewComment represents a review comment for creation API.
-type CreatePullReviewComment struct {
-	Path       string `json:"path"`
-	Body       string `json:"body"`
-	OldLineNum int64  `json:"old_position"`
-	NewLineNum int64  `json:"new_position"`
+// CreateIssueCommentOption is the option to create a comment on an issue or a pull request.
+type CreateIssueCommentOption struct {
+	Body string `json:"body"`
 }
 
 // --- Status ---

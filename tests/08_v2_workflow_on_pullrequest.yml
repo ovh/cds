@@ -164,7 +164,7 @@ testcases:
   - name: Get pull-request from forgejo and check comment
     type: http
     method: GET
-    url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/pulls/{{.Create-Pull-Request.prNumber}}/reviews"
+    url: "{{.git.host}}/api/v1/repos/{{.git.user}}/{{.git_repo}}/issues/{{.Create-Pull-Request.prNumber}}/comments"
     basic_auth_user: "{{.git.user}}"
     basic_auth_password: "{{.git.password}}"
     headers:

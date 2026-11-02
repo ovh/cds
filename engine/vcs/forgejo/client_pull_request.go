@@ -76,8 +76,10 @@ func (f *forgejoClient) PullRequests(ctx context.Context, repo string, opts sdk.
 
 func toVCSPullRequest(pr *PullRequest) sdk.VCSPullRequest {
 	vcs := sdk.VCSPullRequest{
-		ID:    int(pr.Index),
-		State: string(pr.State),
+		ID:     int(pr.Index),
+		State:  string(pr.State),
+		Merged: pr.HasMerged,
+		Closed: pr.State == StateClosed,
 	}
 	if pr.Head != nil {
 		vcs.Head = sdk.VCSPushEvent{
@@ -90,7 +92,8 @@ func toVCSPullRequest(pr *PullRequest) sdk.VCSPullRequest {
 	return vcs
 }
 
-// PullRequestComment push a new comment on a pull request
+// PullRequestComment push a new comment on a pull request; posted as an issue comment because
+// a review created without event stays pending, hence hidden from everyone but its author.
 func (f *forgejoClient) PullRequestComment(ctx context.Context, repo string, prRequest sdk.VCSPullRequestCommentRequest) error {
 	owner, repoName, err := getRepo(repo)
 	if err != nil {
@@ -99,12 +102,12 @@ func (f *forgejoClient) PullRequestComment(ctx context.Context, repo string, prR
 
 	log.Debug(ctx, "PullRequestComment> trying post comment %s", prRequest.Message)
 
-	opt := CreatePullReviewOptions{
+	opt := CreateIssueCommentOption{
 		Body: prRequest.Message,
 	}
 
-	var s PullReview
-	apiPath := fmt.Sprintf("/repos/%s/%s/pulls/%d/reviews", owner, repoName, prRequest.ID)
+	var s Comment
+	apiPath := fmt.Sprintf("/repos/%s/%s/issues/%d/comments", owner, repoName, prRequest.ID)
 	if _, err := f.client.post(ctx, apiPath, opt, &s); err != nil {
 		return sdk.WrapError(err, "unable to create pull-request comment on repo:%v id:%v", repo, prRequest.ID)
 	}

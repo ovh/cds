@@ -47,14 +47,7 @@ func (client *giteaClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBui
 		giteaStatus.Description = buildStatus.Description
 	}
 
-	switch buildStatus.Status {
-	case sdk.StatusChecking, sdk.StatusPending, sdk.StatusBuilding:
-		giteaStatus.State = gitea.StatusPending
-	case sdk.StatusSuccess:
-		giteaStatus.State = gitea.StatusSuccess
-	case sdk.StatusFail:
-		giteaStatus.State = gitea.StatusFailure
-	}
+	giteaStatus.State = getGiteaStateFromStatus(sdk.V2WorkflowRunStatus(buildStatus.Status))
 
 	path := fmt.Sprintf("/repos/%s/statuses/%s", buildStatus.RepositoryFullname, buildStatus.GitHash)
 
@@ -82,6 +75,23 @@ func (client *giteaClient) SetStatus(ctx context.Context, buildStatus sdk.VCSBui
 
 	log.Debug(ctx, "SetStatus> Status %d %s created at %v", s.ID, s.URL, s.Created)
 	return nil
+}
+
+// getGiteaStateFromStatus maps a workflow run status to a Gitea state. Only success lets a required
+// check pass: a skipped run is reported as warning so it blocks without showing as a failure.
+func getGiteaStateFromStatus(status sdk.V2WorkflowRunStatus) gitea.StatusState {
+	switch status {
+	case sdk.V2WorkflowRunStatusCrafting, sdk.V2WorkflowRunStatusBlocked, sdk.V2WorkflowRunStatusBuilding:
+		return gitea.StatusPending
+	case sdk.V2WorkflowRunStatusSuccess:
+		return gitea.StatusSuccess
+	case sdk.V2WorkflowRunStatusFail, sdk.V2WorkflowRunStatusStopped, sdk.V2WorkflowRunStatusCancelled:
+		return gitea.StatusFailure
+	case sdk.V2WorkflowRunStatusSkipped:
+		return gitea.StatusWarning
+	default:
+		return gitea.StatusPending
+	}
 }
 
 func (client *giteaClient) ListStatuses(ctx context.Context, fullname string, ref string) ([]sdk.VCSCommitStatus, error) {
