@@ -493,6 +493,21 @@ func (mr *MockAdminMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifie
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
 }
 
+// AdminProjectVariableSetCopy mocks base method.
+func (m *MockAdmin) AdminProjectVariableSetCopy(ctx context.Context, pKey, vsName string, req sdk.CopyVariableSetToProject) (*sdk.ProjectVariableSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectVariableSetCopy", ctx, pKey, vsName, req)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectVariableSetCopy indicates an expected call of AdminProjectVariableSetCopy.
+func (mr *MockAdminMockRecorder) AdminProjectVariableSetCopy(ctx, pKey, vsName, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectVariableSetCopy", reflect.TypeOf((*MockAdmin)(nil).AdminProjectVariableSetCopy), ctx, pKey, vsName, req)
+}
+
 // AdminUserCreate mocks base method.
 func (m *MockAdmin) AdminUserCreate(ctx context.Context, user sdk.CreateUser) error {
 	m.ctrl.T.Helper()
@@ -7514,6 +7529,21 @@ func (m *MockInterface) AdminOrganizationMigrateUser(ctx context.Context, orgaId
 func (mr *MockInterfaceMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifier any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
+}
+
+// AdminProjectVariableSetCopy mocks base method.
+func (m *MockInterface) AdminProjectVariableSetCopy(ctx context.Context, pKey, vsName string, req sdk.CopyVariableSetToProject) (*sdk.ProjectVariableSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectVariableSetCopy", ctx, pKey, vsName, req)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectVariableSetCopy indicates an expected call of AdminProjectVariableSetCopy.
+func (mr *MockInterfaceMockRecorder) AdminProjectVariableSetCopy(ctx, pKey, vsName, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectVariableSetCopy", reflect.TypeOf((*MockInterface)(nil).AdminProjectVariableSetCopy), ctx, pKey, vsName, req)
 }
 
 // AdminUserCreate mocks base method.
