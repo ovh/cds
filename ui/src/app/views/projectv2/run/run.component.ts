@@ -459,8 +459,9 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
-     * What the graph is drawn from: the jobs of the run, their stage, their gate and their
-     * dependencies. Two runs sharing that shape draw the same graph.
+     * What the graph is drawn from: the jobs of the run, their stage, their gate, their
+     * dependencies and their matrix, interpolated once the run computes it. Two runs sharing
+     * that shape draw the same graph.
      */
     private static workflowShape(workflow: any): string {
         if (!workflow) {
@@ -469,7 +470,7 @@ export class ProjectV2RunComponent implements AfterViewInit, OnDestroy {
         const jobs = workflow.jobs ?? {};
         const stages = workflow.stages ?? {};
         return JSON.stringify({
-            jobs: Object.keys(jobs).sort().map(k => [k, jobs[k]?.stage ?? '', jobs[k]?.gate ?? '', (jobs[k]?.needs ?? []).slice().sort()]),
+            jobs: Object.keys(jobs).sort().map(k => [k, jobs[k]?.stage ?? '', jobs[k]?.gate ?? '', (jobs[k]?.needs ?? []).slice().sort(), jobs[k]?.strategy?.matrix ?? null]),
             stages: Object.keys(stages).sort().map(k => [k, (stages[k]?.needs ?? []).slice().sort()])
         });
     }
