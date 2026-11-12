@@ -1,5 +1,7 @@
 <div class="header">
   <div class="menu left">
+    <button (click)="clickOpenCloseAll(true);$event.stopPropagation();">Collapse all</button>
+    <button (click)="clickOpenCloseAll(false);$event.stopPropagation();">Expand all</button>
     @if (tabs && tabs.length > 1) {
       @for (tab of tabs; track tab; let i = $index) {
         <button [class.active]="i === currentTabIndex"
