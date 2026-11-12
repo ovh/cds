@@ -1,6 +1,8 @@
 package swarm
 
 import (
+	"sync/atomic"
+
 	docker "github.com/moby/moby/client"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
@@ -16,6 +18,9 @@ const (
 	LabelWorkerRequirements = "worker_requirements"
 	LabelWorkerModelPath    = "worker_model_path"
 	LabelJobID              = "job_id"
+
+	// EngineLabelDrain is the docker engine label that stops the hatchery from starting new containers on that engine.
+	EngineLabelDrain = "cds.hatchery.drain=true"
 )
 
 // HatcheryConfiguration is the configuration for hatchery
@@ -70,6 +75,8 @@ type dockerClient struct {
 	docker.Client
 	MaxContainers int
 	name          string
+	// drained is refreshed from the engine labels, see EngineLabelDrain
+	drained atomic.Bool
 }
 
 // DockerEngineConfiguration is a configuration to be able to connect to a docker engine

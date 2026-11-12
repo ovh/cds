@@ -3,6 +3,7 @@ package swarm
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"html/template"
 	"net"
@@ -84,6 +85,7 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 		log.Info(ctx, "hatchery> swarm> connected to default docker engine")
 
 	} else {
+		var nbReachableEngines int
 		for hostName, cfg := range h.Config.DockerEngines {
 			log.Info(ctx, "hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
 			httpClient := new(http.Client)
@@ -175,13 +177,15 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 				continue
 			}
 			ctxDocker, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			if _, errPing := d.Ping(ctxDocker); errPing != nil {
-				log.Error(ctx, "hatchery> swarm> unable to ping docker host:%s", errPing)
-				cancel()
-				continue
-			}
+			_, errPing := d.Ping(ctxDocker)
 			cancel()
-			log.Info(ctx, "hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
+			if errPing != nil {
+				// The engine is kept: it is skipped while unreachable and used again once it answers.
+				log.Error(ctx, "hatchery> swarm> unable to ping docker host %s: %s", hostName, errPing)
+			} else {
+				nbReachableEngines++
+				log.Info(ctx, "hatchery> swarm> connected to %s (%s)", hostName, cfg.Host)
+			}
 
 			h.dockerClients[hostName] = &dockerClient{
 				Client:        *d,
@@ -189,11 +193,13 @@ func (h *HatcherySwarm) InitHatchery(ctx context.Context) error {
 				name:          hostName,
 			}
 		}
-		if len(h.dockerClients) == 0 {
+		if nbReachableEngines == 0 {
 			log.Error(ctx, "hatchery> swarm> no docker host available. Please check errors")
 			return fmt.Errorf("no docker engine available")
 		}
 	}
+
+	h.refreshDrainedEngines(ctx)
 
 	h.GoRoutines.Run(ctx, "swarm", func(ctx context.Context) {
 		h.routines(ctx)
@@ -229,6 +235,10 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	_, next := telemetry.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
+		if dclient.drained.Load() {
+			log.Debug(ctx, "hatchery> swarm> SpawnWorker> docker engine %s is drained", dname)
+			continue
+		}
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		containers, err := dclient.ContainerList(ctxList, container.ListOptions{All: true})
 		if err != nil {
@@ -608,6 +618,9 @@ func (h *HatcherySwarm) CanSpawn(ctx context.Context, model sdk.WorkerStarterWor
 func (h *HatcherySwarm) CanAllocateResources(ctx context.Context, model sdk.WorkerStarterWorkerModel, jobID string, requirements []sdk.Requirement) (bool, error) {
 	var lastError error
 	for dockerName, dockerClient := range h.dockerClients {
+		if dockerClient.drained.Load() {
+			continue
+		}
 		// List all containers to check if we can spawn a new one
 		cs, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
@@ -634,17 +647,25 @@ func (h *HatcherySwarm) WorkersStarted(ctx context.Context) ([]string, error) {
 	ctx, end := telemetry.Span(ctx, "hatchery.WorkersStarted")
 	defer end()
 	res := make([]string, 0)
+	var errs []error
 	for _, dockerClient := range h.dockerClients {
 		containers, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
-			return nil, sdk.WrapError(err, "unable to list containers")
+			errs = append(errs, err)
+			continue
 		}
 		workers := containers.FilterWorkers()
 		for _, w := range workers {
 			res = append(res, w.Labels[LabelWorkerName])
 		}
 	}
-	return res, nil
+	if len(errs) == 0 {
+		return res, nil
+	}
+	if len(errs) == len(h.dockerClients) {
+		return nil, sdk.WrapError(errors.Join(errs...), "unable to list containers")
+	}
+	return res, fmt.Errorf("%w: %v", hatchery.ErrIncompleteWorkersStarted, errors.Join(errs...))
 }
 
 // Start inits client and routines for hatchery
@@ -688,11 +709,32 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 			h.GoRoutines.Exec(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorker(ctx)
 			})
+
+			h.GoRoutines.Exec(ctx, "refreshDrainedEngines", func(ctx context.Context) {
+				h.refreshDrainedEngines(ctx)
+			})
 		case <-ctx.Done():
 			if ctx.Err() != nil {
 				log.Error(ctx, "Hatchery> Swarm> Exiting routines")
 			}
 			return
+		}
+	}
+}
+
+// refreshDrainedEngines reads the drain label of each docker engine; an engine that does not answer keeps its previous state.
+func (h *HatcherySwarm) refreshDrainedEngines(ctx context.Context) {
+	for dockerName, dockerClient := range h.dockerClients {
+		ctxInfo, cancel := context.WithTimeout(ctx, 5*time.Second)
+		info, err := dockerClient.Info(ctxInfo)
+		cancel()
+		if err != nil {
+			log.Debug(ctx, "hatchery> swarm> refreshDrainedEngines> unable to get info from %s: %v", dockerName, err)
+			continue
+		}
+		drained := slices.Contains(info.Labels, EngineLabelDrain)
+		if dockerClient.drained.Swap(drained) != drained {
+			log.Info(ctx, "hatchery> swarm> docker engine %s drained: %t", dockerName, drained)
 		}
 	}
 }
@@ -751,7 +793,7 @@ func (h *HatcherySwarm) killAwolWorker(ctx context.Context) error {
 		containers, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
 			log.Warn(ctx, "hatchery> swarm> killAwolWorker> Cannot list containers: %s on %s", err, dockerClient.name)
-			return err
+			continue
 		}
 
 		oldContainers, err := h.listAwolWorkers(dockerClient.name, containers)
