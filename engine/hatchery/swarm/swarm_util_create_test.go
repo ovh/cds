@@ -1,17 +1,47 @@
 package swarm
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
 	"strings"
 	"testing"
 
 	types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	docker "github.com/moby/moby/client"
 	"github.com/stretchr/testify/require"
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 )
+
+func TestDockerClientUserError(t *testing.T) {
+	c, err := docker.NewClientWithOpts(docker.WithHost("tcp://docker-engine.example.com:2376"))
+	require.NoError(t, err)
+	engine := &dockerClient{Client: *c, name: "engine-1"}
+
+	urlErr := &url.Error{
+		Op:  "Post",
+		URL: "https://docker-engine.example.com:2376/v1.44/images/create?fromImage=registry.example.com%2Fimage&tag=latest",
+		Err: errors.New("net/http: timeout awaiting response headers"),
+	}
+	require.Equal(t, "the docker engine did not answer", engine.userError(sdk.WithStack(urlErr)))
+
+	// Errors from the docker daemon are kept, as they can be actionable for users, without the engine address
+	daemonErr := fmt.Errorf("Error response from daemon: pull access denied for registry.example.com/image (engine docker-engine.example.com:2376)")
+	require.Equal(t, "Error response from daemon: pull access denied for registry.example.com/image (engine engine-1)", engine.userError(daemonErr))
+
+	require.Equal(t, "manifest unknown", engine.userError(sdk.WithStack(errors.New("manifest unknown"))))
+
+	// A real failure of the docker client to reach an engine
+	unreachable, err := docker.NewClientWithOpts(docker.WithHost("tcp://127.0.0.1:1"))
+	require.NoError(t, err)
+	_, err = unreachable.Ping(context.Background())
+	require.Error(t, err)
+	require.Equal(t, "the docker engine did not answer", (&dockerClient{Client: *unreachable, name: "engine-2"}).userError(sdk.WithStack(err)))
+}
 
 func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 	h := testSwarmHatchery(t)
