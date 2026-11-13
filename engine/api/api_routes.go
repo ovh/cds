@@ -117,6 +117,9 @@ func (api *API) InitRouter() {
 	// Admin group
 	r.Handle("/admin/group", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminGroupHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
+	// Admin variable set
+	r.Handle("/admin/project/{projectKey}/variableset/{variableSetName}/copy", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminCopyProjectVariableSetHandler, service.OverrideAuth(api.authAdminMiddleware)))
+
 	// Feature flipping
 	r.Handle("/admin/features", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/features/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlippingByName, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
