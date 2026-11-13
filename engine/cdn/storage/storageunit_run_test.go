@@ -71,11 +71,14 @@ func initRecordingStorageUnit(t *testing.T) (context.Context, *gorpmapper.Mapper
 
 	cdntest.ClearItem(t, context.TODO(), m, db)
 	cdntest.ClearSyncRedisSet(t, store, "local_storage")
+	cdntest.ClearSyncRedisSet(t, store, "local_storage_2")
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	t.Cleanup(cancel)
 
 	tmpDir, err := os.MkdirTemp("", t.Name()+"-cdn-1-*")
+	require.NoError(t, err)
+	tmpDir2, err := os.MkdirTemp("", t.Name()+"-cdn-2-*")
 	require.NoError(t, err)
 
 	cdnUnits, err := storage.Init(ctx, m, store, db.DbMap, sdk.NewGoRoutines(ctx), storage.Configuration{
@@ -105,16 +108,42 @@ func initRecordingStorageUnit(t *testing.T) (context.Context, *gorpmapper.Mapper
 					},
 				},
 			},
+			"local_storage_2": {
+				Local: &storage.LocalStorageConfiguration{
+					Path: tmpDir2,
+					Encryption: []convergent.ConvergentEncryptionConfig{
+						{
+							Cipher:      aesgcm.CipherName,
+							LocatorSalt: "secret_locator_salt_2",
+							SecretValue: "secret_value_2",
+						},
+					},
+				},
+			},
 		},
 	})
 	require.NoError(t, err)
 
-	localUnit, ok := cdnUnits.Storages[0].(storage.StorageUnitWithLocator)
-	require.True(t, ok)
-	dest := &recordingStorageUnit{StorageUnitWithLocator: localUnit}
-	cdnUnits.Storages[0] = dest
+	dest := &recordingStorageUnit{}
+	replaceStorageUnit(t, cdnUnits, "local_storage", func(u storage.StorageUnitWithLocator) storage.StorageUnit {
+		dest.StorageUnitWithLocator = u
+		return dest
+	})
 
 	return ctx, m, db, store, cdnUnits, dest
+}
+
+// replaceStorageUnit swaps the storage unit with the given name for the one built by wrap
+func replaceStorageUnit(t *testing.T, cdnUnits *storage.RunningStorageUnits, name string, wrap func(storage.StorageUnitWithLocator) storage.StorageUnit) {
+	for x, s := range cdnUnits.Storages {
+		if s.Name() == name {
+			u, ok := s.(storage.StorageUnitWithLocator)
+			require.True(t, ok)
+			cdnUnits.Storages[x] = wrap(u)
+			return
+		}
+	}
+	require.Fail(t, "storage unit not found", name)
 }
 
 func insertCompletedLogItem(t *testing.T, ctx context.Context, m *gorpmapper.Mapper, db *commontest.FakeTransaction, hash string) *sdk.CDNItem {
@@ -136,6 +165,8 @@ func insertCompletedLogItem(t *testing.T, ctx context.Context, m *gorpmapper.Map
 	t.Cleanup(func() {
 		_ = item.DeleteByID(db, i.ID)
 	})
+	// Insert replaces the encrypted hash by a placeholder, the locator of an item unit needs the clear one
+	i.Hash = hash
 	return i
 }
 
@@ -219,6 +250,53 @@ func TestProcessItemAbortsWriterOnCopyFailure(t *testing.T) {
 	require.Len(t, dest.writers, 1)
 	require.Equal(t, dest.writeErr, dest.writers[0].abortErr, "the writer must be aborted with the copy error")
 	require.False(t, dest.writers[0].closed, "the writer must not be committed after a failed copy")
+
+	_, err = storage.LoadItemUnitByUnit(ctx, m, db, dest.ID(), i.ID)
+	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "a failed copy must not be recorded on the destination")
+	require.Contains(t, syncQueue(t, ctx, store, dest), i.ID, "a failed copy must be retried")
+}
+
+// failingSourceUnit is a storage unit whose read fails after a first part of the content
+type failingSourceUnit struct {
+	storage.StorageUnitWithLocator
+	readErr error
+}
+
+func (s *failingSourceUnit) NewReader(_ context.Context, _ sdk.CDNItemUnit) (io.ReadCloser, error) {
+	return io.NopCloser(strings.NewReader("")), nil
+}
+
+func (s *failingSourceUnit) Read(_ sdk.CDNItemUnit, _ io.Reader, w io.Writer) error {
+	if _, err := w.Write([]byte("the first part of the content\n")); err != nil {
+		return err
+	}
+	return s.readErr
+}
+
+// When the source fails in the middle of the copy, the destination must not see a complete
+// copy: the writer would commit a truncated object.
+func TestProcessItemAbortsWriterOnSourceFailure(t *testing.T) {
+	ctx, m, db, store, cdnUnits, dest := initRecordingStorageUnit(t)
+
+	src := &failingSourceUnit{readErr: errors.New("source read failed")}
+	replaceStorageUnit(t, cdnUnits, "local_storage_2", func(u storage.StorageUnitWithLocator) storage.StorageUnit {
+		src.StorageUnitWithLocator = u
+		return src
+	})
+
+	// The item is only held by the source unit, so that the sync reads it from there
+	i := insertCompletedLogItem(t, ctx, m, db, randomHash(t))
+	srcItemUnit, err := cdnUnits.NewItemUnit(ctx, src, i)
+	require.NoError(t, err)
+	require.NoError(t, storage.InsertItemUnit(ctx, m, db, srcItemUnit))
+	cdnUnits.PushInSyncQueue(ctx, i.ID, i.Created)
+
+	err = cdnUnits.ProcessItem(ctx, db.DbMap, dest, i.ID)
+	require.Error(t, err)
+
+	require.Len(t, dest.writers, 1)
+	require.False(t, dest.writers[0].closed, "the writer must not be committed after a failed read")
+	require.Error(t, dest.writers[0].abortErr, "the writer must be aborted")
 
 	_, err = storage.LoadItemUnitByUnit(ctx, m, db, dest.ID(), i.ID)
 	require.True(t, sdk.ErrorIs(err, sdk.ErrNotFound), "a failed copy must not be recorded on the destination")

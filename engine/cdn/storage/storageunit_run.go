@@ -189,6 +189,9 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 	x.GoRoutines.Exec(ctx, "runningStorageUnits.runItem.read", func(ctx context.Context) {
 		defer pw.Close()
 		if err := source.Read(rateLimitReader, pw); err != nil {
+			// Fail the copy: a plain close would end it, and the destination would commit a
+			// truncated object
+			_ = pw.CloseWithError(err)
 			chanError <- err
 		}
 		close(chanError)
