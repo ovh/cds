@@ -29,6 +29,7 @@ func adminCommands() []*cobra.Command {
 		adminWorkflows(),
 		adminUsers(),
 		adminGroups(),
+		adminVariableSets(),
 	}
 }
 

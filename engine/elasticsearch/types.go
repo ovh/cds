@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/defensestation/osquery"
@@ -32,13 +34,31 @@ type ESClient interface {
 	SearchDoc(ctx context.Context, index string, query *osquery.SearchRequest, sorts []string, from, size int) (*opensearchapi.SearchResp, error)
 	Ping(ctx context.Context) error
 	IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*opensearchapi.DocumentCreateResp, error)
+	IndexDocWithExternalVersion(ctx context.Context, index, id string, version int64, body interface{}) (*opensearchapi.DocumentCreateResp, error)
 }
+
+// errVersionConflict is returned when the stored document has a higher version than the one sent.
+var errVersionConflict = errors.New("version conflict")
 
 type esClient struct {
 	client *opensearchapi.Client
 }
 
 func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*opensearchapi.DocumentCreateResp, error) {
+	return c.indexDoc(ctx, index, id, nil, body)
+}
+
+// IndexDocWithExternalVersion indexes the document unless the stored one has a higher version,
+// in which case it returns errVersionConflict.
+func (c *esClient) IndexDocWithExternalVersion(ctx context.Context, index, id string, version int64, body interface{}) (*opensearchapi.DocumentCreateResp, error) {
+	params := map[string]string{
+		"version":      strconv.FormatInt(version, 10),
+		"version_type": "external_gte",
+	}
+	return c.indexDoc(ctx, index, id, params, body)
+}
+
+func (c *esClient) indexDoc(ctx context.Context, index, id string, params map[string]string, body interface{}) (*opensearchapi.DocumentCreateResp, error) {
 	btes, err := json.Marshal(body)
 	if err != nil {
 		return nil, sdk.WrapError(err, "unable to prepare index body")
@@ -64,7 +84,7 @@ func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, bo
 		"PUT",
 		path.String(),
 		r.Body,
-		map[string]string{},
+		params,
 		r.Header,
 	)
 	if err != nil {
@@ -76,6 +96,9 @@ func (c *esClient) IndexDocWithoutType(ctx context.Context, index, id string, bo
 	resp, err := c.Do(ctx, br, &documentResp)
 	if err != nil {
 		return nil, err
+	}
+	if resp != nil && resp.StatusCode == http.StatusConflict {
+		return nil, errVersionConflict
 	}
 	if resp != nil && resp.StatusCode > 400 {
 		return nil, sdk.WrapError(err, "error on create or update document")

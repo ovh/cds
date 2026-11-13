@@ -74,3 +74,17 @@ func InitTestHatcherySwarm(t *testing.T) *HatcherySwarm {
 	gock.InterceptClient(h.Client.HTTPClient())
 	return h
 }
+
+// addUnreachableDockerEngine adds a docker engine whose requests all fail, as no gock mock matches its host.
+func addUnreachableDockerEngine(t *testing.T, h *HatcherySwarm, name string) {
+	httpClient := cdsclient.NewHTTPClient(1*time.Minute, false)
+	c, err := docker.NewClientWithOpts(
+		docker.WithHTTPClient(httpClient),
+		docker.WithHost("https://"+name+".local"),
+		docker.WithVersion("6.66"),
+	)
+	require.NoError(t, err)
+
+	gock.InterceptClient(httpClient)
+	h.dockerClients[name] = &dockerClient{Client: *c, name: name}
+}

@@ -3309,3 +3309,188 @@ jobs:
 	require.Equal(t, 403, w.Code, w.Body.String())
 	require.Contains(t, w.Body.String(), "unknown user")
 }
+
+// mockForkLookup serves the single repository lookup used to check a fork; a 404 code means the repository is unknown.
+func mockForkLookup(servicesClients *mock_services.MockClient, fork, parent string, code int) {
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/github/repos/"+fork, gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, method, path string, in interface{}, out interface{}, _ ...interface{}) (http.Header, int, error) {
+			if code >= 400 {
+				return nil, code, fmt.Errorf("repository %s not found", fork)
+			}
+			*(out.(*sdk.VCSRepo)) = sdk.VCSRepo{Fullname: fork, Parent: parent}
+			return nil, 200, nil
+		}).Times(1)
+}
+
+func TestPostWorkflowRunHandler_Fork(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, "ovh/"+sdk.RandomString(10))
+
+	insertWorkflow := func(repositoryDef string) string {
+		e := sdk.Entity{
+			Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+			Name:                sdk.RandomString(10),
+			Type:                sdk.EntityTypeWorkflow,
+			ProjectKey:          proj.Key,
+			Ref:                 "refs/heads/master",
+			Commit:              "123456",
+			ProjectRepositoryID: repo.ID,
+			Head:                true,
+		}
+		e.Data = "name: " + e.Name + "\n" + repositoryDef + `jobs:
+  myFirstJob:
+    worker_model: buildpack-deps-buster
+    region: default
+    steps:
+      - run: echo hello`
+		require.NoError(t, entity.Insert(context.TODO(), db, &e))
+		return e.Name
+	}
+	ownWorkflow := insertWorkflow("")
+	// The distant repository is declared by the workflow only, not in the project
+	distantWorkflow := insertWorkflow("repository:\n  vcs: github\n  name: ovh/distant\n")
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_HOOKS", sdk.TypeHooks)
+	s2, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		_ = services.Delete(db, s2)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	run := func(workflow, fork string) *httptest.ResponseRecorder {
+		uri := api.Router.GetRouteV2("POST", api.postWorkflowRunV2Handler, map[string]string{
+			"projectKey":           proj.Key,
+			"vcsIdentifier":        vcsServer.ID,
+			"repositoryIdentifier": repo.ID,
+			"workflow":             workflow,
+		})
+		test.NotEmpty(t, uri)
+		req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, sdk.V2WorkflowRunManualRequest{
+			Branch:           "fix",
+			WorkflowBranch:   "master",
+			TargetRepository: fork,
+		})
+		w := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(w, req)
+		return w
+	}
+
+	t.Run("fork of the workflow repository", func(t *testing.T) {
+		mockForkLookup(servicesClients, "khopa/own", repo.Name, 200)
+		servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/manual", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+		w := run(ownWorkflow, "khopa/own")
+		require.Equal(t, 201, w.Code, w.Body.String())
+	})
+	t.Run("fork of the distant repository", func(t *testing.T) {
+		mockForkLookup(servicesClients, "khopa/distant", "OVH/Distant", 200)
+		servicesClients.EXPECT().DoJSONRequest(gomock.Any(), "POST", "/v2/workflow/manual", gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+		w := run(distantWorkflow, "khopa/distant")
+		require.Equal(t, 201, w.Code, w.Body.String())
+	})
+	t.Run("not a fork", func(t *testing.T) {
+		mockForkLookup(servicesClients, "khopa/standalone", "", 200)
+		w := run(ownWorkflow, "khopa/standalone")
+		require.Equal(t, 400, w.Code, w.Body.String())
+		require.Contains(t, w.Body.String(), "khopa/standalone is not a fork of "+repo.Name)
+	})
+	t.Run("fork of another repository", func(t *testing.T) {
+		mockForkLookup(servicesClients, "khopa/other", "ovh/other", 200)
+		w := run(ownWorkflow, "khopa/other")
+		require.Equal(t, 400, w.Code, w.Body.String())
+		require.Contains(t, w.Body.String(), "khopa/other is not a fork of "+repo.Name)
+	})
+	t.Run("unknown repository", func(t *testing.T) {
+		mockForkLookup(servicesClients, "khopa/unknown", "", 404)
+		w := run(ownWorkflow, "khopa/unknown")
+		require.Equal(t, 400, w.Code, w.Body.String())
+		require.Contains(t, w.Body.String(), "fork khopa/unknown not found")
+	})
+}
+
+func TestPostWorkflowRunFromHookV2Handler_Fork(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	admin, pwd := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	vcsServer := assets.InsertTestVCSProject(t, db, proj.ID, "github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsServer.ID, sdk.RandomString(10))
+
+	e := sdk.Entity{
+		Initiator:           &sdk.V2Initiator{UserID: admin.ID, User: admin.Initiator()},
+		Name:                sdk.RandomString(10),
+		Type:                sdk.EntityTypeWorkflow,
+		ProjectKey:          proj.Key,
+		Ref:                 "refs/heads/master",
+		Commit:              "123456",
+		ProjectRepositoryID: repo.ID,
+		Head:                true,
+	}
+	e.Data = "name: " + e.Name + `
+repository:
+  vcs: github
+  name: ovh/distant
+jobs:
+  myFirstJob:
+    worker_model: buildpack-deps-buster
+    region: default
+    steps:
+      - run: echo hello`
+	require.NoError(t, entity.Insert(context.TODO(), db, &e))
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	runFromHook := func(fork string) *httptest.ResponseRecorder {
+		uri := api.Router.GetRouteV2("POST", api.postWorkflowRunFromHookV2Handler, map[string]string{
+			"projectKey":           proj.Key,
+			"vcsIdentifier":        vcsServer.Name,
+			"repositoryIdentifier": repo.Name,
+			"workflow":             e.Name,
+		}) + "?ref=refs/heads/master&commit=123456"
+		req := assets.NewAuthentifiedRequest(t, admin, pwd, "POST", uri, sdk.V2WorkflowRunHookRequest{
+			HookEventID:      sdk.UUID(),
+			HookType:         sdk.WorkflowHookTypeManual,
+			EventName:        sdk.WorkflowHookEventNameManual,
+			Ref:              "refs/heads/fix",
+			TargetRepository: fork,
+			Initiator:        &sdk.V2Initiator{UserID: admin.ID, IsAdminWithMFA: true},
+		})
+		w := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(w, req)
+		return w
+	}
+
+	mockForkLookup(servicesClients, "khopa/distant", "ovh/distant", 200)
+	w := runFromHook("khopa/distant")
+	require.Equal(t, 200, w.Code, w.Body.String())
+	var wr sdk.V2WorkflowRun
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &wr))
+	require.Equal(t, "khopa/distant", wr.WorkflowData.Workflow.Repository.Name)
+	require.Equal(t, "ovh/distant", wr.RunEvent.RepositoryOrigin)
+
+	mockForkLookup(servicesClients, "khopa/other", "ovh/other", 200)
+	w = runFromHook("khopa/other")
+	require.Equal(t, 400, w.Code, w.Body.String())
+	require.Contains(t, w.Body.String(), "khopa/other is not a fork of ovh/distant")
+}

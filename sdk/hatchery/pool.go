@@ -2,6 +2,7 @@ package hatchery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -12,6 +13,10 @@ import (
 	"github.com/ovh/cds/sdk/telemetry"
 	"github.com/rockbears/log"
 )
+
+// ErrIncompleteWorkersStarted is wrapped by WorkersStarted when part of the orchestrator could not be listed;
+// the workers returned along with it are still valid.
+var ErrIncompleteWorkersStarted = errors.New("incomplete list of started workers")
 
 // pendingPoolWorker represents a worker that has been started by the hatchery
 // but is not yet registered on the CDS API.
@@ -67,8 +72,12 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 
 	// Then: get all workers in the orchestrator queue
 	startedWorkers, err := h.WorkersStarted(ctx)
+	incompleteStartedWorkers := errors.Is(err, ErrIncompleteWorkersStarted)
 	if err != nil {
-		return nil, err
+		if !incompleteStartedWorkers {
+			return nil, err
+		}
+		log.Warn(ctx, "Hatchery > WorkerPool> %v", err)
 	}
 
 	// Make the union of the two slices
@@ -85,7 +94,8 @@ func WorkerPool(ctx context.Context, h Interface, statusFilter ...string) ([]sdk
 			}
 		}
 		if !found {
-			if w.GetStatus() != sdk.StatusDisabled {
+			// With an incomplete list, the worker may run on the part of the orchestrator that could not be listed
+			if w.GetStatus() != sdk.StatusDisabled && !incompleteStartedWorkers {
 				// Worker is registered on API but not found in the orchestrator
 				switch v := w.(type) {
 				case *sdk.Worker:

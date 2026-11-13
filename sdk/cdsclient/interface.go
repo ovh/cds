@@ -60,6 +60,7 @@ type Admin interface {
 	AdminUserSearch(ctx context.Context, filter *AdminUserFilter) ([]sdk.AuthentifiedUser, error)
 	AdminUserSetContact(ctx context.Context, username string, contact sdk.UserContact) error
 	AdminGroupCreate(ctx context.Context, req sdk.AdminCreateGroup) error
+	AdminProjectVariableSetCopy(ctx context.Context, pKey string, vsName string, req sdk.CopyVariableSetToProject) (*sdk.ProjectVariableSet, error)
 	AdminUserLinkCreate(ctx context.Context, username string, link sdk.UserLink) error
 	AdminUserLinkDelete(ctx context.Context, username string, link sdk.UserLink) error
 	HasProjectRole(ctx context.Context, projectKey, sessionID string, role string) error
@@ -486,6 +487,8 @@ type WorkflowV2Client interface {
 	WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error)
 	WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error)
 	WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error
+	WorkflowV2RunNumberGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) (*sdk.V2WorkflowRunNumber, error)
+	WorkflowV2RunNumberSet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string, value int64) error
 	WorkflowV2RunJobRetries(ctx context.Context, projectKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJob, error)
 }
 

@@ -23,6 +23,7 @@ const (
 	Commit             = log.Field("commit")
 	Deprecated         = log.Field("deprecated")
 	Duration           = log.Field("duration_milliseconds_num")
+	ForkRepository     = log.Field("fork_repository")
 	Goroutine          = log.Field("goroutine")
 	Handler            = log.Field("handler")
 	HookEventID        = log.Field("hook_event_id")
@@ -80,6 +81,7 @@ func init() {
 		ConcurrencyScope,
 		Deprecated,
 		Duration,
+		ForkRepository,
 		Goroutine,
 		GpgKey,
 		Handler,

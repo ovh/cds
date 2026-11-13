@@ -117,6 +117,9 @@ func (api *API) InitRouter() {
 	// Admin group
 	r.Handle("/admin/group", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminGroupHandler, service.OverrideAuth(api.authAdminMiddleware)))
 
+	// Admin variable set
+	r.Handle("/admin/project/{projectKey}/variableset/{variableSetName}/copy", Scope(sdk.AuthConsumerScopeAdmin), r.POST(api.postAdminCopyProjectVariableSetHandler, service.OverrideAuth(api.authAdminMiddleware)))
+
 	// Feature flipping
 	r.Handle("/admin/features", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.POST(api.postAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
 	r.Handle("/admin/features/{name}", Scope(sdk.AuthConsumerScopeAdmin), r.GET(api.getAdminFeatureFlippingByName, service.OverrideAuth(api.authAdminMiddleware)), r.PUT(api.putAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)), r.DELETE(api.deleteAdminFeatureFlipping, service.OverrideAuth(api.authAdminMiddleware)))
@@ -522,6 +525,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis/{analysisID}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryAnalysisHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/branches", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryBranchesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/tags", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryTagsHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/forks", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryForksHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/entities", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectEntitiesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/entities/{entityType}/{entityName}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectEntityHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/events", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryEventsHandler))
@@ -529,6 +533,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkerModelV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", Scope(sdk.AuthConsumerScopeProject), r.POSTv2(api.postWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run-number", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkflowRunNumberHandler), r.PUTv2(api.putWorkflowRunNumberHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/version", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkflowVersionsHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/version/{version}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkflowVersionHandler), r.DELETEv2(api.deleteWorkflowVersionHandler))
 	r.Handle("/v2/project/{projectKey}/run", Scope(sdk.AuthConsumerScopeRun), r.GETv2(api.getWorkflowRunsSearchV2Handler))

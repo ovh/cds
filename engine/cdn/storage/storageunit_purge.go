@@ -54,14 +54,16 @@ func (x *RunningStorageUnits) Purge(ctx context.Context, s Interface) error {
 				log.Info(ctx, "item %s will not be deleted from %s", ui.ID, s.Name())
 			} else {
 				if err := s.Remove(ctx, ui); err != nil {
-					if sdk.ErrorIs(err, sdk.ErrNotFound) {
-						log.Info(ctx, "Item %s has already been deleted from %s", ui.ItemID, s.Name())
+					if !sdk.ErrorIs(err, sdk.ErrNotFound) {
+						log.Error(sdk.ContextWithStacktrace(ctx, err), "unable to remove item %s on %s: %v", ui.ID, s.Name(), err)
 						continue
 					}
-					log.Error(sdk.ContextWithStacktrace(ctx, err), "unable to remove item %s on %s: %v", ui.ID, s.Name(), err)
-					continue
+					// The content is already gone: the item unit must still be deleted, or it stays
+					// marked to delete forever
+					log.Info(ctx, "Item %s has already been deleted from %s", ui.ItemID, s.Name())
+				} else {
+					log.Info(ctx, "item %s deleted on %s", ui.ID, s.Name())
 				}
-				log.Info(ctx, "item %s deleted on %s", ui.ID, s.Name())
 			}
 		}
 

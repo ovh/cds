@@ -105,7 +105,7 @@ func (b *bitbucketClient) ToVCSRepo(repo Repo) sdk.VCSRepo {
 		}
 	}
 
-	return sdk.VCSRepo{
+	r := sdk.VCSRepo{
 		Name:                 repo.Name,
 		Slug:                 repo.Slug,
 		Fullname:             fmt.Sprintf("%s/%s", repo.Project.Key, repo.Slug),
@@ -117,4 +117,8 @@ func (b *bitbucketClient) ToVCSRepo(repo Repo) sdk.VCSRepo {
 		HTTPCloneURL:         httpURL,
 		SSHCloneURL:          sshURL,
 	}
+	if repo.Origin != nil && repo.Origin.Project != nil {
+		r.Parent = fmt.Sprintf("%s/%s", repo.Origin.Project.Key, repo.Origin.Slug)
+	}
+	return r
 }

@@ -94,7 +94,13 @@ func (api *API) postV2WorkerTakeJobHandler() ([]service.RbacChecker, service.Han
 		if err != nil {
 			return err
 		}
-		vcsWithSecrets, err := vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), projWithSecrets.Key, run.VCSServerID, gorpmapping.GetOptions.WithDecryption)
+		// git.token must match the git context, built from the repository's VCS for a distant workflow
+		var vcsWithSecrets *sdk.VCSProject
+		if run.Contexts.Git.Server != "" {
+			vcsWithSecrets, err = vcs.LoadVCSByProject(ctx, api.mustDB(), projWithSecrets.Key, run.Contexts.Git.Server, gorpmapping.GetOptions.WithDecryption)
+		} else {
+			vcsWithSecrets, err = vcs.LoadVCSByIDAndProjectKey(ctx, api.mustDB(), projWithSecrets.Key, run.VCSServerID, gorpmapping.GetOptions.WithDecryption)
+		}
 		if err != nil {
 			return err
 		}

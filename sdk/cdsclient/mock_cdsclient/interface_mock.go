@@ -493,6 +493,21 @@ func (mr *MockAdminMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifie
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
 }
 
+// AdminProjectVariableSetCopy mocks base method.
+func (m *MockAdmin) AdminProjectVariableSetCopy(ctx context.Context, pKey, vsName string, req sdk.CopyVariableSetToProject) (*sdk.ProjectVariableSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectVariableSetCopy", ctx, pKey, vsName, req)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectVariableSetCopy indicates an expected call of AdminProjectVariableSetCopy.
+func (mr *MockAdminMockRecorder) AdminProjectVariableSetCopy(ctx, pKey, vsName, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectVariableSetCopy", reflect.TypeOf((*MockAdmin)(nil).AdminProjectVariableSetCopy), ctx, pKey, vsName, req)
+}
+
 // AdminUserCreate mocks base method.
 func (m *MockAdmin) AdminUserCreate(ctx context.Context, user sdk.CreateUser) error {
 	m.ctrl.T.Helper()
@@ -6269,6 +6284,35 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunJobs(ctx, projKey, work
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobs", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunJobs), ctx, projKey, workflowRunID)
 }
 
+// WorkflowV2RunNumberGet mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunNumberGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) (*sdk.V2WorkflowRunNumber, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunNumberGet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunNumber)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunNumberGet indicates an expected call of WorkflowV2RunNumberGet.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunNumberGet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunNumberGet", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunNumberGet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+}
+
+// WorkflowV2RunNumberSet mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunNumberSet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string, value int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunNumberSet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2RunNumberSet indicates an expected call of WorkflowV2RunNumberSet.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunNumberSet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunNumberSet", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunNumberSet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value)
+}
+
 // WorkflowV2RunResultList mocks base method.
 func (m *MockWorkflowV2Client) WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
@@ -7514,6 +7558,21 @@ func (m *MockInterface) AdminOrganizationMigrateUser(ctx context.Context, orgaId
 func (mr *MockInterfaceMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifier any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
+}
+
+// AdminProjectVariableSetCopy mocks base method.
+func (m *MockInterface) AdminProjectVariableSetCopy(ctx context.Context, pKey, vsName string, req sdk.CopyVariableSetToProject) (*sdk.ProjectVariableSet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectVariableSetCopy", ctx, pKey, vsName, req)
+	ret0, _ := ret[0].(*sdk.ProjectVariableSet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectVariableSetCopy indicates an expected call of AdminProjectVariableSetCopy.
+func (mr *MockInterfaceMockRecorder) AdminProjectVariableSetCopy(ctx, pKey, vsName, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectVariableSetCopy", reflect.TypeOf((*MockInterface)(nil).AdminProjectVariableSetCopy), ctx, pKey, vsName, req)
 }
 
 // AdminUserCreate mocks base method.
@@ -13044,6 +13103,35 @@ func (m *MockInterface) WorkflowV2RunJobs(ctx context.Context, projKey, workflow
 func (mr *MockInterfaceMockRecorder) WorkflowV2RunJobs(ctx, projKey, workflowRunID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobs", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunJobs), ctx, projKey, workflowRunID)
+}
+
+// WorkflowV2RunNumberGet mocks base method.
+func (m *MockInterface) WorkflowV2RunNumberGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) (*sdk.V2WorkflowRunNumber, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunNumberGet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunNumber)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunNumberGet indicates an expected call of WorkflowV2RunNumberGet.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunNumberGet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunNumberGet", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunNumberGet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+}
+
+// WorkflowV2RunNumberSet mocks base method.
+func (m *MockInterface) WorkflowV2RunNumberSet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string, value int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunNumberSet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2RunNumberSet indicates an expected call of WorkflowV2RunNumberSet.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunNumberSet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunNumberSet", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunNumberSet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value)
 }
 
 // WorkflowV2RunResultList mocks base method.

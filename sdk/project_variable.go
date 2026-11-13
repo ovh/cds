@@ -56,3 +56,9 @@ type CopyEnvironmentVariableToVariableSet struct {
 	EnvironmentName string `json:"environment_name"`
 	VariableSetName string `json:"variable_set_name"`
 }
+
+// CopyVariableSetToProject copies a variable set and all its items into another project; NewName defaults to the source name.
+type CopyVariableSetToProject struct {
+	TargetProjectKey string `json:"target_project_key"`
+	NewName          string `json:"new_name,omitempty"`
+}

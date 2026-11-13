@@ -76,8 +76,11 @@ func (h *HatcherySwarm) Status(ctx context.Context) *sdk.MonitoringStatus {
 		maxWorkerDisplay = "unlimited"
 	}
 	m.AddLine(sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%s", len(ws), maxWorkerDisplay), Status: sdk.MonitoringStatusOK})
-	var nbErrorImageList, nbErrorGetContainers int
+	var nbErrorImageList, nbErrorGetContainers, nbDrained int
 	for dockerName, dockerClient := range h.dockerClients {
+		if dockerClient.drained.Load() {
+			nbDrained++
+		}
 		//Check images
 		status := sdk.MonitoringStatusOK
 		ctxList, cancelList := context.WithTimeout(ctx, 20*time.Second)
@@ -111,6 +114,8 @@ func (h *HatcherySwarm) Status(ctx context.Context) *sdk.MonitoringStatus {
 		status = sdk.MonitoringStatusAlert
 	}
 	m.AddLine(sdk.MonitoringStatusLine{Component: "DockerEngines.GetContainers", Value: fmt.Sprintf("%d/%d", nbErrorGetContainers, len(h.dockerClients)), Status: status})
+
+	m.AddLine(sdk.MonitoringStatusLine{Component: "DockerEngines.Drained", Value: fmt.Sprintf("%d/%d", nbDrained, len(h.dockerClients)), Status: sdk.MonitoringStatusOK})
 
 	return m
 }

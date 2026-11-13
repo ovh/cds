@@ -36,6 +36,21 @@ func (m *MockESClient) EXPECT() *MockESClientMockRecorder {
 	return m.recorder
 }
 
+// IndexDocWithExternalVersion mocks base method.
+func (m *MockESClient) IndexDocWithExternalVersion(ctx context.Context, index, id string, version int64, body interface{}) (*opensearchapi.DocumentCreateResp, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IndexDocWithExternalVersion", ctx, index, id, version, body)
+	ret0, _ := ret[0].(*opensearchapi.DocumentCreateResp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IndexDocWithExternalVersion indicates an expected call of IndexDocWithExternalVersion.
+func (mr *MockESClientMockRecorder) IndexDocWithExternalVersion(ctx, index, id, version, body interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexDocWithExternalVersion", reflect.TypeOf((*MockESClient)(nil).IndexDocWithExternalVersion), ctx, index, id, version, body)
+}
+
 // IndexDocWithoutType mocks base method.
 func (m *MockESClient) IndexDocWithoutType(ctx context.Context, index, id string, body interface{}) (*opensearchapi.DocumentCreateResp, error) {
 	m.ctrl.T.Helper()

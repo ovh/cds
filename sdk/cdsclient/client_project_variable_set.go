@@ -97,3 +97,12 @@ func (c *client) ProjectVariableSetItemFromApplicationIntegrationVariable(ctx co
 	}
 	return nil
 }
+
+func (c *client) AdminProjectVariableSetCopy(ctx context.Context, pKey string, vsName string, req sdk.CopyVariableSetToProject) (*sdk.ProjectVariableSet, error) {
+	var vs sdk.ProjectVariableSet
+	path := fmt.Sprintf("/admin/project/%s/variableset/%s/copy", pKey, vsName)
+	if _, err := c.PostJSON(ctx, path, req, &vs); err != nil {
+		return nil, err
+	}
+	return &vs, nil
+}

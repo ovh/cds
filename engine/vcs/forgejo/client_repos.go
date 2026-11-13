@@ -3,6 +3,7 @@ package forgejo
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -45,7 +46,11 @@ func (f *forgejoClient) RepoByFullname(ctx context.Context, fullname string) (sd
 	}
 
 	var repo Repository
-	if _, err = f.client.get(ctx, fmt.Sprintf("/repos/%s/%s", owner, repoName), &repo); err != nil {
+	resp, err := f.client.get(ctx, fmt.Sprintf("/repos/%s/%s", owner, repoName), &repo)
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return sdk.VCSRepo{}, sdk.NewError(sdk.ErrRepoNotFound, err)
+		}
 		return sdk.VCSRepo{}, err
 	}
 	return f.ToVCSRepo(&repo), nil
@@ -56,7 +61,7 @@ func (f *forgejoClient) UserHasWritePermission(ctx context.Context, repo string)
 }
 
 func (f *forgejoClient) ToVCSRepo(repo *Repository) sdk.VCSRepo {
-	return sdk.VCSRepo{
+	r := sdk.VCSRepo{
 		URL:                  repo.HTMLURL,
 		URLCommitFormat:      repo.HTMLURL + "/commit/%s",
 		URLTagFormat:         repo.HTMLURL + "/commits/tag/%s",
@@ -69,4 +74,8 @@ func (f *forgejoClient) ToVCSRepo(repo *Repository) sdk.VCSRepo {
 		SSHCloneURL:          repo.SSHURL,
 		Slug:                 repo.Name,
 	}
+	if repo.Parent != nil {
+		r.Parent = repo.Parent.FullName
+	}
+	return r
 }

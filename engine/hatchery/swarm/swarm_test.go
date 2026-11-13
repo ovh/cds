@@ -81,6 +81,32 @@ func TestHatcherySwarm_KillAwolNetwork(t *testing.T) {
 	require.True(t, gock.IsDone())
 }
 
+func TestHatcherySwarm_KillAwolNetworkWithUnreachableEngine(t *testing.T) {
+	defer gock.Off()
+	h := InitTestHatcherySwarm(t)
+	h.Config.Name = "swarmy"
+	addUnreachableDockerEngine(t, h, "unreachable")
+
+	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON([]types.Container{})
+	gock.New("https://cds-api.local").Get("/worker").Reply(200).JSON([]sdk.Worker{})
+
+	net := types.NetworkResource{
+		ID:         "net-1",
+		Driver:     bridge,
+		Labels:     map[string]string{"worker_net": "net-1"},
+		Containers: map[string]types.EndpointResource{},
+		Created:    time.Now().Add(-11 * time.Minute),
+	}
+	gock.New("https://lolcat.local").Get("/v6.66/networks").Reply(http.StatusOK).JSON([]types.NetworkResource{net})
+	gock.New("https://lolcat.local").Get("/v6.66/networks/net-1").Reply(http.StatusOK).JSON(net)
+	gock.New("https://lolcat.local").Delete("/v6.66/networks/net-1").Reply(http.StatusOK).JSON(nil)
+
+	// The reachable engine is cleaned up whatever the order in which engines are processed
+	err := h.killAwolWorker(context.TODO())
+	require.NoError(t, err)
+	require.True(t, gock.IsDone())
+}
+
 func TestHatcherySwarm_ListAwolWorker(t *testing.T) {
 	defer gock.Off()
 	h := InitTestHatcherySwarm(t)
@@ -266,6 +292,38 @@ func TestHatcherySwarm_WorkersStarted(t *testing.T) {
 	require.Equal(t, "w1", s[0])
 	require.Equal(t, "w2", s[1])
 	require.True(t, gock.IsDone())
+}
+
+func TestHatcherySwarm_WorkersStartedWithUnreachableEngine(t *testing.T) {
+	defer gock.Off()
+	h := InitTestHatcherySwarm(t)
+	h.Config.Name = "swarmy"
+	addUnreachableDockerEngine(t, h, "unreachable")
+
+	containers := []types.Container{
+		{
+			Names:  []string{"w1"},
+			Labels: map[string]string{LabelHatchery: "swarmy", LabelWorkerName: "w1"},
+		},
+	}
+	gock.New("https://lolcat.local").Get("/v6.66/containers/json").Reply(http.StatusOK).JSON(containers)
+
+	s, err := h.WorkersStarted(context.TODO())
+	require.ErrorIs(t, err, hatchery.ErrIncompleteWorkersStarted)
+	require.Equal(t, []string{"w1"}, s)
+	require.True(t, gock.IsDone())
+}
+
+func TestHatcherySwarm_WorkersStartedWithoutReachableEngine(t *testing.T) {
+	defer gock.Off()
+	h := InitTestHatcherySwarm(t)
+	delete(h.dockerClients, "default")
+	addUnreachableDockerEngine(t, h, "unreachable")
+
+	s, err := h.WorkersStarted(context.TODO())
+	require.Error(t, err)
+	require.NotErrorIs(t, err, hatchery.ErrIncompleteWorkersStarted)
+	require.Nil(t, s)
 }
 
 func TestHatcherySwarm_Spawn(t *testing.T) {
@@ -491,4 +549,54 @@ func TestHatcherySwarm_CanAllocateResourcesClientError(t *testing.T) {
 	assert.False(t, can)
 	require.Error(t, err)
 	assert.True(t, gock.IsDone())
+}
+
+func TestHatcherySwarm_RefreshDrainedEngines(t *testing.T) {
+	defer gock.Off()
+	h := InitTestHatcherySwarm(t)
+	addUnreachableDockerEngine(t, h, "unreachable")
+	h.dockerClients["unreachable"].drained.Store(true)
+
+	gock.New("https://lolcat.local").Get("/v6.66/info").Reply(http.StatusOK).JSON(map[string]interface{}{"Labels": []string{"foo=bar", EngineLabelDrain}})
+	h.refreshDrainedEngines(context.TODO())
+	require.True(t, h.dockerClients["default"].drained.Load())
+	require.True(t, h.dockerClients["unreachable"].drained.Load(), "an engine that does not answer keeps its previous state")
+
+	gock.New("https://lolcat.local").Get("/v6.66/info").Reply(http.StatusOK).JSON(map[string]interface{}{"Labels": []string{"foo=bar"}})
+	h.refreshDrainedEngines(context.TODO())
+	require.False(t, h.dockerClients["default"].drained.Load())
+	require.True(t, gock.IsDone())
+}
+
+func TestHatcherySwarm_SpawnOnDrainedEngine(t *testing.T) {
+	defer gock.Off()
+	h := InitTestHatcherySwarm(t)
+	gock.CleanUnmatchedRequest()
+	h.Config.Name = "swarmy"
+	h.dockerClients["default"].MaxContainers = 2
+	h.dockerClients["default"].drained.Store(true)
+
+	m := sdk.Model{ID: 1, Name: "my-model", Group: &sdk.Group{ID: 1, Name: "mygroup"}, ModelDocker: sdk.ModelDocker{Image: "model:9"}}
+	err := h.SpawnWorker(context.TODO(), hatchery.SpawnArguments{
+		JobID:      "1",
+		Model:      sdk.WorkerStarterWorkerModel{ModelV1: &m},
+		WorkerName: "swarmy-worker1",
+	})
+	require.Error(t, err)
+	require.False(t, gock.HasUnmatchedRequest(), "no request is sent to a drained engine")
+}
+
+func TestHatcherySwarm_CanAllocateResourcesDrainedEngine(t *testing.T) {
+	defer gock.Off()
+	h := InitTestHatcherySwarm(t)
+	gock.CleanUnmatchedRequest()
+	h.Config.Name = "swarmy"
+	h.dockerClients["default"].MaxContainers = 2
+	h.dockerClients["default"].drained.Store(true)
+
+	m := sdk.Model{ID: 1, Name: "my-model", Group: &sdk.Group{ID: 1, Name: "mygroup"}}
+	can, err := h.CanAllocateResources(context.TODO(), sdk.WorkerStarterWorkerModel{ModelV1: &m}, "1", []sdk.Requirement{})
+	assert.False(t, can)
+	require.NoError(t, err)
+	require.False(t, gock.HasUnmatchedRequest(), "no request is sent to a drained engine")
 }
