@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/project"
@@ -271,7 +272,7 @@ func Test_PutProjectRunFilter(t *testing.T) {
 	// Create filter
 	filter := &sdk.ProjectRunFilter{
 		ProjectKey: proj.Key,
-		Name:       "My_Filter",
+		Name:       "My Filter",
 		Value:      "status:Success",
 		Sort:       "started:desc",
 		Order:      0,
@@ -285,7 +286,7 @@ func Test_PutProjectRunFilter(t *testing.T) {
 
 	vars := map[string]string{
 		"projectKey": proj.Key,
-		"filterName": "My_Filter",
+		"filterName": url.PathEscape("My Filter"),
 	}
 	uri := api.Router.GetRouteV2("PUT", api.putProjectRunFilterHandler, vars)
 	test.NotEmpty(t, uri)
@@ -347,7 +348,7 @@ func Test_DeleteProjectRunFilter(t *testing.T) {
 
 	// Create filters with order 0, 1, 2
 	filter0 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter_0", Value: "status:Success", Sort: "started:desc", Order: 0}
-	filter1 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter_1", Value: "status:Fail", Sort: "started:desc", Order: 1}
+	filter1 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter 1", Value: "status:Fail", Sort: "started:desc", Order: 1}
 	filter2 := &sdk.ProjectRunFilter{ProjectKey: proj.Key, Name: "Filter_2", Value: "branch:main", Sort: "started:desc", Order: 2}
 
 	require.NoError(t, project.InsertRunFilter(context.TODO(), db, filter0))
@@ -357,7 +358,7 @@ func Test_DeleteProjectRunFilter(t *testing.T) {
 	// Delete filter with order 1
 	vars := map[string]string{
 		"projectKey": proj.Key,
-		"filterName": "Filter_1",
+		"filterName": url.PathEscape("Filter 1"),
 	}
 	uri := api.Router.GetRouteV2("DELETE", api.deleteProjectRunFilterHandler, vars)
 	test.NotEmpty(t, uri)
