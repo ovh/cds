@@ -345,7 +345,7 @@ func (r *RunningStorageUnits) Start(ctx context.Context, gorts *sdk.GoRoutines) 
 								errCtx := context.WithValue(sdk.ContextWithStacktrace(ctx, err), cdslog.Duration, time.Since(t0).Milliseconds())
 								log.Error(errCtx, "error processing item id=%q: %v", id, err)
 							} else {
-								log.Info(ctx, "item id=%q is locked", id)
+								log.Warn(ctx, "unable to process item id=%q on %s: %v", id, s.Name(), err)
 							}
 							continue
 						}
