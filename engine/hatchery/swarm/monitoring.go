@@ -99,7 +99,8 @@ func (h *HatcherySwarm) WorkersMetrics(ctx context.Context) ([]WorkerMetricsReso
 	for host, dockerClient := range h.dockerClients {
 		cs, err := h.getContainers(ctx, dockerClient, container.ListOptions{All: true})
 		if err != nil {
-			return nil, sdk.WrapError(err, "unable to list containers")
+			log.Warn(ctx, "hatchery> swarm> WorkersMetrics> unable to list containers on %s: %v", host, err)
+			continue
 		}
 
 		chanData := make(chan WorkerMetricsResource, len(cs))

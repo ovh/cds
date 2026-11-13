@@ -214,7 +214,7 @@ func (h *HatcherySwarm) killAwolNetworks(ctx context.Context) error {
 		if errLN != nil {
 			log.Warn(ctx, "hatchery> swarm> killAwolNetworks> Cannot get networks on %s: %s", dockerClient.name, errLN)
 			cancelList()
-			return errLN
+			continue
 		}
 
 		for i := range nets {

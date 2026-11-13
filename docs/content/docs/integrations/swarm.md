@@ -44,6 +44,22 @@ engine start hatchery:swarm --config config.toml
 
 This hatchery will now start worker of model 'docker' on you Docker installation.
 
+## Docker engine maintenance
+
+The hatchery keeps working when one of its Docker engines does not answer: that engine is skipped for new workers, while the other engines keep being provisioned and cleaned up. An engine that does not answer when the hatchery starts is used as soon as it answers.
+
+To take an engine out of service without interrupting running jobs, drain it with the `cds.hatchery.drain=true` engine label, for instance in `/etc/docker/daemon.json`:
+
+```json
+{
+  "labels": ["cds.hatchery.drain=true"]
+}
+```
+
+Then reload the Docker daemon (`systemctl reload docker`); no restart is needed. Within a few seconds the hatchery stops starting containers on that engine, but keeps managing the existing ones: running jobs end normally, and their containers and services are removed as usual. The engine is empty once no container with the `hatchery` label remains on it. Remove the label and reload the daemon again to put the engine back in service.
+
+The hatchery status reports the number of drained engines (`DockerEngines.Drained`).
+
 ## Setup a worker model
 
 See [Tutorial]({{< relref "/docs/tutorials/worker_model-docker/_index.md" >}})
