@@ -4,6 +4,15 @@ import * as path from "path";
 import { CDS } from "./cds";
 import { CdsRepository, CdsWorkflowRun } from "./cds/models";
 
+/** Number of runs fetched per page. */
+const RUN_PAGE_SIZE = 15;
+
+interface RunPage {
+  runs: RunItem[];
+  offset: number;
+  hasMore: boolean;
+}
+
 // ─── Tree item classes ───────────────────────────────────────────────────────
 
 export class RepoItem extends vscode.TreeItem {
@@ -159,9 +168,41 @@ export class RunItem extends vscode.TreeItem {
   }
 }
 
+/** Tree item that loads the next page of runs when clicked. */
+export class LoadMoreItem extends vscode.TreeItem {
+  readonly kind = "loadMore" as const;
+  constructor(public readonly workflow: WorkflowItem) {
+    super("Load more...", vscode.TreeItemCollapsibleState.None);
+    this.id = `loadmore:${workflow.id}`;
+    this.description = "older runs";
+    this.tooltip = "Load older workflow runs";
+    this.iconPath = new vscode.ThemeIcon("ellipsis");
+    this.command = {
+      command: "vscode-cds.loadMoreRuns",
+      title: "Load more runs",
+      arguments: [workflow],
+    };
+  }
+}
+
+/** Placeholder shown when a workflow has no run to display. */
+export class NoRunsItem extends vscode.TreeItem {
+  readonly kind = "noRuns" as const;
+  constructor() {
+    super("No runs found", vscode.TreeItemCollapsibleState.None);
+    this.iconPath = new vscode.ThemeIcon("info");
+  }
+}
+
 // ─── Provider ────────────────────────────────────────────────────────────────
 
-type TreeNode = RepoItem | WorkflowItem | RunItem | SeparatorItem;
+type TreeNode =
+  | RepoItem
+  | WorkflowItem
+  | RunItem
+  | LoadMoreItem
+  | NoRunsItem
+  | SeparatorItem;
 
 /** Visual separator in the tree view. */
 class SeparatorItem extends vscode.TreeItem {
@@ -197,7 +238,10 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
   // Promise-based caches — undefined = not started yet
   private repoPromise: Promise<TreeNode[]> | undefined;
   private workflowPromises = new Map<string, Promise<WorkflowItem[]>>();
-  private runPromises = new Map<string, Promise<RunItem[]>>();
+
+  // Run pages, keyed by workflow tree id
+  private runPages = new Map<string, RunPage>();
+  private runPagePromises = new Map<string, Promise<RunPage>>();
 
   // Workflow names discovered per CDS repo (projectKey:repoId -> Set<workflowName>)
   private discoveredWorkflows = new Map<string, Promise<string[]>>();
@@ -245,10 +289,10 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
       return this.workflowPromises.get(element.id!)!;
     }
     if (element instanceof WorkflowItem) {
-      if (!this.runPromises.has(element.id!)) {
-        this.runPromises.set(element.id!, this.buildRunList(element));
+      if (!this.runPages.has(element.id!)) {
+        return this.ensureRunPage(element).then(() => this.renderRunNodes(element));
       }
-      return this.runPromises.get(element.id!)!;
+      return this.renderRunNodes(element);
     }
     return [];
   }
@@ -256,14 +300,33 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
   refresh(): void {
     this.repoPromise = undefined;
     this.workflowPromises.clear();
-    this.runPromises.clear();
+    this.runPages.clear();
+    this.runPagePromises.clear();
     this.discoveredWorkflows.clear();
     this._onDidChangeTreeData.fire();
   }
 
   /** Refresh only a single workflow's run list (after stop / restart). */
   refreshRuns(wf: WorkflowItem): void {
-    this.runPromises.delete(wf.id!);
+    this.clearRunPages(wf.id!);
+    this._onDidChangeTreeData.fire(wf);
+  }
+
+  /** Append the next page of older runs to a workflow. */
+  async loadMore(wf: WorkflowItem): Promise<void> {
+    const key = wf.id!;
+    const page = this.runPages.get(key);
+    if (!page || !page.hasMore) {
+      return;
+    }
+    const next = await this.getRunPage(wf, page.offset);
+    // The page may have been dropped while the request was in flight.
+    if (this.runPages.get(key) !== page) {
+      return;
+    }
+    page.runs.push(...next.runs);
+    page.offset = next.offset;
+    page.hasMore = next.hasMore;
     this._onDidChangeTreeData.fire(wf);
   }
 
@@ -368,22 +431,78 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
     return workflows;
   }
 
-  private async buildRunList(wf: WorkflowItem): Promise<RunItem[]> {
-    if (!wf.repo.cdsRepo) {
-      return [];
+  private clearRunPages(workflowId: string): void {
+    this.runPages.delete(workflowId);
+    for (const key of [...this.runPagePromises.keys()]) {
+      if (key.startsWith(`${workflowId}:`)) {
+        this.runPagePromises.delete(key);
+      }
     }
-    const { projectKey, vcsName, id: repoId } = wf.repo.cdsRepo;
+  }
 
-    // Use the repo UUID to avoid shell-quoting issues with slash-names
-    const runs = await CDS.getWorkflowHistory(
+  private async ensureRunPage(wf: WorkflowItem): Promise<void> {
+    const key = wf.id!;
+    if (this.runPages.has(key)) {
+      return;
+    }
+    const page = await this.getRunPage(wf, 0);
+    this.runPages.set(key, page);
+  }
+
+  private getRunPage(wf: WorkflowItem, offset: number): Promise<RunPage> {
+    const key = `${wf.id}:${offset}`;
+    let promise = this.runPagePromises.get(key);
+    if (!promise) {
+      promise = this.fetchRunPage(wf, offset).finally(() => {
+        this.runPagePromises.delete(key);
+      });
+      this.runPagePromises.set(key, promise);
+    }
+    return promise;
+  }
+
+  private async fetchRunPage(wf: WorkflowItem, offset: number): Promise<RunPage> {
+    if (!wf.repo.cdsRepo) {
+      return { runs: [], offset, hasMore: false };
+    }
+    const { projectKey, vcsName, repoName } = wf.repo.cdsRepo;
+
+    // Fetch one extra run to know whether another page exists.
+    const runs = await CDS.searchWorkflowRuns(
       projectKey,
       vcsName,
-      repoId,
+      repoName,
       wf.cdsWorkflowName,
-      15,
+      {
+        offset,
+        limit: RUN_PAGE_SIZE + 1,
+      },
     );
+    const pageRuns = runs.slice(0, RUN_PAGE_SIZE);
 
-    return runs.map((r) => new RunItem(r, wf));
+    return {
+      runs: pageRuns.map((r) => new RunItem(r, wf)),
+      offset: offset + pageRuns.length,
+      hasMore: runs.length > RUN_PAGE_SIZE,
+    };
+  }
+
+  private renderRunNodes(wf: WorkflowItem): TreeNode[] {
+    const key = wf.id!;
+    const page = this.runPages.get(key);
+    if (!page) {
+      return [];
+    }
+    const nodes: TreeNode[] = [];
+    if (page.runs.length === 0) {
+      nodes.push(new NoRunsItem());
+      return nodes;
+    }
+    nodes.push(...page.runs);
+    if (page.hasMore) {
+      nodes.push(new LoadMoreItem(wf));
+    }
+    return nodes;
   }
 
   private async findCdsDirs(dir: string, depth = 0): Promise<string[]> {

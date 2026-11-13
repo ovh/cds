@@ -191,17 +191,65 @@ export class CDS {
             Journal.logError(new Error(`getWorkflowHistory: failed to parse JSON output`));
             return [];
         }
-        return items.slice(0, limit).map((r) => ({
+        return items.slice(0, limit).map((r) => CDS.mapWorkflowRun(r, projectKey, workflowName));
+    }
+
+    /** Normalize a run payload coming from either `history` or `search`. */
+    private static mapWorkflowRun(
+        r: Record<string, any>,
+        projectKey: string,
+        workflowName: string,
+    ): CdsWorkflowRun {
+        const git = r["contexts"]?.["git"] ?? {};
+        const initiator = r["initiator"] ?? {};
+        return {
             id: r["id"] ?? "",
-            runNumber: parseInt(r["run_number"] ?? r["runnumber"] ?? "0", 10),
+            runNumber: parseInt(String(r["run_number"] ?? r["runnumber"] ?? "0"), 10),
             status: r["status"] ?? "",
             started: r["started"] ?? r["start"] ?? r["last_modified"] ?? "",
             workflowName: r["workflow_name"] ?? r["workflowname"] ?? workflowName,
             projectKey: r["project_key"] ?? r["projectkey"] ?? projectKey,
-            username: r["user"] ?? r["username"] ?? "",
-            ref: r["ref_name"] ?? "",
-            commit: r["commit"] ?? "",
-        }));
+            username: initiator?.["user"]?.["username"]
+                ?? initiator?.["vcs_username"]
+                ?? r["user"]
+                ?? r["username"]
+                ?? "",
+            ref: git?.["ref_name"] ?? r["ref_name"] ?? "",
+            commit: git?.["sha"] ?? r["commit"] ?? "",
+        };
+    }
+
+    /**
+     * Search runs of a single v2 workflow with pagination.
+     */
+    static async searchWorkflowRuns(
+        projectKey: string,
+        vcsName: string,
+        repoName: string,
+        workflowName: string,
+        opts?: {
+            offset?: number;
+            limit?: number;
+        },
+    ): Promise<CdsWorkflowRun[]> {
+        const args = [
+            "experimental", "workflow", "search",
+            "--project", projectKey,
+            "--workflow", `${vcsName}/${repoName}/${workflowName}`,
+            "--offset", String(opts?.offset ?? 0),
+            "--limit", String(opts?.limit ?? 15),
+            "--format", "json",
+        ];
+
+        const out = await CDS.getInstance().runCtl(...args);
+        let items: Record<string, any>[];
+        try {
+            items = JSON.parse(out);
+        } catch {
+            Journal.logError(new Error(`searchWorkflowRuns: failed to parse JSON output`));
+            return [];
+        }
+        return items.map((r) => CDS.mapWorkflowRun(r, projectKey, workflowName));
     }
 
     /**

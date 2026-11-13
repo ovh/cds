@@ -96,6 +96,12 @@
         "title": "Refresh Runs",
         "category": "CDS",
         "icon": "$(sync)"
+      },
+      {
+        "command": "vscode-cds.loadMoreRuns",
+        "title": "Load More Runs",
+        "category": "CDS",
+        "icon": "$(ellipsis)"
       }
     ],
     "configuration": {
