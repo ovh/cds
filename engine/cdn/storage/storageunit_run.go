@@ -109,6 +109,12 @@ func (x *RunningStorageUnits) processItem(ctx context.Context, db *gorp.DbMap, s
 	}
 
 	if err := x.runItem(ctx, db, s, it); err != nil {
+		// Retrying cannot succeed if no unit holds a copy of the item
+		if sdk.Cause(err) == errItemHasNoSourceUnit {
+			log.Error(ctx, "item %s has no source unit: removed from %s sync queue", it.ID, s.Name())
+			x.RemoveFromRedisSyncQueue(ctx, s, id)
+			return nil
+		}
 		return err
 	}
 	x.RemoveFromRedisSyncQueue(ctx, s, id)
@@ -144,18 +150,8 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 
 	t1 := time.Now()
 
-	// Prepare the destination
-	writer, err := dest.NewWriter(ctx, *iu)
-	if err != nil {
-		return err
-	}
-	if writer == nil {
-		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to get writer")
-	}
-	rateLimitWriter := shapeio.NewWriter(writer)
-	rateLimitWriter.SetRateLimit(dest.SyncBandwidth())
-	log.Debug(ctx, "%s write ratelimit: %v", dest.Name(), dest.SyncBandwidth())
-
+	// Open the source before the destination: a destination writer can start the upload in
+	// background (swift), which leaks its goroutines if the writer is never closed
 	source, err := x.GetSource(ctx, item)
 	if err != nil {
 		return err
@@ -170,7 +166,22 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 	rateLimitReader.SetRateLimit(source.SyncBandwidth())
 	log.Debug(ctx, "%s read ratelimit: %v", source.Name(), source.SyncBandwidth())
 
-	chanError := make(chan error)
+	// Prepare the destination
+	writer, err := dest.NewWriter(ctx, *iu)
+	if err != nil {
+		_ = reader.Close()
+		return err
+	}
+	if writer == nil {
+		_ = reader.Close()
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "unable to get writer")
+	}
+	rateLimitWriter := shapeio.NewWriter(writer)
+	rateLimitWriter.SetRateLimit(dest.SyncBandwidth())
+	log.Debug(ctx, "%s write ratelimit: %v", dest.Name(), dest.SyncBandwidth())
+
+	// Buffered so that the read goroutine never blocks when an error exit stops listening
+	chanError := make(chan error, 1)
 	pr, pw := io.Pipe()
 
 	// The GoRoutines of the service, not a new one: NewGoRoutines starts a monitoring goroutine
@@ -186,18 +197,18 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 	if err := dest.Write(*iu, pr, rateLimitWriter); err != nil {
 		_ = pr.Close()
 		_ = reader.Close()
-		_ = writer.Close()
+		abortWriter(writer, err)
 		return err
 	}
 
 	if err := pr.Close(); err != nil {
 		_ = reader.Close()
-		_ = writer.Close()
+		abortWriter(writer, err)
 		return sdk.WithStack(err)
 	}
 
 	if err := reader.Close(); err != nil {
-		_ = writer.Close()
+		abortWriter(writer, err)
 		return sdk.WithStack(err)
 	}
 
@@ -227,6 +238,16 @@ func (x *RunningStorageUnits) runItem(ctx context.Context, db *gorp.DbMap, dest 
 		return err
 	}
 	return sdk.WrapError(tx.Commit(), "unable to commit tx")
+}
+
+// abortWriter releases a destination writer after a failed copy. A writer that can be aborted
+// (swift) must not be closed: Close would commit a partial object.
+func abortWriter(writer io.WriteCloser, err error) {
+	if w, ok := writer.(interface{ CloseWithError(error) error }); ok {
+		_ = w.CloseWithError(err)
+		return
+	}
+	_ = writer.Close()
 }
 
 func (x *RunningStorageUnits) NewItemUnit(_ context.Context, su Interface, i *sdk.CDNItem) (*sdk.CDNItemUnit, error) {
