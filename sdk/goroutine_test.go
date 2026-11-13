@@ -3,7 +3,10 @@ package sdk
 import (
 	"bytes"
 	"context"
-	"runtime"
+	"fmt"
+	"runtime/pprof"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -82,21 +85,23 @@ func Test_GoroutineTools(t *testing.T) {
 	// Each manager carries a monitoring goroutine that only ends with its context, so building one
 	// per unit of work leaks one goroutine per call. Callers share the manager of their service.
 	t.Run("NewGoRoutines costs one goroutine until its context ends", func(t *testing.T) {
-		before := runtime.NumGoroutine()
-
-		ctx, cancel := context.WithCancel(context.TODO())
+		// Count only the goroutines started from this context, through a pprof label they inherit:
+		// the process-wide count also moves with the goroutines of other tests, which made it flaky
+		id := RandomString(10)
+		ctx, cancel := context.WithCancel(pprof.WithLabels(context.TODO(), pprof.Labels(testGoroutinesLabel, id)))
+		t.Cleanup(cancel)
 		for i := 0; i < 50; i++ {
 			_ = NewGoRoutines(ctx)
 		}
 
 		require.Eventually(t, func() bool {
-			return runtime.NumGoroutine() >= before+50
+			return countLabelledGoroutines(t, testGoroutinesLabel, id) == 50
 		}, 5*time.Second, 10*time.Millisecond, "expected one monitoring goroutine per manager")
 
 		cancel()
 
 		require.Eventually(t, func() bool {
-			return runtime.NumGoroutine() < before+50
+			return countLabelledGoroutines(t, testGoroutinesLabel, id) == 0
 		}, 15*time.Second, 50*time.Millisecond, "monitoring goroutines outlived their context")
 	})
 
@@ -114,4 +119,28 @@ func Test_GoroutineTools(t *testing.T) {
 		<-ctx.Done()
 		require.Equal(t, 2, count)
 	})
+}
+
+const testGoroutinesLabel = "test-goroutines"
+
+// countLabelledGoroutines counts the running goroutines whose pprof labels hold key=value
+func countLabelledGoroutines(t *testing.T, key, value string) int {
+	var buf bytes.Buffer
+	require.NoError(t, pprof.Lookup("goroutine").WriteTo(&buf, 1))
+
+	label := fmt.Sprintf("%q:%q", key, value)
+	var count, groupSize int
+	for _, line := range strings.Split(buf.String(), "\n") {
+		// A group of identical goroutines starts with "<count> @ <pcs>", then its labels if any
+		if fields := strings.Fields(line); len(fields) > 1 && fields[1] == "@" {
+			n, err := strconv.Atoi(fields[0])
+			require.NoError(t, err)
+			groupSize = n
+			continue
+		}
+		if strings.HasPrefix(line, "# labels: ") && strings.Contains(line, label) {
+			count += groupSize
+		}
+	}
+	return count
 }

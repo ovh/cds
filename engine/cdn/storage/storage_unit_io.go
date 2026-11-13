@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -17,6 +18,10 @@ var (
 	rs  = rand.NewSource(time.Now().Unix())
 	rnd = rand.New(rs)
 )
+
+// errItemHasNoSourceUnit is the cause of the not found error returned by GetSource when no unit
+// holds the item, to tell it apart from the other not found errors of a sync
+var errItemHasNoSourceUnit = errors.New("no unit holds the item")
 
 type Source interface {
 	NewReader(context.Context) (io.ReadCloser, error)
@@ -73,7 +78,7 @@ func (r RunningStorageUnits) GetSource(ctx context.Context, i *sdk.CDNItem) (Sou
 
 	if len(itemUnits) == 0 {
 		log.Warn(ctx, "item %s can't be found. No unit knows it...", i.ID)
-		return nil, sdk.WithStack(sdk.ErrNotFound)
+		return nil, sdk.NewErrorWithStack(errItemHasNoSourceUnit, sdk.ErrNotFound)
 	}
 
 	itemUnits = r.FilterItemUnitReaderByType(itemUnits)

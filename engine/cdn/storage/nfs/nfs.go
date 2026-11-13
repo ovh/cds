@@ -227,14 +227,19 @@ func (n *Buffer) NewReader(ctx context.Context, i sdk.CDNItemUnit) (io.ReadClose
 	// Open the file from the filesystem according to the locator
 	path, err := n.filename(target, i)
 	if err != nil {
+		_ = target.Close()
+		_ = dial.Close()
 		return nil, sdk.WithStack(err)
 	}
 	log.Debug(ctx, "[%T] reading from %s", n, path)
 	f, err := target.Open(path)
+	if err != nil {
+		_ = target.Close()
+		_ = dial.Close()
+		return nil, sdk.WithStack(err)
+	}
 
-	nfsReader := &Reader{ctx: ctx, dialMount: dial, target: target, reader: f}
-
-	return nfsReader, sdk.WithStack(err)
+	return &Reader{ctx: ctx, dialMount: dial, target: target, reader: f}, nil
 }
 
 func (n *Buffer) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteCloser, error) {
@@ -246,12 +251,16 @@ func (n *Buffer) NewWriter(ctx context.Context, i sdk.CDNItemUnit) (io.WriteClos
 	// Open the file from the filesystem according to the locator
 	path, err := n.filename(target, i)
 	if err != nil {
+		_ = target.Close()
+		_ = dial.Close()
 		return nil, err
 	}
 	log.Debug(ctx, "[%T] writing to %s", n, path)
 
 	f, err := target.OpenFile(path, os.FileMode(0640))
 	if err != nil {
+		_ = target.Close()
+		_ = dial.Close()
 		return nil, sdk.WithStack(err)
 	}
 

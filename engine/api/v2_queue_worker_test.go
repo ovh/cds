@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/authentication"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/vcs"
 	"github.com/ovh/cds/engine/api/worker_v2"
 	"github.com/ovh/cds/sdk/jws"
 
@@ -452,6 +453,103 @@ hatcheries:
 	rrDBs, err = workflow_v2.LoadRunResultsByRunJobID(context.TODO(), db, jobRun.ID)
 	require.NoError(t, err)
 	require.Len(t, rrDBs, 2)
+}
+
+func TestWorkerTakeJobHandlerGitToken(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	ctx := context.TODO()
+
+	db.Exec("DELETE FROM rbac")
+	db.Exec("DELETE FROM region")
+
+	admin, _ := assets.InsertAdminUser(t, db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+
+	// the workflow is defined on one VCS, the repository it runs on can be on another (distant workflow)
+	workflowVCS := &sdk.VCSProject{Name: "bitbucket", Type: sdk.VCSTypeBitbucketServer, ProjectID: proj.ID, Auth: sdk.VCSAuthProject{Token: "workflow-vcs-token"}}
+	require.NoError(t, vcs.Insert(ctx, db, workflowVCS))
+	repositoryVCS := &sdk.VCSProject{Name: "forgejo", Type: sdk.VCSTypeForgejo, ProjectID: proj.ID, Auth: sdk.VCSAuthProject{Token: "repository-vcs-token"}}
+	require.NoError(t, vcs.Insert(ctx, db, repositoryVCS))
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, workflowVCS.ID, "myrepo")
+
+	hatch := sdk.Hatchery{
+		ModelType: "docker",
+		Name:      sdk.RandomString(10),
+	}
+	require.NoError(t, hatchery.Insert(ctx, db, &hatch))
+
+	reg := sdk.Region{Name: "default"}
+	require.NoError(t, region.Insert(ctx, db, &reg))
+
+	rbacYaml := `name: perm-default
+hatcheries:
+- role: %s
+  region: default
+  hatchery: %s
+`
+	rbacYaml = fmt.Sprintf(rbacYaml, sdk.HatcheryRoleSpawn, hatch.Name)
+	var r sdk.RBAC
+	require.NoError(t, yaml.Unmarshal([]byte(rbacYaml), &r))
+	r.Hatcheries[0].RegionID = reg.ID
+	r.Hatcheries[0].HatcheryID = hatch.ID
+	require.NoError(t, rbac.Insert(context.TODO(), db, &r))
+
+	hatchConsumer, err := authentication.NewConsumerHatchery(ctx, db, hatch)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		gitServer     string
+		expectedToken string
+	}{
+		{name: "distant workflow: token of the repository VCS", gitServer: repositoryVCS.Name, expectedToken: "repository-vcs-token"},
+		{name: "no git server: token of the workflow VCS", gitServer: "", expectedToken: "workflow-vcs-token"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wr := sdk.V2WorkflowRun{
+				Status:           sdk.V2WorkflowRunStatusBuilding,
+				ProjectKey:       proj.Key,
+				DeprecatedUserID: admin.ID,
+				WorkflowName:     sdk.RandomString(10),
+				RepositoryID:     repo.ID,
+				VCSServerID:      workflowVCS.ID,
+				VCSServer:        workflowVCS.Name,
+				Repository:       repo.Name,
+				RunAttempt:       1,
+				Contexts:         sdk.WorkflowRunContext{Git: sdk.GitContext{Server: tt.gitServer}},
+			}
+			require.NoError(t, workflow_v2.InsertRun(ctx, db, &wr))
+
+			jobRun := sdk.V2WorkflowRunJob{
+				ProjectKey:    proj.Key,
+				Status:        sdk.V2WorkflowRunJobStatusScheduling,
+				ModelType:     "docker",
+				Region:        "default",
+				WorkflowRunID: wr.ID,
+				HatcheryName:  hatch.Name,
+				RunAttempt:    wr.RunAttempt,
+				Initiator: sdk.V2Initiator{
+					UserID: admin.ID,
+					User:   admin.Initiator(),
+				},
+			}
+			require.NoError(t, workflow_v2.InsertRunJob(ctx, db, &jobRun))
+
+			_, jwtWorker := assets.InsertWorker(t, ctx, db, hatchConsumer, hatch, sdk.RandomString(10), jobRun)
+
+			uri := api.Router.GetRouteV2("POST", api.postV2WorkerTakeJobHandler, map[string]string{"regionName": "default", "runJobID": jobRun.ID})
+			test.NotEmpty(t, uri)
+			req := assets.NewJWTAuthentifiedRequest(t, jwtWorker, "POST", uri, nil)
+			w := httptest.NewRecorder()
+			api.Router.Mux.ServeHTTP(w, req)
+			require.Equal(t, 200, w.Code)
+
+			var takeJob sdk.V2TakeJobResponse
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &takeJob))
+			require.Equal(t, tt.expectedToken, takeJob.Contexts.Git.Token)
+		})
+	}
 }
 
 func TestWorkerRegister(t *testing.T) {
