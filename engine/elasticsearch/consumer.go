@@ -37,19 +37,36 @@ func (s *Service) processEventJobSummary(i interface{}) error {
 		return errors.Errorf("unsupported type %T", i)
 	}
 
-	// job v2 as code
-	if e.JobRunID != "" {
-		_, err := s.esClient.IndexDocWithoutType(ctx, s.Cfg.ElasticSearch.IndexJobSummary, e.JobRunID, e)
-		if err != nil {
-			return errors.Wrapf(err, "unable to index document ascode v2 %+v", e)
-		}
-		return nil
+	id := e.JobRunID // job v2 as code
+	if id == "" {
+		id = strconv.FormatInt(e.ID, 10) // job v1
 	}
 
-	// job v1
-	_, err := s.esClient.IndexDocWithoutType(ctx, s.Cfg.ElasticSearch.IndexJobSummary, strconv.FormatInt(e.ID, 10), e)
+	_, err := s.esClient.IndexDocWithExternalVersion(ctx, s.Cfg.ElasticSearch.IndexJobSummary, id, jobSummaryVersion(*e), e)
+	if errors.Is(err, errVersionConflict) {
+		log.Info(ctx, "skipping job summary %s: the index already holds a later state of the job", id)
+		return nil
+	}
 	if err != nil {
 		return errors.Wrapf(err, "unable to index document %+v", e)
 	}
 	return nil
+}
+
+// jobSummaryVersionBase keeps every version above the internal version of the documents indexed
+// without one, which counts their writes.
+const jobSummaryVersionBase = 1_000_000
+
+// jobSummaryVersion ranks the state of the job: queued, started, ended. The events of a job can be
+// consumed out of order, as they are spread over the partitions of the topic, and a late event must
+// not take its document back to an earlier state.
+func jobSummaryVersion(e sdk.EventJobSummary) int64 {
+	switch {
+	case e.Ended != nil:
+		return jobSummaryVersionBase + 3
+	case e.Started != nil:
+		return jobSummaryVersionBase + 2
+	default:
+		return jobSummaryVersionBase + 1
+	}
 }
