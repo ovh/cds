@@ -2,7 +2,10 @@ package swarm
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -10,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
+	docker "github.com/moby/moby/client"
 	"github.com/rockbears/log"
 
 	"github.com/ovh/cds/sdk"
@@ -118,12 +122,12 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 			if err := h.CDSClientV2().V2QueuePushJobInfo(ctx, spawnArgs.Region, spawnArgs.JobID, sdk.V2SendJobRunInfo{
 				Time:    time.Now(),
 				Level:   sdk.WorkflowRunInfoLevelError,
-				Message: fmt.Sprintf("docker pull %s done with error: %v", cArgs.image, sdk.Cause(err)),
+				Message: fmt.Sprintf("docker pull %s done with error: %s", cArgs.image, dockerClient.userError(err)),
 			}); err != nil {
 				log.Warn(ctx, "unable to send job info for job %s: %v", spawnArgs.JobID, err)
 			}
 		} else {
-			spawnMsg := sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPullErr, h.Name(), cArgs.image, sdk.Cause(err))
+			spawnMsg := sdk.SpawnMsgNew(*sdk.MsgSpawnInfoHatcheryEndDockerPullErr, h.Name(), cArgs.image, dockerClient.userError(err))
 			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, spawnMsg)
 		}
 		return sdk.WrapError(err, "unable to pull image %s on %s", cArgs.image, dockerClient.name)
@@ -157,4 +161,20 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 	}
 	next()
 	return nil
+}
+
+// userError returns the message shown in job infos for an error from the docker engine. An engine that does not answer
+// gets a generic message, its details (e.g. the engine address) staying in the hatchery logs.
+func (c *dockerClient) userError(err error) string {
+	cause := sdk.Cause(err)
+	var urlErr *url.Error
+	if errors.As(cause, &urlErr) || docker.IsErrConnectionFailed(cause) {
+		return "the docker engine did not answer"
+	}
+	msg := cause.Error()
+	if u, err := url.Parse(c.DaemonHost()); err == nil && u.Hostname() != "" {
+		msg = strings.ReplaceAll(msg, u.Host, c.name)
+		msg = strings.ReplaceAll(msg, u.Hostname(), c.name)
+	}
+	return msg
 }
