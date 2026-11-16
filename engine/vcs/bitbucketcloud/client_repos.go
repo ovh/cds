@@ -117,7 +117,7 @@ func (client *bitbucketcloudClient) ToVCSRepo(repo Repository) sdk.VCSRepo {
 	}
 	webURL := repo.Links.HTML.Href
 
-	return sdk.VCSRepo{
+	r := sdk.VCSRepo{
 		ID:                   repo.UUID,
 		Name:                 repo.Name,
 		Slug:                 repo.Slug,
@@ -130,4 +130,8 @@ func (client *bitbucketcloudClient) ToVCSRepo(repo Repository) sdk.VCSRepo {
 		HTTPCloneURL:         httpURL,
 		SSHCloneURL:          sshURL,
 	}
+	if repo.Parent != nil {
+		r.Parent = repo.Parent.FullName
+	}
+	return r
 }

@@ -44,6 +44,7 @@ type VCSRepo struct {
 	URLPullRequestFormat string `json:"url_pull_request_format"` // Web URL to pull request
 	HTTPCloneURL         string `json:"http_url"`                // Git clone URL  "https://<baseURL>/scm/PRJ/my-repo.git"
 	SSHCloneURL          string `json:"ssh_url"`                 // Git clone URL  "ssh://git@<baseURL>/PRJ/my-repo.git"
+	Parent               string `json:"parent,omitempty"`        // Fullname of the repository this one is forked from; reliable on single repository lookups only
 }
 
 // VCSAuthor represents the auhor for every commit

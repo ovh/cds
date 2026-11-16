@@ -61,7 +61,7 @@ func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk
 }
 
 func (c *gitlabClient) ToVCSRepo(p *gitlab.Project) sdk.VCSRepo {
-	return sdk.VCSRepo{
+	r := sdk.VCSRepo{
 		ID:                   fmt.Sprintf("%d", p.ID),
 		Name:                 p.NameWithNamespace,
 		Slug:                 p.PathWithNamespace,
@@ -74,4 +74,8 @@ func (c *gitlabClient) ToVCSRepo(p *gitlab.Project) sdk.VCSRepo {
 		HTTPCloneURL:         p.HTTPURLToRepo,
 		SSHCloneURL:          p.SSHURLToRepo,
 	}
+	if p.ForkedFromProject != nil {
+		r.Parent = p.ForkedFromProject.PathWithNamespace
+	}
+	return r
 }

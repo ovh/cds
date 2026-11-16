@@ -525,6 +525,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/analysis/{analysisID}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryAnalysisHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/branches", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryBranchesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/tags", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryTagsHandler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/forks", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryForksHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/entities", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectEntitiesHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/entities/{entityType}/{entityName}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectEntityHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/events", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getProjectRepositoryEventsHandler))
