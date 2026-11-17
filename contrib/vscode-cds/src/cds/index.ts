@@ -177,13 +177,28 @@ export class CDS {
         vcsName: string,
         repoId: string,
         workflowName: string,
-        limit = 15,
+        opts?: {
+            offset?: number;
+            limit?: number;
+            query?: string;
+        },
     ): Promise<CdsWorkflowRun[]> {
-        const out = await CDS.getInstance().runCtl(
+        const args = [
             "experimental", "workflow", "history",
             projectKey, vcsName, repoId, workflowName,
             "--format", "json",
-        );
+        ];
+        if (opts?.offset !== undefined) {
+            args.push("--offset", String(opts.offset));
+        }
+        if (opts?.limit !== undefined) {
+            args.push("--limit", String(opts.limit));
+        }
+        if (opts?.query) {
+            args.push("--query", opts.query);
+        }
+
+        const out = await CDS.getInstance().runCtl(...args);
         let items: Record<string, any>[];
         try {
             items = JSON.parse(out);
@@ -191,7 +206,7 @@ export class CDS {
             Journal.logError(new Error(`getWorkflowHistory: failed to parse JSON output`));
             return [];
         }
-        return items.slice(0, limit).map((r) => CDS.mapWorkflowRun(r, projectKey, workflowName));
+        return items.map((r) => CDS.mapWorkflowRun(r, projectKey, workflowName));
     }
 
     /** Normalize a run payload coming from either `history` or `search`. */
@@ -220,39 +235,6 @@ export class CDS {
     }
 
     /**
-     * Search runs of a single v2 workflow with pagination.
-     */
-    static async searchWorkflowRuns(
-        projectKey: string,
-        vcsName: string,
-        repoName: string,
-        workflowName: string,
-        opts?: {
-            offset?: number;
-            limit?: number;
-        },
-    ): Promise<CdsWorkflowRun[]> {
-        const args = [
-            "experimental", "workflow", "search",
-            "--project", projectKey,
-            "--workflow", `${vcsName}/${repoName}/${workflowName}`,
-            "--offset", String(opts?.offset ?? 0),
-            "--limit", String(opts?.limit ?? 15),
-            "--format", "json",
-        ];
-
-        const out = await CDS.getInstance().runCtl(...args);
-        let items: Record<string, any>[];
-        try {
-            items = JSON.parse(out);
-        } catch {
-            Journal.logError(new Error(`searchWorkflowRuns: failed to parse JSON output`));
-            return [];
-        }
-        return items.map((r) => CDS.mapWorkflowRun(r, projectKey, workflowName));
-    }
-
-    /**
      * Search v2 workflow runs in a project with optional filters.
      */
     static async searchWorkflows(
@@ -268,12 +250,14 @@ export class CDS {
             args.push("--repository", opts.repository);
         }
         const out = await CDS.getInstance().runCtl(...args);
+        let items: Record<string, any>[];
         try {
-            return JSON.parse(out);
+            items = JSON.parse(out);
         } catch {
             Journal.logError(new Error(`searchWorkflows: failed to parse JSON output`));
             return [];
         }
+        return items.map((r) => CDS.mapWorkflowRun(r, projectKey, ""));
     }
 
     /**

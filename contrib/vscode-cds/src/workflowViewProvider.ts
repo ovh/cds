@@ -242,6 +242,9 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
   // Run pages, keyed by workflow tree id
   private runPages = new Map<string, RunPage>();
   private runPagePromises = new Map<string, Promise<RunPage>>();
+  private loadingMore = new Set<string>();
+  private runPageEpoch = 0;
+  private runPageGenerations = new Map<string, number>();
 
   // Workflow names discovered per CDS repo (projectKey:repoId -> Set<workflowName>)
   private discoveredWorkflows = new Map<string, Promise<string[]>>();
@@ -298,10 +301,13 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
   }
 
   refresh(): void {
+    this.runPageEpoch++;
+    this.runPageGenerations.clear();
     this.repoPromise = undefined;
     this.workflowPromises.clear();
     this.runPages.clear();
     this.runPagePromises.clear();
+    this.loadingMore.clear();
     this.discoveredWorkflows.clear();
     this._onDidChangeTreeData.fire();
   }
@@ -316,18 +322,35 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
   async loadMore(wf: WorkflowItem): Promise<void> {
     const key = wf.id!;
     const page = this.runPages.get(key);
-    if (!page || !page.hasMore) {
+    if (!page || !page.hasMore || this.loadingMore.has(key)) {
       return;
     }
-    const next = await this.getRunPage(wf, page.offset);
-    // The page may have been dropped while the request was in flight.
-    if (this.runPages.get(key) !== page) {
-      return;
+
+    this.loadingMore.add(key);
+    try {
+      const epoch = this.runPageEpoch;
+      const generation = this.runPageGenerations.get(key) ?? 0;
+      const next = await this.getRunPage(wf, page.offset);
+      // The page may have been dropped or refreshed while the request was in flight.
+      if (
+        this.runPageEpoch !== epoch
+        || (this.runPageGenerations.get(key) ?? 0) !== generation
+        || this.runPages.get(key) !== page
+      ) {
+        return;
+      }
+
+      // A run started between the two requests shifts the offset, so the API can
+      // return runs that are already displayed. Do not append them twice.
+      const known = new Set(page.runs.map((run) => run.run.id));
+      const newRuns = next.runs.filter((run) => !known.has(run.run.id));
+      page.runs.push(...newRuns);
+      page.offset = next.offset;
+      page.hasMore = next.hasMore;
+      this._onDidChangeTreeData.fire(wf);
+    } finally {
+      this.loadingMore.delete(key);
     }
-    page.runs.push(...next.runs);
-    page.offset = next.offset;
-    page.hasMore = next.hasMore;
-    this._onDidChangeTreeData.fire(wf);
   }
 
   // ─── Private helpers ──────────────────────────────────────────────────────
@@ -432,7 +455,12 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
   }
 
   private clearRunPages(workflowId: string): void {
+    this.runPageGenerations.set(
+      workflowId,
+      (this.runPageGenerations.get(workflowId) ?? 0) + 1,
+    );
     this.runPages.delete(workflowId);
+    this.loadingMore.delete(workflowId);
     for (const key of [...this.runPagePromises.keys()]) {
       if (key.startsWith(`${workflowId}:`)) {
         this.runPagePromises.delete(key);
@@ -445,7 +473,16 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
     if (this.runPages.has(key)) {
       return;
     }
+    const epoch = this.runPageEpoch;
+    const generation = this.runPageGenerations.get(key) ?? 0;
     const page = await this.getRunPage(wf, 0);
+    // A refresh may have invalidated this response while it was in flight.
+    if (
+      this.runPageEpoch !== epoch
+      || (this.runPageGenerations.get(key) ?? 0) !== generation
+    ) {
+      return;
+    }
     this.runPages.set(key, page);
   }
 
@@ -465,13 +502,13 @@ export class WorkflowViewProvider implements vscode.TreeDataProvider<TreeNode>, 
     if (!wf.repo.cdsRepo) {
       return { runs: [], offset, hasMore: false };
     }
-    const { projectKey, vcsName, repoName } = wf.repo.cdsRepo;
+    const { projectKey, vcsName, id: repoId } = wf.repo.cdsRepo;
 
     // Fetch one extra run to know whether another page exists.
-    const runs = await CDS.searchWorkflowRuns(
+    const runs = await CDS.getWorkflowHistory(
       projectKey,
       vcsName,
-      repoName,
+      repoId,
       wf.cdsWorkflowName,
       {
         offset,
