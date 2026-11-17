@@ -515,13 +515,13 @@ func (s SearchRunsFilters) queryPatterns() pq.StringArray {
 func runQueryOrderBy(sort string) (string, error) {
 	switch sort {
 	case "", "started:desc":
-		return "ORDER BY started DESC", nil
+		return "ORDER BY v2_workflow_run.started DESC, v2_workflow_run.id DESC", nil
 	case "started:asc":
-		return "ORDER BY started ASC", nil
+		return "ORDER BY v2_workflow_run.started ASC, v2_workflow_run.id ASC", nil
 	case "last_modified:desc":
-		return "ORDER BY last_modified DESC", nil
+		return "ORDER BY v2_workflow_run.last_modified DESC, v2_workflow_run.id DESC", nil
 	case "last_modified:asc":
-		return "ORDER BY last_modified ASC", nil
+		return "ORDER BY v2_workflow_run.last_modified ASC, v2_workflow_run.id ASC", nil
 	}
 	return "", sdk.NewErrorFrom(sdk.ErrWrongRequest, "invalid given value for sort param: %q", sort)
 }

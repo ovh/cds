@@ -100,8 +100,7 @@
       {
         "command": "vscode-cds.loadMoreRuns",
         "title": "Load More Runs",
-        "category": "CDS",
-        "icon": "$(ellipsis)"
+        "category": "CDS"
       }
     ],
     "configuration": {
@@ -166,6 +165,32 @@
           "command": "vscode-cds.refreshRuns",
           "when": "view == vscode-cds-workflows && viewItem == cdsWorkflow",
           "group": "inline@4"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "vscode-cds.triggerWorkflow",
+          "when": "false"
+        },
+        {
+          "command": "vscode-cds.stopRun",
+          "when": "false"
+        },
+        {
+          "command": "vscode-cds.restartRun",
+          "when": "false"
+        },
+        {
+          "command": "vscode-cds.viewRunLogs",
+          "when": "false"
+        },
+        {
+          "command": "vscode-cds.refreshRuns",
+          "when": "false"
+        },
+        {
+          "command": "vscode-cds.loadMoreRuns",
+          "when": "false"
         }
       ]
     },

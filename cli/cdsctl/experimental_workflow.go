@@ -218,6 +218,16 @@ var workflowRunHistoryCmd = cli.Command{
 		{
 			Name: "commit",
 		},
+		{
+			Name: "offset",
+		},
+		{
+			Name: "limit",
+		},
+		{
+			Name:  "query",
+			Usage: "free text search, all given words must match",
+		},
 	},
 	Mcp: true,
 }
@@ -228,6 +238,25 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
 	commit := v.GetString("commit")
+	query := v.GetString("query")
+
+	offset, err := v.GetInt64("offset")
+	if err != nil {
+		return nil, err
+	}
+	limit, err := v.GetInt64("limit")
+	if err != nil {
+		return nil, err
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	if limit < 0 {
+		limit = 0
+	}
+	if limit > 100 {
+		limit = 100
+	}
 
 	vcsName := ""
 	// If vcsId looks like a UUID, resolve it to the VCS name.
@@ -277,6 +306,15 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	if commit != "" {
 		mods = append(mods, cdsclient.WithQueryParameter("commit", commit))
 	}
+	if query != "" {
+		mods = append(mods, cdsclient.WithQueryParameter("query", query))
+	}
+	if offset > 0 {
+		mods = append(mods, cdsclient.WithQueryParameter("offset", fmt.Sprintf("%d", offset)))
+	}
+	if limit > 0 {
+		mods = append(mods, cdsclient.WithQueryParameter("limit", fmt.Sprintf("%d", limit)))
+	}
 
 	runs, err := client.WorkflowV2RunSearch(context.Background(), projKey, mods...)
 	if err != nil {
@@ -291,11 +329,12 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 		WorkflowName string                  `json:"workflow_name" cli:"workflow_name"`
 		User         string                  `json:"user" cli:"user"`
 		Status       sdk.V2WorkflowRunStatus `json:"status" cli:"status"`
-		RunNumber    int64                   `json:"run_number" cli:"run_number" `
+		RunNumber    int64                   `json:"run_number" cli:"run_number"`
 		Started      time.Time               `json:"started" cli:"started"`
 		LastModified time.Time               `json:"last_modified" cli:"last_modified"`
 		RefName      string                  `json:"ref_name" cli:"ref_name"`
 		Commit       string                  `json:"commit" cli:"commit"`
+		Author       string                  `json:"author" cli:"author"`
 	}
 	runsHistory := make([]CliRun, len(runs))
 	for i, r := range runs {
@@ -312,6 +351,7 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 			LastModified: r.LastModified,
 			RefName:      r.Contexts.Git.RefName,
 			Commit:       r.Contexts.Git.Sha,
+			Author:       r.Contexts.Git.Author,
 		}
 	}
 	return cli.AsListResult(runsHistory), nil
