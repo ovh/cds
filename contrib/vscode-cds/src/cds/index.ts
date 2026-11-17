@@ -180,7 +180,6 @@ export class CDS {
         opts?: {
             offset?: number;
             limit?: number;
-            query?: string;
         },
     ): Promise<CdsWorkflowRun[]> {
         const args = [
@@ -194,9 +193,6 @@ export class CDS {
         if (opts?.limit !== undefined) {
             args.push("--limit", String(opts.limit));
         }
-        if (opts?.query) {
-            args.push("--query", opts.query);
-        }
 
         const out = await CDS.getInstance().runCtl(...args);
         let items: Record<string, any>[];
@@ -209,14 +205,12 @@ export class CDS {
         return items.map((r) => CDS.mapWorkflowRun(r, projectKey, workflowName));
     }
 
-    /** Normalize a run payload coming from either `history` or `search`. */
+    /** Normalize a workflow history run. */
     private static mapWorkflowRun(
         r: Record<string, any>,
         projectKey: string,
         workflowName: string,
     ): CdsWorkflowRun {
-        const git = r["contexts"]?.["git"] ?? {};
-        const initiator = r["initiator"] ?? {};
         return {
             id: r["id"] ?? "",
             runNumber: parseInt(String(r["run_number"] ?? r["runnumber"] ?? "0"), 10),
@@ -224,13 +218,9 @@ export class CDS {
             started: r["started"] ?? r["start"] ?? r["last_modified"] ?? "",
             workflowName: r["workflow_name"] ?? r["workflowname"] ?? workflowName,
             projectKey: r["project_key"] ?? r["projectkey"] ?? projectKey,
-            username: initiator?.["user"]?.["username"]
-                ?? initiator?.["vcs_username"]
-                ?? r["user"]
-                ?? r["username"]
-                ?? "",
-            ref: git?.["ref_name"] ?? r["ref_name"] ?? "",
-            commit: git?.["sha"] ?? r["commit"] ?? "",
+            username: r["user"] ?? r["username"] ?? "",
+            ref: r["ref_name"] ?? "",
+            commit: r["commit"] ?? "",
         };
     }
 
@@ -250,14 +240,12 @@ export class CDS {
             args.push("--repository", opts.repository);
         }
         const out = await CDS.getInstance().runCtl(...args);
-        let items: Record<string, any>[];
         try {
-            items = JSON.parse(out);
+            return JSON.parse(out);
         } catch {
             Journal.logError(new Error(`searchWorkflows: failed to parse JSON output`));
             return [];
         }
-        return items.map((r) => CDS.mapWorkflowRun(r, projectKey, ""));
     }
 
     /**
