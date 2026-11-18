@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 
@@ -79,7 +80,10 @@ func (api *API) putProjectRunFilterHandler() ([]service.RbacChecker, service.Han
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			projectKey := vars["projectKey"]
-			filterName := vars["filterName"]
+			filterName, err := url.PathUnescape(vars["filterName"])
+			if err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrWrongRequest)
+			}
 
 			var filterUpdate sdk.ProjectRunFilter
 			if err := service.UnmarshalBody(r, &filterUpdate); err != nil {
@@ -122,7 +126,10 @@ func (api *API) deleteProjectRunFilterHandler() ([]service.RbacChecker, service.
 		func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			vars := mux.Vars(r)
 			projectKey := vars["projectKey"]
-			filterName := vars["filterName"]
+			filterName, err := url.PathUnescape(vars["filterName"])
+			if err != nil {
+				return sdk.NewErrorWithStack(err, sdk.ErrWrongRequest)
+			}
 
 			// Check that filter exists
 			filter, err := project.LoadRunFilterByNameAndProjectKey(ctx, api.mustDB(), projectKey, filterName)
