@@ -63,25 +63,12 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			unknownInitiatorReason = fmt.Sprintf("User with key %s not found", hre.SignKey)
 		}
 
-		if hre.SignKey != "" && r.Initiator.IsUnknown() {
-			hre.Status = sdk.HookEventStatusSkipped
-			hre.LastError = unknownInitiatorReason
-
-			for i := range hre.WorkflowHooks {
-				wh := &hre.WorkflowHooks[i]
-				wh.Status = sdk.HookEventWorkflowStatusSkipped
-				wh.Error = hre.LastError
-			}
-		}
-
+		// An unknown initiator does not end the event: each hook decides below, so a distant
+		// workflow allowed to skip the signature check still runs.
 		hre.Initiator = r.Initiator
 
 		if err := s.Dao.SaveRepositoryEvent(ctx, hre); err != nil {
 			return err
-		}
-
-		if hre.IsTerminated() {
-			return s.Dao.RemoveRepositoryEventFromInProgressList(ctx, hre.UUID)
 		}
 	}
 
