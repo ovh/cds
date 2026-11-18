@@ -148,6 +148,18 @@ describe('hookEventVerdict', () => {
         expect(v.detail).toBe('checkout #128');
     });
 
+    it('warns on a workflow triggered without an identified author', () => {
+        const warning = 'run attributed to the workflow owner (insecure_skip_signature_verify): forgejo user robot-team-engine is not linked to a CDS user';
+        const v = hookEventVerdict(event({ username: null, initiator: null, workflows: [
+            workflow('upload-archive', HookEventWorkflowStatus.Warning, { run_number: '12', error: warning }),
+            workflow('checkout', HookEventWorkflowStatus.Done, { run_number: '128' })
+        ] }), PROJECT, true);
+        expect(v.level).toBe('warning');
+        expect(v.label).toBe('2 workflows triggered');
+        expect(v.detail).toBe(warning);
+        expect(v.steps[3].status).toBe('warning');
+    });
+
     it('says when nothing matched', () => {
         const v = hookEventVerdict(event({ workflows: [workflow('a', HookEventWorkflowStatus.Skipped)] }), PROJECT, false);
         expect(v.level).toBe('none');

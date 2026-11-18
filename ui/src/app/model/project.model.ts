@@ -141,7 +141,9 @@ export enum HookEventWorkflowStatus {
   Scheduled = "Scheduled",
   Skipped = "Skipped",
   Error = "Error",
-  Done = "Done"
+  Done = "Done",
+  // Run started without an identified author, thanks to insecure_skip_signature_verify
+  Warning = "Warning"
 }
 
 export class RepositoryHookEventExtractedData {

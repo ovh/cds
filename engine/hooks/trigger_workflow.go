@@ -93,6 +93,8 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 			}
 			continue
 		}
+		// Only the signature check skip lets this hook run; the API attributes the run to the workflow owner
+		insecureTrigger := initiator.IsUnknown()
 		if wh.Status == sdk.HookEventWorkflowStatusScheduled {
 			// Check path filter
 			canTriggerWithChangeSet := false
@@ -221,6 +223,10 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 					wh.Error = fmt.Sprintf("unable to run workflow %s: %v", wh.WorkflowName, err)
 				} else {
 					wh.Status = sdk.HookEventWorkflowStatusDone
+					if insecureTrigger {
+						wh.Status = sdk.HookEventWorkflowStatusWarning
+						wh.Error = "run attributed to the workflow owner (insecure_skip_signature_verify): " + unknownInitiatorReason
+					}
 					wh.RunID = wr.ID
 					wh.RunNumber = wr.RunNumber
 				}

@@ -178,12 +178,27 @@ func TestTriggerWorkflow_InsecureDistantWorkflowRunsWithoutInitiator(t *testing.
 		Return(&sdk.V2WorkflowRun{ID: "run-id", RunNumber: 1}, nil).Times(1)
 
 	require.NoError(t, s.triggerWorkflows(ctx, &hre))
-	require.Equal(t, sdk.HookEventWorkflowStatusDone, hre.WorkflowHooks[0].Status)
+	require.Equal(t, sdk.HookEventWorkflowStatusWarning, hre.WorkflowHooks[0].Status)
+	require.Equal(t, "run attributed to the workflow owner (insecure_skip_signature_verify): "+reason, hre.WorkflowHooks[0].Error)
+	require.Equal(t, "run-id", hre.WorkflowHooks[0].RunID)
 	require.Equal(t, sdk.HookEventWorkflowStatusSkipped, hre.WorkflowHooks[1].Status)
 	require.Equal(t, reason, hre.WorkflowHooks[1].Error)
 	require.Equal(t, sdk.HookEventStatusDone, hre.Status)
 	require.Empty(t, hre.LastError)
 	require.Equal(t, "ABCDEF", hre.SignKey)
+
+	// Committer identified: the flag played no part, no warning
+	identified := hre
+	identified.UUID = sdk.UUID()
+	identified.Status = ""
+	identified.Initiator = &sdk.V2Initiator{UserID: "1234567890"}
+	identified.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{distantHook("insecure-workflow", true)}
+	mock.EXPECT().WorkflowV2RunFromHook(gomock.Any(), "PROJ", "github", "ovh/cds", "insecure-workflow", gomock.Any(), gomock.Any()).
+		Return(&sdk.V2WorkflowRun{ID: "run-id-2", RunNumber: 2}, nil).Times(1)
+
+	require.NoError(t, s.triggerWorkflows(ctx, &identified))
+	require.Equal(t, sdk.HookEventWorkflowStatusDone, identified.WorkflowHooks[0].Status)
+	require.Empty(t, identified.WorkflowHooks[0].Error)
 }
 
 func TestTriggerWorkflow_SkipCIOnlyAppliesToPushAndPullRequest(t *testing.T) {

@@ -83,7 +83,9 @@ export function eventAuthorKnown(event: RepositoryHookEvent, projectKey: string)
 
 export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string, distant: boolean): HookEventVerdict {
     const workflows = (event.workflows ?? []).filter(w => w.project_key === projectKey);
-    const done = workflows.filter(w => w.status === HookEventWorkflowStatus.Done);
+    // A workflow in warning ran, attributed to its owner as its author could not be identified
+    const warned = workflows.filter(w => w.status === HookEventWorkflowStatus.Warning);
+    const done = workflows.filter(w => w.status === HookEventWorkflowStatus.Done || w.status === HookEventWorkflowStatus.Warning);
     const scheduled = workflows.filter(w => w.status === HookEventWorkflowStatus.Scheduled);
     // A workflow skipped by its own filters behaved as defined; skipped for any other reason, or in
     // error, it did not start because of a problem
@@ -183,8 +185,14 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
     }
 
     if (done.length > 0) {
+        const label = `${done.length} ${plural(done.length, 'workflow')} triggered`;
+        if (warned.length > 0) {
+            workflowsStep.status = 'warning';
+            const warnings = [...new Set(warned.map(w => cleanErrorMessage(w.error)).filter(e => !!e))].join(' · ');
+            return { level: 'warning', label, detail: warnings || names(warned), steps };
+        }
         workflowsStep.status = 'success';
-        return { level: 'success', label: `${done.length} ${plural(done.length, 'workflow')} triggered`, detail: names(done), steps };
+        return { level: 'success', label, detail: names(done), steps };
     }
 
     const withReason = skipped.filter(w => !!w.error);
