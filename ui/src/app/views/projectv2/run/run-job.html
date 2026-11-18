@@ -15,6 +15,13 @@
     }
   </div>
   <div class="menu right">
+    @if (collapsibleLogBlocks.length > 0) {
+      @if (anyLogBlockExpanded) {
+        <button (click)="collapseAll();$event.stopPropagation();">Collapse all</button>
+      } @else {
+        <button (click)="expandAll();$event.stopPropagation();">Expand all</button>
+      }
+    }
     <button [class.active]="mode === displayModes.ANSI"
     (click)="clickMode(displayModes.ANSI);$event.stopPropagation();">ANSI</button>
     <button [class.active]="mode === displayModes.HTML"
