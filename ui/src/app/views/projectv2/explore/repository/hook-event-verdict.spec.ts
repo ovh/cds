@@ -28,6 +28,34 @@ describe('hookEventVerdict', () => {
         expect(v.steps[3].status).toBe('none');
     });
 
+    it('says the workflows of the repository wait for its failed analysis', () => {
+        const v = hookEventVerdict(event({ status: 'Done', analyses: [{ analyze_id: 'a1', status: 'Error', project_key: PROJECT, error: 'boom' }],
+            workflows: [workflow('build', HookEventWorkflowStatus.Skipped, { error: 'repository analysis failed: boom' })] }), PROJECT, false);
+        expect(v.label).toBe('Analysis failed');
+        expect(v.steps[3].status).toBe('none');
+        expect(v.steps[3].description).toBe('Not evaluated: the analysis must succeed first.');
+    });
+
+    it('lets the distant workflows tell the workflows step when the analysis of the project failed', () => {
+        const unlinked = 'bitbucketserver user steven.guiheux is not linked to a CDS user';
+        const v = hookEventVerdict(event({ status: 'Done', username: null, analyses: [{ analyze_id: 'a1', status: 'Error', project_key: PROJECT, error: unlinked }], workflows: [
+            workflow('build', HookEventWorkflowStatus.Skipped, { error: 'repository analysis failed: ' + unlinked }),
+            workflow('distant', HookEventWorkflowStatus.Skipped, { error: unlinked }),
+            workflow('distantInsecure', HookEventWorkflowStatus.Warning, { run_number: '4', error: 'run attributed to the workflow owner (insecure_skip_signature_verify): ' + unlinked })
+        ] }), PROJECT, false);
+        expect(v.level).toBe('error');
+        expect(v.label).toBe('Analysis failed');
+        expect(v.steps[2].status).toBe('error');
+        expect(v.steps[3].status).toBe('warning');
+        expect(v.steps[3].description).toBe('');
+    });
+
+    it('marks the workflows step as success when every distant workflow ran despite the failed analysis', () => {
+        const v = hookEventVerdict(event({ status: 'Done', analyses: [{ analyze_id: 'a1', status: 'Error', project_key: PROJECT, error: 'boom' }],
+            workflows: [workflow('distant', HookEventWorkflowStatus.Done, { run_number: '7' })] }), PROJECT, false);
+        expect(v.steps[3].status).toBe('success');
+    });
+
     it('names the failure of the analysis when the event carries it', () => {
         const v = hookEventVerdict(event({ status: 'Error', analyses: [{ analyze_id: 'a1', status: 'Error', project_key: PROJECT, error: "workflow release: integration artifactory doesn't exist.\nsecond line" }] }), PROJECT, false);
         expect(v.detail).toBe("workflow release: integration artifactory doesn't exist.");

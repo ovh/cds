@@ -27,6 +27,8 @@ export interface HookEventVerdict {
 const IN_PROGRESS = ['Scheduled', 'Analyzing', 'CheckAnalyzing', 'WorkflowHooks', 'GitInfo', 'Workflow'];
 // A workflow skipped for one of these reasons did what its definition asks: nothing to fix
 const FILTER_SKIP = /no file matches path filters|does not match .*filter|skip CI directive/i;
+// Reason given to the workflows defined in a repository whose analysis failed
+const ANALYSIS_SKIP = /^repository analysis failed/i;
 const ANALYZING = ['Analyzing', 'CheckAnalyzing'];
 const TRIGGERING = ['WorkflowHooks', 'GitInfo', 'Workflow'];
 
@@ -124,7 +126,19 @@ export function hookEventVerdict(event: RepositoryHookEvent, projectKey: string,
 
     if (analysis?.status === 'Error') {
         analysisStep.status = 'error';
-        workflowsStep.description = 'Not evaluated: the analysis must succeed first.';
+        // Only the workflows defined in this repository wait for its analysis: distant ones are evaluated anyway
+        const evaluated = workflows.filter(w => !ANALYSIS_SKIP.test(w.error ?? ''));
+        const ran = evaluated.filter(w => done.includes(w));
+        const failed = evaluated.filter(w => notStarted.includes(w));
+        if (evaluated.length === 0) {
+            workflowsStep.description = 'Not evaluated: the analysis must succeed first.';
+        } else if (ran.length > 0) {
+            workflowsStep.status = failed.length > 0 || ran.some(w => w.status === HookEventWorkflowStatus.Warning) ? 'warning' : 'success';
+        } else if (failed.length > 0) {
+            workflowsStep.status = 'error';
+        } else if (evaluated.some(isFilterSkip)) {
+            workflowsStep.status = 'filtered';
+        }
         const analysisError = cleanErrorMessage(analysis.error);
         return { level: 'error', label: 'Analysis failed', detail: firstLine(analysisError) ?? 'Workflows of this ref were not evaluated', steps, hint: hintFor(analysisError || lastError) };
     }
