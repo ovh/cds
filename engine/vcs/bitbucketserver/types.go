@@ -148,6 +148,7 @@ type Repo struct {
 	ScmID   string                      `json:"scmId"`
 	Project *sdk.BitbucketServerProject `json:"project"`
 	Links   *Links                      `json:"links"`
+	Origin  *Repo                       `json:"origin,omitempty"` // Set on forks only
 }
 
 type Links struct {

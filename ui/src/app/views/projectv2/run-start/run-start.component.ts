@@ -11,7 +11,7 @@ import { V2Workflow, V2WorkflowRunManualRequest, V2JobGate, V2Job } from "../../
 import { NzMessageService } from "ng-zorro-antd/message";
 import { NzDrawerRef } from "ng-zorro-antd/drawer";
 import { LoadOptions, load } from "js-yaml";
-import { Branch, Tag } from "app/model/repositories.model";
+import { Branch, Repository, Tag } from "app/model/repositories.model";
 import { ErrorUtils } from "app/shared/error.utils";
 import { ProjectV2State } from "app/store/project-v2.state";
 
@@ -41,10 +41,21 @@ export class ProjectV2RunStartComponent implements OnInit {
   sourceBranches: Array<Branch> = [];
   sourceTags: Array<Tag> = [];
   workflows: Array<string> = [];
+  // Repository a fork is taken from: the one declared by the workflow, else the workflow repository
+  originRepository: { vcs: string, repo: string } = null;
+  workflowRepository: { vcs: string, repo: string } = null;
+  // Fork suggestions only, any fork can be typed; listing forks is slow so it never blocks the form
+  forks: Array<Repository> = [];
+  filteredForks: Array<Repository> = [];
+  forksLoading: boolean = false;
+  private _forksRequest = 0;
+  // Repository whose refs are loaded in the source fields, '' when none
+  private _sourceKey: string = null;
   validateForm: FormGroup<{
     repository: FormControl<string | null>;
     ref: FormControl<string | null>;
     workflow: FormControl<string | null>;
+    fork: FormControl<string | null>;
     sourceRepository: FormControl<string | null>;
     sourceRef: FormControl<string | null>;
     jobInputs: FormControl<{ [jobIdentifier: string]: { [inputName: string]: any } } | null>
@@ -54,12 +65,14 @@ export class ProjectV2RunStartComponent implements OnInit {
     global: boolean,
     repository: boolean,
     ref: boolean,
-    workflow: boolean
+    workflow: boolean,
+    source: boolean
   } = {
       global: false,
       repository: false,
       ref: false,
-      workflow: false
+      workflow: false,
+      source: false
     };
   noWorkflowFound: boolean = false;
 
@@ -81,6 +94,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       repository: this._fb.control<string | null>(null, Validators.required),
       ref: this._fb.control<string | null>(null, Validators.required),
       workflow: this._fb.control<string | null>(null, Validators.required),
+      fork: this._fb.control<string | null>(null),
       sourceRepository: this._fb.control<string | null>({ disabled: true, value: '' }),
       sourceRef: this._fb.control<string | null>(null),
       jobInputs: this._fb.control<{ [jobIdentifier: string]: { [inputName: string]: any } } | null>(null),
@@ -192,6 +206,12 @@ export class ProjectV2RunStartComponent implements OnInit {
 
   async workflowChange(workflow: string) {
     if (!workflow) {
+      this.originRepository = null;
+      this._forksRequest++;
+      this.forksLoading = false;
+      this.forks = [];
+      this.filteredForks = [];
+      this.validateForm.controls.fork.setValue(null, { emitViewToModelChange: false });
       return;
     }
     this.loaders.workflow = true;
@@ -256,25 +276,130 @@ export class ProjectV2RunStartComponent implements OnInit {
       });
     }
 
-    if (wkf.repository) {
-      this.validateForm.controls.sourceRepository.setValidators([Validators.required]);
-      this.validateForm.controls.sourceRef.setValidators([Validators.required]);
-      this.validateForm.controls.sourceRepository.setValue(wkf.repository.vcs + '/' + wkf.repository.name);
-      this.sourceBranches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, wkf.repository.vcs, wkf.repository.name, 50));
-      this.sourceTags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, wkf.repository.vcs, wkf.repository.name));
-      const selectedSourceRef = this.params.ref ?? null;
-      if (selectedSourceRef && (this.sourceBranches.findIndex(b => `refs/heads/${b.display_id}` === selectedSourceRef) !== -1 || this.sourceTags.findIndex(t => `refs/tags/${t.tag}` === selectedSourceRef) !== -1)) {
-        this.validateForm.controls.sourceRef.setValue(selectedSourceRef);
-      } else {
-        this.validateForm.controls.sourceRef.setValue('refs/heads/' + this.sourceBranches.find(b => b.default).display_id);
-      }
-    } else {
-      this.validateForm.controls.sourceRepository.reset();
-      this.validateForm.controls.sourceRef.reset();
-      this.validateForm.controls.sourceRepository.clearValidators();
-      this.validateForm.controls.sourceRef.clearValidators();
-    }
+    this.workflowRepository = wkf.repository ? { vcs: wkf.repository.vcs, repo: wkf.repository.name } : null;
+    this.originRepository = this.workflowRepository ?? splitted;
+    this.loadForks();
+    this.validateForm.controls.fork.setValue(this.preselectedFork(splitted), { emitViewToModelChange: false });
+
+    this._sourceKey = null;
+    await this.updateSourceRepository();
     this.loaders.workflow = false;
+    this._cd.markForCheck();
+  }
+
+  async loadForks(): Promise<void> {
+    const request = ++this._forksRequest;
+    const origin = this.originRepository;
+    this.forks = [];
+    this.filteredForks = [];
+    this.forksLoading = true;
+    this._cd.markForCheck();
+    let forks: Array<Repository> = [];
+    try {
+      forks = (await lastValueFrom(this._projectService.getVCSRepositoryForks(this.project.key, origin.vcs, origin.repo))) ?? [];
+    } catch (e) {
+      // Suggestions only: a fork can still be typed
+    }
+    if (request !== this._forksRequest) {
+      return;
+    }
+    this.forks = forks;
+    this.forksLoading = false;
+    this.filterForks(this.validateForm.controls.fork.value);
+    this._cd.markForCheck();
+  }
+
+  // A run built from a fork is restarted on the same fork
+  preselectedFork(workflowRepository: { vcs: string, repo: string }): string {
+    if (!this.params.repository) {
+      return null;
+    }
+    const caller = this.splitRepository(this.params.repository);
+    const isOtherRepository = caller.repo !== this.originRepository.repo && caller.repo !== workflowRepository.repo;
+    return caller.vcs === this.originRepository.vcs && isOtherRepository ? caller.repo : null;
+  }
+
+  filterForks(value: string): void {
+    const search = (value ?? '').trim().toLowerCase();
+    this.filteredForks = this.forks.filter(f => f.fullname.toLowerCase().includes(search));
+  }
+
+  // The autocomplete updates the field after notifying the selection, so the fork is read on the next tick
+  forkChange(): void {
+    setTimeout(() => this.updateSourceRepository());
+  }
+
+  forkEnter(event: Event): void {
+    event.preventDefault(); // Would submit the form with the refs of the previous source
+    this.forkChange();
+  }
+
+  sourceRepositoryKey(): string {
+    const fork = this.validateForm.controls.fork.value?.trim();
+    const source = fork ? { vcs: this.originRepository.vcs, repo: fork } : this.workflowRepository;
+    return source ? `${source.vcs}/${source.repo}` : '';
+  }
+
+  // The code is taken from the fork if any, else from the repository declared by the workflow; with
+  // neither, no source field is shown and the workflow ref is also the code ref.
+  async updateSourceRepository(): Promise<void> {
+    if (!this.originRepository) {
+      return;
+    }
+    const controls = this.validateForm.controls;
+    const key = this.sourceRepositoryKey();
+    if (key === this._sourceKey) {
+      return;
+    }
+    this._sourceKey = key;
+    if (!key) {
+      controls.sourceRepository.reset();
+      controls.sourceRef.reset();
+      controls.sourceRepository.clearValidators();
+      controls.sourceRef.clearValidators();
+      this._cd.markForCheck();
+      return;
+    }
+
+    const source = this.splitRepository(key);
+    controls.sourceRepository.setValidators([Validators.required]);
+    controls.sourceRef.setValidators([Validators.required]);
+    controls.sourceRepository.setValue(key);
+    controls.sourceRef.reset(); // Invalid until the refs of this repository are loaded
+    this.loaders.source = true;
+    this._cd.markForCheck();
+    let branches: Array<Branch>;
+    let tags: Array<Tag>;
+    try {
+      branches = await lastValueFrom(this._projectService.getVCSRepositoryBranches(this.project.key, source.vcs, source.repo, 50));
+      tags = await lastValueFrom(this._projectService.getVCSRepositoryTags(this.project.key, source.vcs, source.repo));
+    } catch (e) {
+      if (key !== this._sourceKey) {
+        return;
+      }
+      this._messageService.error(`Unable to get repository refs: ${ErrorUtils.print(e)}`, { nzDuration: 2000 });
+      this.sourceBranches = [];
+      this.sourceTags = [];
+      this.loaders.source = false;
+      this._cd.markForCheck();
+      return;
+    }
+    // Another source was picked while loading: its own call fills the fields
+    if (key !== this._sourceKey) {
+      return;
+    }
+    this.sourceBranches = branches ?? [];
+    this.sourceTags = tags ?? [];
+    const selectedSourceRef = this.params.ref ?? null;
+    const defaultBranch = this.sourceBranches.find(b => b.default);
+    if (selectedSourceRef && (this.sourceBranches.findIndex(b => `refs/heads/${b.display_id}` === selectedSourceRef) !== -1 || this.sourceTags.findIndex(t => `refs/tags/${t.tag}` === selectedSourceRef) !== -1)) {
+      controls.sourceRef.setValue(selectedSourceRef);
+    } else if (defaultBranch) {
+      controls.sourceRef.setValue('refs/heads/' + defaultBranch.display_id);
+    } else {
+      controls.sourceRef.reset();
+    }
+    this.loaders.source = false;
     this._cd.markForCheck();
   }
 
@@ -301,6 +426,11 @@ export class ProjectV2RunStartComponent implements OnInit {
   }
 
   async submitForm() {
+    // The typed fork is not loaded yet: load its refs instead of sending those of another repository
+    if (this.originRepository && this.sourceRepositoryKey() !== this._sourceKey) {
+      await this.updateSourceRepository();
+      return;
+    }
     if (!this.validateForm.valid) {
       Object.values(this.validateForm.controls).forEach(control => {
         if (control.invalid) {
@@ -328,6 +458,10 @@ export class ProjectV2RunStartComponent implements OnInit {
       } else {
         req.workflow_branch = ref.replace('refs/heads/', '');
       }
+    }
+    const fork = this.validateForm.value.fork?.trim();
+    if (fork) {
+      req.target_repository = fork;
     }
 
     if (this.noWorkflowFound) {

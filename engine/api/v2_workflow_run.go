@@ -950,33 +950,20 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 				return sdk.NewErrorFrom(sdk.ErrForbidden, "user %s has no right to trigger this workflow", theOneWhoTriggers.Username())
 			}
 
-			originRepo := repo.Name
-			originVCS := vcsProject.Name
-			if wk.Repository != nil && wk.Repository.Name != "" {
-				originRepo = wk.Repository.Name
-				originVCS = wk.Repository.VCSServer
-			}
+			originVCS, originRepo := workflowOriginRepository(wk, vcsProject.Name, repo.Name)
 			if runRequest.TargetRepository != "" && runRequest.TargetRepository != originRepo {
+				if err := api.checkForkRepository(ctx, proj.Key, originVCS, originRepo, runRequest.TargetRepository); err != nil {
+					return err
+				}
 
-				// Check fork
-				client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, proj.Key, originVCS)
-				if err != nil {
-					return err
-				}
-				forks, err := client.ListForks(ctx, originRepo)
-				if err != nil {
-					return err
-				}
-				found := false
-				for _, f := range forks {
-					if f.Fullname == runRequest.TargetRepository {
-						found = true
-						break
-					}
-				}
-				if !found {
-					return sdk.NewErrorFrom(sdk.ErrWrongRequest, "fork %s not found", runRequest.TargetRepository)
-				}
+				// Running a fork's code is sensitive: keep a dedicated field to monitor it
+				ctx = context.WithValue(ctx, cdslog.Project, proj.Key)
+				ctx = context.WithValue(ctx, cdslog.VCSServer, originVCS)
+				ctx = context.WithValue(ctx, cdslog.Repository, originRepo)
+				ctx = context.WithValue(ctx, cdslog.Workflow, wk.Name)
+				ctx = context.WithValue(ctx, cdslog.ForkRepository, runRequest.TargetRepository)
+				log.Info(ctx, "workflow %s/%s/%s/%s triggered by %s on fork %s (ref %q, sha %q)", proj.Key, vcsProject.Name, repo.Name, wk.Name,
+					theOneWhoTriggers.Username(), runRequest.TargetRepository, runRequest.Ref, runRequest.Sha)
 
 				if wk.Repository == nil {
 					wk.Repository = &sdk.WorkflowRepository{}
@@ -991,6 +978,34 @@ func (api *API) postWorkflowRunFromHookV2Handler() ([]service.RbacChecker, servi
 			}
 			return service.WriteJSON(w, wr, http.StatusOK)
 		}
+}
+
+// workflowOriginRepository returns the repository whose code the workflow runs: the one it declares, else its own.
+func workflowOriginRepository(wk sdk.V2Workflow, vcsName, repoName string) (string, string) {
+	if wk.Repository != nil && wk.Repository.Name != "" {
+		return wk.Repository.VCSServer, wk.Repository.Name
+	}
+	return vcsName, repoName
+}
+
+// checkForkRepository checks with a single repository lookup, not a listing of all forks, that fork is a direct
+// fork of originRepo.
+func (api *API) checkForkRepository(ctx context.Context, projKey, originVCS, originRepo, fork string) error {
+	client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projKey, originVCS)
+	if err != nil {
+		return err
+	}
+	forkRepo, err := client.RepoByFullname(ctx, fork)
+	if err != nil {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "fork %s not found", fork)
+		}
+		return err
+	}
+	if !strings.EqualFold(forkRepo.Parent, originRepo) {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "%s is not a fork of %s", fork, originRepo)
+	}
+	return nil
 }
 
 func (api *API) postStartJobWorkflowRunHandler() ([]service.RbacChecker, service.Handler) {
@@ -1678,12 +1693,23 @@ func (api *API) postWorkflowRunV2Handler() ([]service.RbacChecker, service.Handl
 				}
 			}
 
+			var wk sdk.V2Workflow
+			if err := yaml.Unmarshal([]byte(workflowEntity.Data), &wk); err != nil {
+				return err
+			}
+
+			// Reject a wrong fork now rather than in the asynchronous hook event
+			if runRequest.TargetRepository != "" {
+				originVCS, originRepo := workflowOriginRepository(wk, vcsProject.Name, repo.Name)
+				if runRequest.TargetRepository != originRepo {
+					if err := api.checkForkRepository(ctx, proj.Key, originVCS, originRepo, runRequest.TargetRepository); err != nil {
+						return err
+					}
+				}
+			}
+
 			// Check job inputs regarding workflow definition
 			if runRequest.JobInputs != nil {
-				var wk sdk.V2Workflow
-				if err := yaml.Unmarshal([]byte(workflowEntity.Data), &wk); err != nil {
-					return err
-				}
 				for jobID, inputs := range runRequest.JobInputs {
 					if err := sdk.CheckJobInputWithGate(wk, jobID, inputs); err != nil {
 						return err

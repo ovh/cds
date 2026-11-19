@@ -362,3 +362,62 @@ func Test_getProjectRepositoryEventsHandler_DistantRepository(t *testing.T) {
 	require.Len(t, events, 1)
 	require.Equal(t, "declared-event", events[0].UUID)
 }
+
+func Test_getProjectRepositoryForksHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10))
+	user1, pass := assets.InsertLambdaUser(t, db)
+	assets.InsertRBAcProject(t, db, "read", proj.Key, *user1)
+	userNoRight, passNoRight := assets.InsertLambdaUser(t, db)
+
+	vcsProj := assets.InsertTestVCSProject(t, db, proj.ID, "vcs-github", "github")
+	repo := assets.InsertTestProjectRepository(t, db, proj.Key, vcsProj.ID, "ovh/cds")
+
+	s, _ := assets.InsertService(t, db, t.Name()+"_VCS", sdk.TypeVCS)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	servicesClients := mock_services.NewMockClient(ctrl)
+	services.NewClient = func(_ []sdk.Service) services.Client {
+		return servicesClients
+	}
+	defer func() {
+		_ = services.Delete(db, s)
+		services.NewClient = services.NewDefaultClient
+	}()
+
+	// Called once by identifier and once by name
+	servicesClients.EXPECT().
+		DoJSONRequest(gomock.Any(), "GET", "/vcs/vcs-github/repos/ovh/cds/forks", gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(
+			func(ctx context.Context, method, path string, in interface{}, out interface{}, _ interface{}) (http.Header, int, error) {
+				*(out.(*[]sdk.VCSRepo)) = []sdk.VCSRepo{{Name: "cds", Fullname: "khopa/cds"}}
+				return nil, 200, nil
+			},
+		).Times(2)
+
+	callHandler := func(u *sdk.AuthentifiedUser, password, repositoryIdentifier string) *httptest.ResponseRecorder {
+		uri := api.Router.GetRouteV2("GET", api.getProjectRepositoryForksHandler, map[string]string{
+			"projectKey":           proj.Key,
+			"vcsIdentifier":        vcsProj.Name,
+			"repositoryIdentifier": repositoryIdentifier,
+		})
+		test.NotEmpty(t, uri)
+		req := assets.NewAuthentifiedRequest(t, u, password, "GET", uri, nil)
+		w := httptest.NewRecorder()
+		api.Router.Mux.ServeHTTP(w, req)
+		return w
+	}
+
+	for _, identifier := range []string{repo.ID, url.PathEscape(repo.Name)} {
+		w := callHandler(user1, pass, identifier)
+		require.Equal(t, 200, w.Code)
+		var forks []sdk.VCSRepo
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &forks))
+		require.Len(t, forks, 1)
+		require.Equal(t, "khopa/cds", forks[0].Fullname)
+	}
+
+	// No read permission on the project
+	require.Equal(t, 403, callHandler(userNoRight, passNoRight, repo.ID).Code)
+}

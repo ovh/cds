@@ -170,7 +170,7 @@ func (g *githubClient) UserHasWritePermission(ctx context.Context, fullname stri
 }
 
 func (g *githubClient) ToVCSRepo(repo Repository) sdk.VCSRepo {
-	return sdk.VCSRepo{
+	r := sdk.VCSRepo{
 		ID:                   strconv.Itoa(repo.ID),
 		Name:                 repo.Name,
 		Slug:                 strings.Split(repo.FullName, "/")[0],
@@ -183,4 +183,8 @@ func (g *githubClient) ToVCSRepo(repo Repository) sdk.VCSRepo {
 		HTTPCloneURL:         repo.CloneURL,
 		SSHCloneURL:          repo.SSHURL,
 	}
+	if repo.Parent != nil {
+		r.Parent = repo.Parent.FullName
+	}
+	return r
 }

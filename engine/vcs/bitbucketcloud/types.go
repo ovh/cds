@@ -253,6 +253,9 @@ type Repository struct {
 	Slug        string    `json:"slug"`
 	IsPrivate   bool      `json:"is_private"`
 	Description string    `json:"description"`
+	Parent      *struct {
+		FullName string `json:"full_name"`
+	} `json:"parent,omitempty"` // Set on forks only
 }
 
 type Status struct {

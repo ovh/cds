@@ -319,6 +319,7 @@ export class V2WorkflowRunManualRequest {
     sha: string;
     workflow_branch: string;
     workflow_tag: string;
+    target_repository: string;
     payload: any;
     job_inputs: { [key: string]: any };
 }

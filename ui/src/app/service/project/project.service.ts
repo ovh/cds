@@ -8,7 +8,7 @@ import { LoadOpts, Project, ProjectDistantRepository, ProjectRepository, Reposit
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, shareReplay } from 'rxjs/operators';
 import { RepositoryAnalysis } from "../../model/analysis.model";
-import { Branch, Tag } from "../../model/repositories.model";
+import { Branch, Repository, Tag } from "../../model/repositories.model";
 import { Entity, EntityType } from "../../model/entity.model";
 import { VCSProject } from 'app/model/vcs.model';
 
@@ -108,6 +108,11 @@ export class ProjectService {
     getVCSRepositoryTags(key: string, vcsName: string, repoName: string): Observable<Array<Tag>> {
         let encodedRepo = encodeURIComponent(repoName);
         return this._http.get<Array<Tag>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/tags`);
+    }
+
+    getVCSRepositoryForks(key: string, vcsName: string, repoName: string): Observable<Array<Repository>> {
+        let encodedRepo = encodeURIComponent(repoName);
+        return this._http.get<Array<Repository>>(`/v2/project/${key}/vcs/${vcsName}/repository/${encodedRepo}/forks`);
     }
 
     getVCSRepositories(key: string, vcsName: string): Observable<Array<ProjectRepository>> {
