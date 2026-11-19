@@ -210,6 +210,23 @@ func (c *client) WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdenti
 	return nil
 }
 
+func (c *client) WorkflowV2RunNumberGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) (*sdk.V2WorkflowRunNumber, error) {
+	var runNumber sdk.V2WorkflowRunNumber
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/run-number", projKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName)
+	if _, _, _, err := c.RequestJSON(ctx, "GET", path, nil, &runNumber); err != nil {
+		return nil, err
+	}
+	return &runNumber, nil
+}
+
+func (c *client) WorkflowV2RunNumberSet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string, value int64) error {
+	path := fmt.Sprintf("/v2/project/%s/vcs/%s/repository/%s/workflow/%s/run-number", projKey, url.PathEscape(vcsIdentifier), url.PathEscape(repoIdentifier), wkfName)
+	if _, _, _, err := c.RequestJSON(ctx, "PUT", path, sdk.V2WorkflowRunNumber{Value: value}, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkflowV2RunJobRetries(ctx context.Context, projectKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJob, error) {
 	var runJobs []sdk.V2WorkflowRunJob
 	path := fmt.Sprintf("/v2/project/%s/run/%s/job/%s/retry", projectKey, workflowRunID, jobRunID)

@@ -487,6 +487,8 @@ type WorkflowV2Client interface {
 	WorkflowV2VersionList(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) ([]sdk.V2WorkflowVersion, error)
 	WorkflowV2VersionGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) (*sdk.V2WorkflowVersion, error)
 	WorkflowV2VersionDelete(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName, version string) error
+	WorkflowV2RunNumberGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) (*sdk.V2WorkflowRunNumber, error)
+	WorkflowV2RunNumberSet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string, value int64) error
 	WorkflowV2RunJobRetries(ctx context.Context, projectKey, workflowRunID, jobRunID string) ([]sdk.V2WorkflowRunJob, error)
 }
 

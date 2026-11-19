@@ -870,6 +870,11 @@ type V2WorkflowRunManualResponse struct {
 	UIUrl         string `json:"ui_url"`
 }
 
+// V2WorkflowRunNumber is the current run number of a workflow: its next run gets Value+1.
+type V2WorkflowRunNumber struct {
+	Value int64 `json:"value" cli:"value"`
+}
+
 type SchedulerExecution struct {
 	SchedulerDef      V2WorkflowHook
 	NextExecutionTime int64
