@@ -91,25 +91,26 @@ func TestWorkflowRunNumber_SetMakesTheNextRunFollowIt(t *testing.T) {
 	require.Equal(t, int64(84), f.show(t))
 }
 
-func TestWorkflowRunNumber_RefusesANumberBelowTheHighestRun(t *testing.T) {
-	f := newRunNumberFixture(t)
-	db := f.db
-
-	for i := 0; i < 10; i++ {
-		_, err := workflow_v2.WorkflowRunNextNumber(db, f.repo.ID, f.workflow)
+// allocateRunNumbers moves the sequence of the fixture workflow up to n, as n triggered runs would.
+func (f runNumberFixture) allocateRunNumbers(t *testing.T, n int) {
+	for i := 0; i < n; i++ {
+		_, err := workflow_v2.WorkflowRunNextNumber(f.db, f.repo.ID, f.workflow)
 		require.NoError(t, err)
 	}
+}
+
+func (f runNumberFixture) insertRun(t *testing.T, workflow string, runNumber int64) {
 	wr := sdk.V2WorkflowRun{
 		ProjectKey:   f.proj.Key,
 		VCSServerID:  f.vcs.ID,
 		VCSServer:    f.vcs.Name,
 		RepositoryID: f.repo.ID,
 		Repository:   f.repo.Name,
-		WorkflowName: f.workflow,
+		WorkflowName: workflow,
 		WorkflowSha:  "123456",
 		WorkflowRef:  "refs/heads/master",
 		RunAttempt:   1,
-		RunNumber:    10,
+		RunNumber:    runNumber,
 		Started:      time.Now(),
 		LastModified: time.Now(),
 		Status:       sdk.V2WorkflowRunStatusSuccess,
@@ -117,7 +118,13 @@ func TestWorkflowRunNumber_RefusesANumberBelowTheHighestRun(t *testing.T) {
 		RunEvent:     sdk.V2WorkflowRunEvent{},
 		WorkflowData: sdk.V2WorkflowRunData{Workflow: sdk.V2Workflow{}},
 	}
-	require.NoError(t, workflow_v2.InsertRun(context.TODO(), db, &wr))
+	require.NoError(t, workflow_v2.InsertRun(context.TODO(), f.db, &wr))
+}
+
+func TestWorkflowRunNumber_RefusesANumberBelowTheHighestRun(t *testing.T) {
+	f := newRunNumberFixture(t)
+	f.allocateRunNumbers(t, 10)
+	f.insertRun(t, f.workflow, 10)
 
 	w := f.do(t, f.admin, f.adminPwd, "PUT", f.workflow, sdk.V2WorkflowRunNumber{Value: 5})
 	require.Equal(t, 400, w.Code, w.Body.String())
@@ -127,6 +134,40 @@ func TestWorkflowRunNumber_RefusesANumberBelowTheHighestRun(t *testing.T) {
 	w = f.do(t, f.admin, f.adminPwd, "PUT", f.workflow, sdk.V2WorkflowRunNumber{Value: 10})
 	require.Equal(t, 200, w.Code, w.Body.String())
 	require.Equal(t, int64(10), f.show(t))
+}
+
+func TestWorkflowRunNumber_CanGoBackDownToTheHighestRun(t *testing.T) {
+	f := newRunNumberFixture(t)
+	f.allocateRunNumbers(t, 20)
+	f.insertRun(t, f.workflow, 10)
+
+	w := f.do(t, f.admin, f.adminPwd, "PUT", f.workflow, sdk.V2WorkflowRunNumber{Value: 15})
+	require.Equal(t, 200, w.Code, w.Body.String())
+	require.Equal(t, int64(15), f.show(t))
+
+	next, err := workflow_v2.WorkflowRunNextNumber(f.db, f.repo.ID, f.workflow)
+	require.NoError(t, err)
+	require.Equal(t, int64(16), next)
+}
+
+func TestWorkflowRunNumber_IgnoresTheRunsOfOtherWorkflows(t *testing.T) {
+	f := newRunNumberFixture(t)
+	f.insertRun(t, sdk.RandomString(10), 50)
+
+	w := f.do(t, f.admin, f.adminPwd, "PUT", f.workflow, sdk.V2WorkflowRunNumber{Value: 5})
+	require.Equal(t, 200, w.Code, w.Body.String())
+	require.Equal(t, int64(5), f.show(t))
+}
+
+func TestWorkflowRunNumber_ManagersCanSet(t *testing.T) {
+	f := newRunNumberFixture(t)
+
+	manager, managerPwd := assets.InsertLambdaUser(t, f.db)
+	assets.InsertRBAcProject(t, f.db, sdk.ProjectRoleManage, f.proj.Key, *manager)
+
+	w := f.do(t, manager, managerPwd, "PUT", f.workflow, sdk.V2WorkflowRunNumber{Value: 83})
+	require.Equal(t, 200, w.Code, w.Body.String())
+	require.Equal(t, int64(83), f.show(t))
 }
 
 func TestWorkflowRunNumber_RefusesANegativeNumber(t *testing.T) {
