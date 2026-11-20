@@ -101,6 +101,42 @@ func WorkflowRunNextNumber(db gorp.SqlExecutor, repoID, workflowName string) (in
 	return i, nil
 }
 
+// LoadWorkflowRunNumber returns the current run number of a workflow, 0 if it never ran.
+func LoadWorkflowRunNumber(db gorp.SqlExecutor, repoID, workflowName string) (int64, error) {
+	i, err := db.SelectNullInt("SELECT current_val FROM v2_workflow_run_sequences WHERE repository_id = $1 AND workflow_name = $2", repoID, workflowName)
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	return i.Int64, nil
+}
+
+// LockWorkflowRunNumber locks the sequence row of a workflow until the end of the transaction, so no run number
+// can be allocated meanwhile; nothing is locked if the workflow never ran.
+func LockWorkflowRunNumber(db gorpmapper.SqlExecutorWithTx, repoID, workflowName string) error {
+	_, err := db.Exec("SELECT current_val FROM v2_workflow_run_sequences WHERE repository_id = $1 AND workflow_name = $2 FOR UPDATE", repoID, workflowName)
+	return sdk.WithStack(err)
+}
+
+// SetWorkflowRunNumber sets the current run number of a workflow, its next run gets value+1.
+func SetWorkflowRunNumber(db gorpmapper.SqlExecutorWithTx, repoID, workflowName string, value int64) error {
+	_, err := db.Exec(`
+		INSERT INTO v2_workflow_run_sequences(repository_id, workflow_name, current_val) VALUES ($1, $2, $3)
+		ON CONFLICT (repository_id, workflow_name) DO UPDATE SET current_val = EXCLUDED.current_val`, repoID, workflowName, value)
+	return sdk.WithStack(err)
+}
+
+// LoadMaxRunNumber returns the highest run number among the existing runs of a workflow, 0 if there is none.
+func LoadMaxRunNumber(db gorp.SqlExecutor, projectKey, vcsServerID, repoID, workflowName string) (int64, error) {
+	i, err := db.SelectInt(`
+		SELECT COALESCE(MAX(run_number), 0) FROM v2_workflow_run
+		WHERE project_key = $1 AND vcs_server_id = $2 AND repository_id = $3 AND workflow_name = $4`,
+		projectKey, vcsServerID, repoID, workflowName)
+	if err != nil {
+		return 0, sdk.WithStack(err)
+	}
+	return i, nil
+}
+
 func InsertRun(ctx context.Context, db gorpmapper.SqlExecutorWithTx, wr *sdk.V2WorkflowRun) error {
 	ctx, next := telemetry.Span(ctx, "workflow_v2.InsertRun")
 	defer next()

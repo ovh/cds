@@ -172,6 +172,17 @@ func LoadByRepository(ctx context.Context, db gorp.SqlExecutor, projectRepositor
 	return getEntities(ctx, db, query, opts...)
 }
 
+// ExistsByTypeAndName tells whether an entity of the given type and name exists on any ref of the repository.
+func ExistsByTypeAndName(db gorp.SqlExecutor, projectRepositoryID, entityType, name string) (bool, error) {
+	n, err := db.SelectInt(`
+		SELECT COUNT(1) FROM entity
+		WHERE project_repository_id = $1 AND type = $2 AND name = $3`, projectRepositoryID, entityType, name)
+	if err != nil {
+		return false, sdk.WithStack(err)
+	}
+	return n > 0, nil
+}
+
 // LoadHeadByTypeAndRef loads an entity by his repository, type and ref
 func LoadHeadByTypeAndRef(ctx context.Context, db gorp.SqlExecutor, projectRepositoryID string, t string, ref string, opts ...gorpmapping.GetAllOptionFunc) ([]sdk.Entity, error) {
 	query := gorpmapping.NewQuery(`

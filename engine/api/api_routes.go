@@ -533,6 +533,7 @@ func (api *API) InitRouter() {
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkerModelsV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workermodel/{workerModelName}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkerModelV2Handler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run", Scope(sdk.AuthConsumerScopeProject), r.POSTv2(api.postWorkflowRunV2Handler))
+	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/run-number", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkflowRunNumberHandler), r.PUTv2(api.putWorkflowRunNumberHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/version", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkflowVersionsHandler))
 	r.Handle("/v2/project/{projectKey}/vcs/{vcsIdentifier}/repository/{repositoryIdentifier}/workflow/{workflow}/version/{version}", Scope(sdk.AuthConsumerScopeProject), r.GETv2(api.getWorkflowVersionHandler), r.DELETEv2(api.deleteWorkflowVersionHandler))
 	r.Handle("/v2/project/{projectKey}/run", Scope(sdk.AuthConsumerScopeRun), r.GETv2(api.getWorkflowRunsSearchV2Handler))

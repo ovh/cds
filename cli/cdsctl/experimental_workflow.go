@@ -36,6 +36,7 @@ func experimentalWorkflow() *cobra.Command {
 		experimentalWorkflowJob(),
 		experimentalWorkflowResult(),
 		experimentalWorkflowVersion(),
+		experimentalWorkflowRunNumber(),
 	})
 }
 

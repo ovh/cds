@@ -6284,6 +6284,35 @@ func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunJobs(ctx, projKey, work
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobs", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunJobs), ctx, projKey, workflowRunID)
 }
 
+// WorkflowV2RunNumberGet mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunNumberGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) (*sdk.V2WorkflowRunNumber, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunNumberGet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunNumber)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunNumberGet indicates an expected call of WorkflowV2RunNumberGet.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunNumberGet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunNumberGet", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunNumberGet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+}
+
+// WorkflowV2RunNumberSet mocks base method.
+func (m *MockWorkflowV2Client) WorkflowV2RunNumberSet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string, value int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunNumberSet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2RunNumberSet indicates an expected call of WorkflowV2RunNumberSet.
+func (mr *MockWorkflowV2ClientMockRecorder) WorkflowV2RunNumberSet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunNumberSet", reflect.TypeOf((*MockWorkflowV2Client)(nil).WorkflowV2RunNumberSet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value)
+}
+
 // WorkflowV2RunResultList mocks base method.
 func (m *MockWorkflowV2Client) WorkflowV2RunResultList(ctx context.Context, projKey, runIdentifier string) ([]sdk.V2WorkflowRunResult, error) {
 	m.ctrl.T.Helper()
@@ -13074,6 +13103,35 @@ func (m *MockInterface) WorkflowV2RunJobs(ctx context.Context, projKey, workflow
 func (mr *MockInterfaceMockRecorder) WorkflowV2RunJobs(ctx, projKey, workflowRunID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunJobs", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunJobs), ctx, projKey, workflowRunID)
+}
+
+// WorkflowV2RunNumberGet mocks base method.
+func (m *MockInterface) WorkflowV2RunNumberGet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string) (*sdk.V2WorkflowRunNumber, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunNumberGet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+	ret0, _ := ret[0].(*sdk.V2WorkflowRunNumber)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WorkflowV2RunNumberGet indicates an expected call of WorkflowV2RunNumberGet.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunNumberGet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunNumberGet", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunNumberGet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName)
+}
+
+// WorkflowV2RunNumberSet mocks base method.
+func (m *MockInterface) WorkflowV2RunNumberSet(ctx context.Context, projKey, vcsIdentifier, repoIdentifier, wkfName string, value int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkflowV2RunNumberSet", ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WorkflowV2RunNumberSet indicates an expected call of WorkflowV2RunNumberSet.
+func (mr *MockInterfaceMockRecorder) WorkflowV2RunNumberSet(ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkflowV2RunNumberSet", reflect.TypeOf((*MockInterface)(nil).WorkflowV2RunNumberSet), ctx, projKey, vcsIdentifier, repoIdentifier, wkfName, value)
 }
 
 // WorkflowV2RunResultList mocks base method.
