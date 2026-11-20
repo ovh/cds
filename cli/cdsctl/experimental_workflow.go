@@ -218,6 +218,12 @@ var workflowRunHistoryCmd = cli.Command{
 		{
 			Name: "commit",
 		},
+		{
+			Name: "offset",
+		},
+		{
+			Name: "limit",
+		},
 	},
 	Mcp: true,
 }
@@ -228,6 +234,24 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	repoId := v.GetString("repo_identifier")
 	wkfName := v.GetString("workflow_name")
 	commit := v.GetString("commit")
+
+	offset, err := v.GetInt64("offset")
+	if err != nil {
+		return nil, err
+	}
+	limit, err := v.GetInt64("limit")
+	if err != nil {
+		return nil, err
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	if limit < 0 {
+		limit = 0
+	}
+	if limit > 100 {
+		limit = 100
+	}
 
 	vcsName := ""
 	// If vcsId looks like a UUID, resolve it to the VCS name.
@@ -277,6 +301,12 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 	if commit != "" {
 		mods = append(mods, cdsclient.WithQueryParameter("commit", commit))
 	}
+	if offset > 0 {
+		mods = append(mods, cdsclient.WithQueryParameter("offset", fmt.Sprintf("%d", offset)))
+	}
+	if limit > 0 {
+		mods = append(mods, cdsclient.WithQueryParameter("limit", fmt.Sprintf("%d", limit)))
+	}
 
 	runs, err := client.WorkflowV2RunSearch(context.Background(), projKey, mods...)
 	if err != nil {
@@ -291,7 +321,7 @@ func workflowRunHistoryFunc(v cli.Values) (cli.ListResult, error) {
 		WorkflowName string                  `json:"workflow_name" cli:"workflow_name"`
 		User         string                  `json:"user" cli:"user"`
 		Status       sdk.V2WorkflowRunStatus `json:"status" cli:"status"`
-		RunNumber    int64                   `json:"run_number" cli:"run_number" `
+		RunNumber    int64                   `json:"run_number" cli:"run_number"`
 		Started      time.Time               `json:"started" cli:"started"`
 		LastModified time.Time               `json:"last_modified" cli:"last_modified"`
 		RefName      string                  `json:"ref_name" cli:"ref_name"`
