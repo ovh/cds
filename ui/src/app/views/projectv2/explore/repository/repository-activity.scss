@@ -274,6 +274,8 @@ nz-alert.events-error {
         &.Error,
         &.Error .note,
         &.stuck .note { color: #ff4d4f; }
+
+        &.Warning .note { color: #faad14; }
       }
 
       .note {

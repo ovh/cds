@@ -134,6 +134,73 @@ func TestTriggerWorkflow_EntityOwnerIdentifiesTheUser(t *testing.T) {
 	}
 }
 
+func TestTriggerWorkflow_InsecureDistantWorkflowRunsWithoutInitiator(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	ctx := context.TODO()
+	mock := s.Client.(*mock_cdsclient.MockInterface)
+
+	distantHook := func(name string, insecure bool) sdk.HookRepositoryEventWorkflow {
+		return sdk.HookRepositoryEventWorkflow{
+			Type:                 sdk.WorkflowHookTypeRepository,
+			Status:               sdk.HookEventWorkflowStatusScheduled,
+			ProjectKey:           "PROJ",
+			VCSIdentifier:        "github",
+			RepositoryIdentifier: "ovh/cds",
+			WorkflowName:         name,
+			Ref:                  "refs/heads/master",
+			Commit:               "123456",
+			TargetCommit:         "abcdef",
+			Data:                 sdk.V2WorkflowHookData{InsecureSkipSignatureVerify: insecure},
+		}
+	}
+	hre := sdk.HookRepositoryEvent{
+		UUID:           sdk.UUID(),
+		VCSServerName:  "forgejo",
+		RepositoryName: "team/engine",
+		EventName:      sdk.WorkflowHookEventNamePush,
+		ExtractData: sdk.HookRepositoryEventExtractData{
+			Ref:    "refs/heads/master",
+			Commit: "abcdef",
+		},
+		WorkflowHooks: []sdk.HookRepositoryEventWorkflow{
+			distantHook("insecure-workflow", true),
+			distantHook("secure-workflow", false),
+		},
+	}
+
+	// Verified signature whose signer maps to no CDS user
+	reason := "forgejo user robot-team-engine is not linked to a CDS user"
+	mock.EXPECT().RetrieveHookEventUser(gomock.Any(), gomock.Any()).
+		Return(sdk.HookRetrieveUserResponse{SignKey: "ABCDEF", Error: reason}, nil).Times(1)
+	mock.EXPECT().WorkflowV2RunFromHook(gomock.Any(), "PROJ", "github", "ovh/cds", "insecure-workflow", gomock.Any(), gomock.Any()).
+		Return(&sdk.V2WorkflowRun{ID: "run-id", RunNumber: 1}, nil).Times(1)
+
+	require.NoError(t, s.triggerWorkflows(ctx, &hre))
+	require.Equal(t, sdk.HookEventWorkflowStatusWarning, hre.WorkflowHooks[0].Status)
+	require.Equal(t, "run attributed to the workflow owner (insecure_skip_signature_verify): "+reason, hre.WorkflowHooks[0].Error)
+	require.Equal(t, "run-id", hre.WorkflowHooks[0].RunID)
+	require.Equal(t, sdk.HookEventWorkflowStatusSkipped, hre.WorkflowHooks[1].Status)
+	require.Equal(t, reason, hre.WorkflowHooks[1].Error)
+	require.Equal(t, sdk.HookEventStatusDone, hre.Status)
+	require.Empty(t, hre.LastError)
+	require.Equal(t, "ABCDEF", hre.SignKey)
+
+	// Committer identified: the flag played no part, no warning
+	identified := hre
+	identified.UUID = sdk.UUID()
+	identified.Status = ""
+	identified.Initiator = &sdk.V2Initiator{UserID: "1234567890"}
+	identified.WorkflowHooks = []sdk.HookRepositoryEventWorkflow{distantHook("insecure-workflow", true)}
+	mock.EXPECT().WorkflowV2RunFromHook(gomock.Any(), "PROJ", "github", "ovh/cds", "insecure-workflow", gomock.Any(), gomock.Any()).
+		Return(&sdk.V2WorkflowRun{ID: "run-id-2", RunNumber: 2}, nil).Times(1)
+
+	require.NoError(t, s.triggerWorkflows(ctx, &identified))
+	require.Equal(t, sdk.HookEventWorkflowStatusDone, identified.WorkflowHooks[0].Status)
+	require.Empty(t, identified.WorkflowHooks[0].Error)
+}
+
 func TestTriggerWorkflow_SkipCIOnlyAppliesToPushAndPullRequest(t *testing.T) {
 	log.Factory = log.NewTestingWrapper(t)
 	s, cancel := setupTestHookService(t)

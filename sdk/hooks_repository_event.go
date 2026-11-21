@@ -75,6 +75,8 @@ const (
 	HookEventWorkflowStatusSkipped   = "Skipped"
 	HookEventWorkflowStatusError     = "Error"
 	HookEventWorkflowStatusDone      = "Done"
+	// Run started without an identified initiator, thanks to insecure_skip_signature_verify
+	HookEventWorkflowStatusWarning = "Warning"
 )
 
 type HookEventCallback struct {
@@ -304,7 +306,8 @@ type HookRepositoryEventWorkflow struct {
 }
 
 func (wh *HookRepositoryEventWorkflow) IsTerminated() bool {
-	return wh.Status == HookEventWorkflowStatusError || wh.Status == HookEventWorkflowStatusSkipped || wh.Status == HookEventWorkflowStatusDone
+	return wh.Status == HookEventWorkflowStatusError || wh.Status == HookEventWorkflowStatusSkipped ||
+		wh.Status == HookEventWorkflowStatusDone || wh.Status == HookEventWorkflowStatusWarning
 }
 
 type HookRepositoryEventExtractData struct {
