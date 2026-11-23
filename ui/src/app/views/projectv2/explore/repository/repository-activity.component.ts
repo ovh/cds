@@ -197,9 +197,9 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Why a workflow shows no run, in a few words; nothing for a triggered one. The red says a failed
-     * one did not start. One still scheduled once the event is settled never will: its git information
-     * could not be read, or the event failed before reaching it.
+     * Why a workflow shows no run, in a few words; nothing for a triggered one, unless it ran without an
+     * identified author. The red says a failed one did not start. One still scheduled once the event is
+     * settled never will: its git information could not be read, or the event failed before reaching it.
      */
     workflowNote(row: ActivityRow, w: RepositoryHookWorkflow): string {
         switch (w.status) {
@@ -212,6 +212,7 @@ export class ProjectV2RepositoryActivityComponent implements OnInit, OnDestroy {
                     : 'not started';
             case HookEventWorkflowStatus.Error: return cleanErrorMessage(w.error) || 'did not start';
             case HookEventWorkflowStatus.Skipped: return w.error ? `skipped: ${w.error}` : 'skipped';
+            case HookEventWorkflowStatus.Warning: return cleanErrorMessage(w.error) || null;
             default: return null;
         }
     }
