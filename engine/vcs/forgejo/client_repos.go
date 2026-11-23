@@ -3,6 +3,7 @@ package forgejo
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -45,7 +46,11 @@ func (f *forgejoClient) RepoByFullname(ctx context.Context, fullname string) (sd
 	}
 
 	var repo Repository
-	if _, err = f.client.get(ctx, fmt.Sprintf("/repos/%s/%s", owner, repoName), &repo); err != nil {
+	resp, err := f.client.get(ctx, fmt.Sprintf("/repos/%s/%s", owner, repoName), &repo)
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return sdk.VCSRepo{}, sdk.NewError(sdk.ErrRepoNotFound, err)
+		}
 		return sdk.VCSRepo{}, err
 	}
 	return f.ToVCSRepo(&repo), nil
