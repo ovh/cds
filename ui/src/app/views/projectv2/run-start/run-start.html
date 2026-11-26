@@ -21,14 +21,18 @@
   <nz-form-item>
     <nz-form-label [nzSpan]="6" nzFor="workflow">Workflow</nz-form-label>
     <nz-form-control [nzSpan]="14" [nzValidateStatus]="noWorkflowFound ? 'warning' : ''"
-      nzWarningTip="No workflow found for the current branch, fallback on the default one.">
+      nzWarningTip="No workflow found for the current branch, fallback on the default one."
+      [nzExtra]="originRepository && !forkOpened ? forkLink : null">
       <nz-select nzShowSearch nzAllowClear nzPlaceHolder="Select a workflow" formControlName="workflow" id="workflow"
         (ngModelChange)="workflowChange($event)">
         <nz-option *ngFor="let workflow of workflows" [nzLabel]="workflow" [nzValue]="workflow"></nz-option>
       </nz-select>
+      <ng-template #forkLink>
+        <a role="button" tabindex="0" (click)="openFork()" (keydown.enter)="openFork()">Run from a fork</a>
+      </ng-template>
     </nz-form-control>
   </nz-form-item>
-  <nz-form-item *ngIf="originRepository">
+  <nz-form-item *ngIf="originRepository && forkOpened">
     <nz-form-label [nzSpan]="6" nzFor="fork">Fork</nz-form-label>
     <nz-form-control [nzSpan]="14">
       <input nz-input type="text" id="fork" formControlName="fork" [nzAutocomplete]="forkAutocomplete"
@@ -36,6 +40,8 @@
         (blur)="forkChange()" (keydown.enter)="forkEnter($event)" />
       <nz-autocomplete #forkAutocomplete [nzDefaultActiveFirstOption]="false" (selectionChange)="forkChange()">
         <nz-auto-option *ngIf="forksLoading" nzDisabled>Loading forks…</nz-auto-option>
+        <nz-auto-option *ngIf="!forksLoading && forksError" nzDisabled>Unable to list forks, the fork name can still be typed</nz-auto-option>
+        <nz-auto-option *ngIf="!forksLoading && !forksError && forks.length === 0" nzDisabled>No fork found</nz-auto-option>
         <nz-auto-option *ngFor="let fork of filteredForks" [nzValue]="fork.fullname">{{ fork.fullname }}</nz-auto-option>
       </nz-autocomplete>
     </nz-form-control>
