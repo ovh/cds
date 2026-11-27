@@ -132,265 +132,203 @@ func Delete(_ context.Context, db gorpmapper.SqlExecutorWithTx, rb sdk.RBAC) err
 	return nil
 }
 
-// LoadAllRBACByUserID returns all RBAC rules where the given user is referenced,
-// either directly or through one of their groups, across all scopes
-// (global, project, region, workflow, variableset).
-func LoadAllRBACByUserID(ctx context.Context, db gorp.SqlExecutor, userID string, opts ...LoadOptionFunc) ([]sdk.RBAC, error) {
-	rbacIDs := make(sdk.StringSlice, 0)
+// LoadEntriesByUserID returns, gathered in a single RBAC, only the entries that name the given user,
+// directly or through one of their groups. Entries granted to all users are not included.
+func LoadEntriesByUserID(ctx context.Context, db gorp.SqlExecutor, userID string) (sdk.RBAC, error) {
+	var ids entryIDs
 
-	// --- Global ---
-	rbacGlobalUsers, err := loadRBACGlobalUsersByUserID(ctx, db, userID)
+	globalUsers, err := loadRBACGlobalUsersByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacGlobalGroups, err := loadRBACGlobalGroupsByUserID(ctx, db, userID)
+	for _, x := range globalUsers {
+		ids.global = append(ids.global, x.RbacGlobalID)
+	}
+	globalGroups, err := loadRBACGlobalGroupsByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	globalIDs := make(sdk.Int64Slice, 0)
-	for _, x := range rbacGlobalUsers {
-		globalIDs = append(globalIDs, x.RbacGlobalID)
-	}
-	for _, x := range rbacGlobalGroups {
-		globalIDs = append(globalIDs, x.RbacGlobalID)
-	}
-	globalIDs.Unique()
-	if len(globalIDs) > 0 {
-		globals, err := loadRBACGlobalsByIDs(ctx, db, globalIDs)
-		if err != nil {
-			return nil, err
-		}
-		for _, g := range globals {
-			rbacIDs = append(rbacIDs, g.RbacID)
-		}
+	for _, x := range globalGroups {
+		ids.global = append(ids.global, x.RbacGlobalID)
 	}
 
-	// --- Project ---
-	rbacProjectUsers, err := loadRBACProjectUsersByUserID(ctx, db, userID)
+	projectUsers, err := loadRBACProjectUsersByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacProjectGroups, err := loadRBACProjectGroupsByUserID(ctx, db, userID)
+	for _, x := range projectUsers {
+		ids.projects = append(ids.projects, x.RbacProjectID)
+	}
+	projectGroups, err := loadRBACProjectGroupsByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacProjectIDs := make(sdk.Int64Slice, 0)
-	for _, x := range rbacProjectUsers {
-		rbacProjectIDs = append(rbacProjectIDs, x.RbacProjectID)
-	}
-	for _, x := range rbacProjectGroups {
-		rbacProjectIDs = append(rbacProjectIDs, x.RbacProjectID)
-	}
-	rbacProjectIDs.Unique()
-	if len(rbacProjectIDs) > 0 {
-		projects, err := loadRBACProjectsByIDs(ctx, db, rbacProjectIDs)
-		if err != nil {
-			return nil, err
-		}
-		for _, p := range projects {
-			rbacIDs = append(rbacIDs, p.RbacID)
-		}
+	for _, x := range projectGroups {
+		ids.projects = append(ids.projects, x.RbacProjectID)
 	}
 
-	// --- Region ---
-	rbacRegionUsers, err := loadRBACRegionUsersByUserID(ctx, db, userID)
+	regionUsers, err := loadRBACRegionUsersByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacRegionGroups, err := loadRBACRegionGroupsByUserID(ctx, db, userID)
+	for _, x := range regionUsers {
+		ids.regions = append(ids.regions, x.RbacRegionID)
+	}
+	regionGroups, err := loadRBACRegionGroupsByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacRegionIDs := make(sdk.Int64Slice, 0)
-	for _, x := range rbacRegionUsers {
-		rbacRegionIDs = append(rbacRegionIDs, x.RbacRegionID)
-	}
-	for _, x := range rbacRegionGroups {
-		rbacRegionIDs = append(rbacRegionIDs, x.RbacRegionID)
-	}
-	rbacRegionIDs.Unique()
-	if len(rbacRegionIDs) > 0 {
-		regions, err := loadRBACRegionsByIDs(ctx, db, rbacRegionIDs)
-		if err != nil {
-			return nil, err
-		}
-		for _, r := range regions {
-			rbacIDs = append(rbacIDs, r.RbacID)
-		}
+	for _, x := range regionGroups {
+		ids.regions = append(ids.regions, x.RbacRegionID)
 	}
 
-	// --- Workflow ---
-	rbacWorkflowUsers, err := loadRBACWorkflowUsersByUserID(ctx, db, userID)
+	workflowUsers, err := loadRBACWorkflowUsersByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacWorkflowGroups, err := loadRBACWorkflowGroupsByUserID(ctx, db, userID)
+	for _, x := range workflowUsers {
+		ids.workflows = append(ids.workflows, x.RbacWorkflowID)
+	}
+	workflowGroups, err := loadRBACWorkflowGroupsByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacWorkflowIDs := make(sdk.Int64Slice, 0)
-	for _, x := range rbacWorkflowUsers {
-		rbacWorkflowIDs = append(rbacWorkflowIDs, x.RbacWorkflowID)
-	}
-	for _, x := range rbacWorkflowGroups {
-		rbacWorkflowIDs = append(rbacWorkflowIDs, x.RbacWorkflowID)
-	}
-	rbacWorkflowIDs.Unique()
-	if len(rbacWorkflowIDs) > 0 {
-		workflows, err := loadRBACWorkflowsByIDs(ctx, db, rbacWorkflowIDs)
-		if err != nil {
-			return nil, err
-		}
-		for _, w := range workflows {
-			rbacIDs = append(rbacIDs, w.RbacID)
-		}
+	for _, x := range workflowGroups {
+		ids.workflows = append(ids.workflows, x.RbacWorkflowID)
 	}
 
-	// --- VariableSet ---
-	rbacVSUsers, err := loadRBACVariableSetUsersByUserID(ctx, db, userID)
+	vsUsers, err := loadRBACVariableSetUsersByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacVSGroups, err := loadRBACVariableSetGroupsByUserID(ctx, db, userID)
+	for _, x := range vsUsers {
+		ids.variableSets = append(ids.variableSets, x.RbacVariableSetID)
+	}
+	vsGroups, err := loadRBACVariableSetGroupsByUserID(ctx, db, userID)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacVSIDs := make(sdk.Int64Slice, 0)
-	for _, x := range rbacVSUsers {
-		rbacVSIDs = append(rbacVSIDs, x.RbacVariableSetID)
-	}
-	for _, x := range rbacVSGroups {
-		rbacVSIDs = append(rbacVSIDs, x.RbacVariableSetID)
-	}
-	rbacVSIDs.Unique()
-	if len(rbacVSIDs) > 0 {
-		variableSets, err := loadRBACVariableSetsByIDs(ctx, db, rbacVSIDs)
-		if err != nil {
-			return nil, err
-		}
-		for _, vs := range variableSets {
-			rbacIDs = append(rbacIDs, vs.RbacID)
-		}
+	for _, x := range vsGroups {
+		ids.variableSets = append(ids.variableSets, x.RbacVariableSetID)
 	}
 
-	rbacIDs.Unique()
-	if len(rbacIDs) == 0 {
-		return nil, nil
-	}
-	return LoadRBACByIDs(ctx, db, rbacIDs, opts...)
+	return loadEntriesByIDs(ctx, db, ids)
 }
 
-// LoadAllRBACByGroupID returns all RBAC rules where the given group is referenced
-// across all scopes (global, project, region, workflow, variableset).
-func LoadAllRBACByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64, opts ...LoadOptionFunc) ([]sdk.RBAC, error) {
+// LoadEntriesByGroupID returns, gathered in a single RBAC, only the entries that name the given group.
+func LoadEntriesByGroupID(ctx context.Context, db gorp.SqlExecutor, groupID int64) (sdk.RBAC, error) {
+	var ids entryIDs
 	groupIDs := []int64{groupID}
-	rbacIDs := make(sdk.StringSlice, 0)
 
-	// --- Global ---
-	rbacGlobalGroups, err := loadRBACGlobalGroupsByGroupIDs(ctx, db, groupIDs)
+	globalGroups, err := loadRBACGlobalGroupsByGroupIDs(ctx, db, groupIDs)
 	if err != nil {
-		return nil, err
+		return sdk.RBAC{}, err
 	}
-	rbacGlobalIDs := make(sdk.Int64Slice, 0, len(rbacGlobalGroups))
-	for _, x := range rbacGlobalGroups {
-		rbacGlobalIDs = append(rbacGlobalIDs, x.RbacGlobalID)
+	for _, x := range globalGroups {
+		ids.global = append(ids.global, x.RbacGlobalID)
 	}
-	rbacGlobalIDs.Unique()
-	if len(rbacGlobalIDs) > 0 {
-		globals, err := loadRBACGlobalsByIDs(ctx, db, rbacGlobalIDs)
+
+	projectGroups, err := loadRBACProjectGroupsByGroupIDs(ctx, db, groupIDs)
+	if err != nil {
+		return sdk.RBAC{}, err
+	}
+	for _, x := range projectGroups {
+		ids.projects = append(ids.projects, x.RbacProjectID)
+	}
+
+	regionGroups, err := loadRBACRegionGroupsByGroupIDs(ctx, db, groupIDs)
+	if err != nil {
+		return sdk.RBAC{}, err
+	}
+	for _, x := range regionGroups {
+		ids.regions = append(ids.regions, x.RbacRegionID)
+	}
+
+	workflowGroups, err := loadRBACWorkflowGroupsByGroupIDs(ctx, db, groupIDs)
+	if err != nil {
+		return sdk.RBAC{}, err
+	}
+	for _, x := range workflowGroups {
+		ids.workflows = append(ids.workflows, x.RbacWorkflowID)
+	}
+
+	vsGroups, err := loadRBACVariableSetGroupsByGroupIDs(ctx, db, groupIDs)
+	if err != nil {
+		return sdk.RBAC{}, err
+	}
+	for _, x := range vsGroups {
+		ids.variableSets = append(ids.variableSets, x.RbacVariableSetID)
+	}
+
+	return loadEntriesByIDs(ctx, db, ids)
+}
+
+type entryIDs struct {
+	global, projects, regions, workflows, variableSets []int64
+}
+
+// loadEntriesByIDs loads the given entries without their users and groups.
+func loadEntriesByIDs(ctx context.Context, db gorp.SqlExecutor, ids entryIDs) (sdk.RBAC, error) {
+	var rb sdk.RBAC
+
+	if len(ids.global) > 0 {
+		globals, err := loadRBACGlobalsByIDs(ctx, db, ids.global)
 		if err != nil {
-			return nil, err
+			return rb, err
 		}
 		for _, g := range globals {
-			rbacIDs = append(rbacIDs, g.RbacID)
+			rb.Global = append(rb.Global, g.RBACGlobal)
 		}
 	}
 
-	// --- Project ---
-	rbacProjectGroups, err := loadRBACProjectGroupsByGroupIDs(ctx, db, groupIDs)
-	if err != nil {
-		return nil, err
-	}
-	rbacProjectIDs := make(sdk.Int64Slice, 0, len(rbacProjectGroups))
-	for _, x := range rbacProjectGroups {
-		rbacProjectIDs = append(rbacProjectIDs, x.RbacProjectID)
-	}
-	rbacProjectIDs.Unique()
-	if len(rbacProjectIDs) > 0 {
-		projects, err := loadRBACProjectsByIDs(ctx, db, rbacProjectIDs)
+	if len(ids.projects) > 0 {
+		projects, err := loadRBACProjectsByIDs(ctx, db, ids.projects)
 		if err != nil {
-			return nil, err
+			return rb, err
+		}
+		projectKeys, err := loadAllRBACProjectKeys(ctx, db, ids.projects)
+		if err != nil {
+			return rb, err
+		}
+		keysByProjectID := make(map[int64][]string)
+		for _, k := range projectKeys {
+			keysByProjectID[k.RbacProjectID] = append(keysByProjectID[k.RbacProjectID], k.ProjectKey)
 		}
 		for _, p := range projects {
-			rbacIDs = append(rbacIDs, p.RbacID)
+			p.RBACProjectKeys = keysByProjectID[p.ID]
+			rb.Projects = append(rb.Projects, p.RBACProject)
 		}
 	}
 
-	// --- Region ---
-	rbacRegionGroups, err := loadRBACRegionGroupsByGroupIDs(ctx, db, groupIDs)
-	if err != nil {
-		return nil, err
-	}
-	rbacRegionIDs := make(sdk.Int64Slice, 0, len(rbacRegionGroups))
-	for _, x := range rbacRegionGroups {
-		rbacRegionIDs = append(rbacRegionIDs, x.RbacRegionID)
-	}
-	rbacRegionIDs.Unique()
-	if len(rbacRegionIDs) > 0 {
-		regions, err := loadRBACRegionsByIDs(ctx, db, rbacRegionIDs)
+	if len(ids.regions) > 0 {
+		regions, err := loadRBACRegionsByIDs(ctx, db, ids.regions)
 		if err != nil {
-			return nil, err
+			return rb, err
 		}
-		for _, r := range regions {
-			rbacIDs = append(rbacIDs, r.RbacID)
-		}
+		rb.Regions = regions
 	}
 
-	// --- Workflow ---
-	rbacWorkflowGroups, err := loadRBACWorkflowGroupsByGroupIDs(ctx, db, groupIDs)
-	if err != nil {
-		return nil, err
-	}
-	rbacWorflowIDs := make(sdk.Int64Slice, 0, len(rbacWorkflowGroups))
-	for _, x := range rbacWorkflowGroups {
-		rbacWorflowIDs = append(rbacWorflowIDs, x.RbacWorkflowID)
-	}
-	rbacWorflowIDs.Unique()
-	if len(rbacWorflowIDs) > 0 {
-		workflows, err := loadRBACWorkflowsByIDs(ctx, db, rbacWorflowIDs)
+	if len(ids.workflows) > 0 {
+		workflows, err := loadRBACWorkflowsByIDs(ctx, db, ids.workflows)
 		if err != nil {
-			return nil, err
+			return rb, err
 		}
 		for _, w := range workflows {
-			rbacIDs = append(rbacIDs, w.RbacID)
+			rb.Workflows = append(rb.Workflows, w.RBACWorkflow)
 		}
 	}
 
-	// --- VariableSet ---
-	rbacVSGroups, err := loadRBACVariableSetGroupsByGroupIDs(ctx, db, groupIDs)
-	if err != nil {
-		return nil, err
-	}
-	rbacVSIDs := make(sdk.Int64Slice, 0, len(rbacVSGroups))
-	for _, x := range rbacVSGroups {
-		rbacVSIDs = append(rbacVSIDs, x.RbacVariableSetID)
-	}
-	rbacVSIDs.Unique()
-	if len(rbacVSIDs) > 0 {
-		variableSets, err := loadRBACVariableSetsByIDs(ctx, db, rbacVSIDs)
+	if len(ids.variableSets) > 0 {
+		variableSets, err := loadRBACVariableSetsByIDs(ctx, db, ids.variableSets)
 		if err != nil {
-			return nil, err
+			return rb, err
 		}
 		for _, vs := range variableSets {
-			rbacIDs = append(rbacIDs, vs.RbacID)
+			rb.VariableSets = append(rb.VariableSets, vs.RBACVariableSet)
 		}
 	}
 
-	rbacIDs.Unique()
-	if len(rbacIDs) == 0 {
-		return nil, nil
-	}
-	return LoadRBACByIDs(ctx, db, rbacIDs, opts...)
+	return rb, nil
 }
 
 func getAll(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query, opts ...LoadOptionFunc) ([]sdk.RBAC, error) {
