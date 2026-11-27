@@ -220,6 +220,16 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.refreshRuns', (item?: WorkflowItem) => {
         if (item) { workflowViewProvider.refreshRuns(item); }
     }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('vscode-cds.loadMoreRuns', async (item?: WorkflowItem) => {
+        if (!(item instanceof WorkflowItem)) { return; }
+        try {
+            await workflowViewProvider.loadMore(item);
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to load more runs: ${(e as Error).message}`);
+        }
+    }));
+
 }
 
 async function currentGitBranch(cwd?: string): Promise<string> {

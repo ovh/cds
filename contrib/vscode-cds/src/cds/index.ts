@@ -177,13 +177,24 @@ export class CDS {
         vcsName: string,
         repoId: string,
         workflowName: string,
-        limit = 15,
+        opts?: {
+            offset?: number;
+            limit?: number;
+        },
     ): Promise<CdsWorkflowRun[]> {
-        const out = await CDS.getInstance().runCtl(
+        const args = [
             "experimental", "workflow", "history",
             projectKey, vcsName, repoId, workflowName,
             "--format", "json",
-        );
+        ];
+        if (opts?.offset !== undefined) {
+            args.push("--offset", String(opts.offset));
+        }
+        if (opts?.limit !== undefined) {
+            args.push("--limit", String(opts.limit));
+        }
+
+        const out = await CDS.getInstance().runCtl(...args);
         let items: Record<string, any>[];
         try {
             items = JSON.parse(out);
@@ -191,9 +202,18 @@ export class CDS {
             Journal.logError(new Error(`getWorkflowHistory: failed to parse JSON output`));
             return [];
         }
-        return items.slice(0, limit).map((r) => ({
+        return items.map((r) => CDS.mapWorkflowRun(r, projectKey, workflowName));
+    }
+
+    /** Normalize a workflow history run. */
+    private static mapWorkflowRun(
+        r: Record<string, any>,
+        projectKey: string,
+        workflowName: string,
+    ): CdsWorkflowRun {
+        return {
             id: r["id"] ?? "",
-            runNumber: parseInt(r["run_number"] ?? r["runnumber"] ?? "0", 10),
+            runNumber: parseInt(String(r["run_number"] ?? r["runnumber"] ?? "0"), 10),
             status: r["status"] ?? "",
             started: r["started"] ?? r["start"] ?? r["last_modified"] ?? "",
             workflowName: r["workflow_name"] ?? r["workflowname"] ?? workflowName,
@@ -201,7 +221,7 @@ export class CDS {
             username: r["user"] ?? r["username"] ?? "",
             ref: r["ref_name"] ?? "",
             commit: r["commit"] ?? "",
-        }));
+        };
     }
 
     /**
