@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/rockbears/log"
@@ -79,6 +80,16 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		}
 	}
 
+	// Conclusion of the parent run, checked against the status filter of workflow-run hooks
+	var parentRunStatus string
+	if hre.EventName == sdk.WorkflowHookEventNameWorkflowRun && len(hre.Body) > 0 {
+		var parentRun sdk.HookWorkflowRunEventRequest
+		if err := json.Unmarshal(hre.Body, &parentRun); err != nil {
+			return sdk.WithStack(err)
+		}
+		parentRunStatus = parentRun.WorkflowRun.Conclusion
+	}
+
 	for i := range hre.WorkflowHooks {
 		wh := &hre.WorkflowHooks[i]
 		initiator := hre.Initiator
@@ -96,6 +107,14 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 		// Only the signature check skip lets this hook run; the API attributes the run to the workflow owner
 		insecureTrigger := initiator.IsUnknown()
 		if wh.Status == sdk.HookEventWorkflowStatusScheduled {
+			// A workflow-run hook only reacts to the parent run statuses it lists, any status if none
+			canTriggerWithRunStatus := true
+			if wh.Type == string(sdk.WorkflowHookTypeWorkflowRun) && len(wh.Data.WorkflowRunStatus) > 0 {
+				canTriggerWithRunStatus = slices.ContainsFunc(wh.Data.WorkflowRunStatus, func(s string) bool {
+					return strings.EqualFold(s, parentRunStatus)
+				})
+			}
+
 			// Check path filter
 			canTriggerWithChangeSet := false
 			if len(wh.PathFilters) > 0 {
@@ -149,9 +168,11 @@ func (s *Service) triggerWorkflows(ctx context.Context, hre *sdk.HookRepositoryE
 				}
 			}
 
-			if !canTriggerWithChangeSet || !canTriggerWithCommitMessage {
+			if !canTriggerWithRunStatus || !canTriggerWithChangeSet || !canTriggerWithCommitMessage {
 				wh.Status = sdk.HookEventWorkflowStatusSkipped
 				switch {
+				case !canTriggerWithRunStatus:
+					wh.Error = fmt.Sprintf("workflow run status %s does not match status filter", parentRunStatus)
 				case !canTriggerWithChangeSet && !canTriggerWithCommitMessage:
 					wh.Error = "no file matches path filters and commit message does not match commit filter"
 				case !canTriggerWithChangeSet:

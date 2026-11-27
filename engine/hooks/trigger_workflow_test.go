@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/rockbears/log"
@@ -257,6 +258,83 @@ func TestTriggerWorkflow_SkipCIOnlyAppliesToPushAndPullRequest(t *testing.T) {
 			if tt.wantSkipped {
 				require.Equal(t, sdk.HookEventWorkflowStatusSkipped, hre.WorkflowHooks[0].Status)
 				require.Equal(t, "commit message does not match commit filter or contains a skip CI directive", hre.WorkflowHooks[0].Error)
+			} else {
+				require.Equal(t, sdk.HookEventWorkflowStatusDone, hre.WorkflowHooks[0].Status)
+			}
+		})
+	}
+}
+
+func TestTriggerWorkflow_WorkflowRunStatusFilter(t *testing.T) {
+	log.Factory = log.NewTestingWrapper(t)
+	s, cancel := setupTestHookService(t)
+	defer cancel()
+	ctx := context.TODO()
+	mock := s.Client.(*mock_cdsclient.MockInterface)
+
+	tests := []struct {
+		name         string
+		parentStatus sdk.V2WorkflowRunStatus
+		statusFilter []string
+		wantSkipped  bool
+	}{
+		{"success matches", sdk.V2WorkflowRunStatusSuccess, []string{"Success"}, false},
+		{"fail does not match", sdk.V2WorkflowRunStatusFail, []string{"Success"}, true},
+		{"filter is case insensitive", sdk.V2WorkflowRunStatusSuccess, []string{"success"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Body of the event as the outgoing hook builds it from the terminated parent run
+			body, err := json.Marshal(sdk.HookWorkflowRunEventRequest{
+				WorkflowRun: sdk.HookWorkflowRunEventRequestWorkflowRun{Conclusion: string(tt.parentStatus)},
+			})
+			require.NoError(t, err)
+
+			hre := sdk.HookRepositoryEvent{
+				UUID:           sdk.UUID(),
+				VCSServerName:  "github",
+				RepositoryName: "ovh/cds",
+				EventName:      sdk.WorkflowHookEventNameWorkflowRun,
+				Body:           body,
+				ExtractData: sdk.HookRepositoryEventExtractData{
+					Ref:    "refs/heads/master",
+					Commit: "123456",
+					WorkflowRun: &sdk.HookRepositoryEventExtractedDataWorkflowRun{
+						Project:               "PROJ",
+						Workflow:              "PROJ/github/ovh/parent/parent",
+						WorkflowRunID:         "parent-run-id",
+						TargetVCS:             "github",
+						TargetRepository:      "ovh/cds",
+						OutgoingHookEventUUID: sdk.UUID(),
+					},
+				},
+				WorkflowHooks: []sdk.HookRepositoryEventWorkflow{
+					{
+						Type:                 sdk.WorkflowHookTypeWorkflowRun,
+						Status:               sdk.HookEventWorkflowStatusScheduled,
+						ProjectKey:           "PROJ",
+						VCSIdentifier:        "github",
+						RepositoryIdentifier: "ovh/cds",
+						WorkflowName:         "myworkflow",
+						Ref:                  "refs/heads/master",
+						Commit:               "123456",
+						TargetCommit:         "123456",
+						Initiator:            &sdk.V2Initiator{UserID: "1234567890"},
+						Data: sdk.V2WorkflowHookData{
+							WorkflowRunStatus: tt.statusFilter,
+						},
+					},
+				},
+			}
+			if !tt.wantSkipped {
+				mock.EXPECT().WorkflowV2RunFromHook(gomock.Any(), "PROJ", "github", "ovh/cds", "myworkflow", gomock.Any(), gomock.Any()).
+					Return(&sdk.V2WorkflowRun{ID: "run-id", RunNumber: 1}, nil).Times(1)
+			}
+
+			require.NoError(t, s.triggerWorkflows(ctx, &hre))
+			if tt.wantSkipped {
+				require.Equal(t, sdk.HookEventWorkflowStatusSkipped, hre.WorkflowHooks[0].Status)
+				require.Equal(t, "workflow run status Fail does not match status filter", hre.WorkflowHooks[0].Error)
 			} else {
 				require.Equal(t, sdk.HookEventWorkflowStatusDone, hre.WorkflowHooks[0].Status)
 			}
