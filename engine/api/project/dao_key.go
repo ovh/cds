@@ -65,18 +65,6 @@ func LoadAllKeys(ctx context.Context, db gorp.SqlExecutor, projectID int64) ([]s
 	return getAllKeys(ctx, db, query)
 }
 
-func LoadAllKeysByProjectKey(ctx context.Context, db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectKey, error) {
-	query := gorpmapping.NewQuery(`
-		SELECT *
-		FROM project_key
-		JOIN project ON project.id = project_key.project_id
-		WHERE project.projectKey = $1
-		AND project_key.builtin = false
-	`).Args(projectKey)
-
-	return getAllKeys(ctx, db, query)
-}
-
 // LoadAllKeysWithPrivateContent load all keys for the given project
 func LoadAllKeysWithPrivateContent(ctx context.Context, db gorp.SqlExecutor, projID int64) ([]sdk.ProjectKey, error) {
 	keys, err := LoadAllKeys(ctx, db, projID)
@@ -144,6 +132,34 @@ func LoadKey(ctx context.Context, db gorp.SqlExecutor, id int64, keyName string)
 	}
 	if !isValid {
 		log.Error(ctx, "project.LoadKey> project key %d data corrupted", k.ID)
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	return &k.ProjectKey, nil
+}
+
+// LoadKeyByName returns a key of a project by its name, builtin excluded, without decrypting it.
+func LoadKeyByName(ctx context.Context, db gorp.SqlExecutor, projectID int64, keyName string) (*sdk.ProjectKey, error) {
+	query := gorpmapping.NewQuery(`
+	SELECT *
+	FROM project_key
+	WHERE project_id = $1
+	AND name = $2
+	AND builtin = false
+	`).Args(projectID, keyName)
+	var k dbProjectKey
+	found, err := gorpmapping.Get(ctx, db, query, &k)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, sdk.WithStack(sdk.ErrNotFound)
+	}
+	isValid, err := gorpmapping.CheckSignature(k, k.Signature)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		log.Error(ctx, "project.LoadKeyByName> project key %d data corrupted", k.ID)
 		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &k.ProjectKey, nil

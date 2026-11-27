@@ -95,7 +95,7 @@ func (api *API) gpgKeyEmailAddress(ctx context.Context, projectKey, keyName stri
 	if tmpl == "" {
 		tmpl = "noreply+cds-{{.ProjectKey}}-{{.KeyName}}@localhost.local"
 	}
-	t, err := template.New("emailAddr").Parse(tmpl)
+	t, err := template.New("emailAddr").Funcs(template.FuncMap{"lower": strings.ToLower}).Parse(tmpl)
 	if err != nil {
 		return "", sdk.WrapError(err, "unable to parse template %q", tmpl)
 	}

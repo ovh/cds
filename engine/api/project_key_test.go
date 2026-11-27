@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +14,28 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func Test_gpgKeyEmailAddress(t *testing.T) {
+	tests := []struct {
+		name     string
+		template string
+		expected string
+	}{
+		{name: "default template", template: "", expected: "noreply+cds-MYPROJ-proj-pgp-myproj@localhost.local"},
+		{name: "lowercased project key", template: "robot-cds-{{lower .ProjectKey}}@robot.ovh.net", expected: "robot-cds-myproj@robot.ovh.net"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			api := &API{}
+			api.Config.Project.GPGKeyEmailAddressTemplate = tt.template
+			email, err := api.gpgKeyEmailAddress(context.TODO(), "MYPROJ", "proj-pgp-myproj")
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, email)
+		})
+	}
+}
 
 func Test_getKeysInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)

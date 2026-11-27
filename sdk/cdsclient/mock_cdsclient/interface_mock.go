@@ -493,6 +493,51 @@ func (mr *MockAdminMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifie
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockAdmin)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
 }
 
+// AdminProjectKeyUpdateEmail mocks base method.
+func (m *MockAdmin) AdminProjectKeyUpdateEmail(ctx context.Context, projectKey, keyName string) (*sdk.ProjectKeyEmailUpdateReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectKeyUpdateEmail", ctx, projectKey, keyName)
+	ret0, _ := ret[0].(*sdk.ProjectKeyEmailUpdateReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectKeyUpdateEmail indicates an expected call of AdminProjectKeyUpdateEmail.
+func (mr *MockAdminMockRecorder) AdminProjectKeyUpdateEmail(ctx, projectKey, keyName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectKeyUpdateEmail", reflect.TypeOf((*MockAdmin)(nil).AdminProjectKeyUpdateEmail), ctx, projectKey, keyName)
+}
+
+// AdminProjectKeysOutdatedEmail mocks base method.
+func (m *MockAdmin) AdminProjectKeysOutdatedEmail(ctx context.Context) ([]sdk.ProjectKeyEmailStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectKeysOutdatedEmail", ctx)
+	ret0, _ := ret[0].([]sdk.ProjectKeyEmailStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectKeysOutdatedEmail indicates an expected call of AdminProjectKeysOutdatedEmail.
+func (mr *MockAdminMockRecorder) AdminProjectKeysOutdatedEmail(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectKeysOutdatedEmail", reflect.TypeOf((*MockAdmin)(nil).AdminProjectKeysOutdatedEmail), ctx)
+}
+
+// AdminProjectKeysUpdateEmail mocks base method.
+func (m *MockAdmin) AdminProjectKeysUpdateEmail(ctx context.Context) (*sdk.ProjectKeyEmailUpdateReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectKeysUpdateEmail", ctx)
+	ret0, _ := ret[0].(*sdk.ProjectKeyEmailUpdateReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectKeysUpdateEmail indicates an expected call of AdminProjectKeysUpdateEmail.
+func (mr *MockAdminMockRecorder) AdminProjectKeysUpdateEmail(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectKeysUpdateEmail", reflect.TypeOf((*MockAdmin)(nil).AdminProjectKeysUpdateEmail), ctx)
+}
+
 // AdminProjectVariableSetCopy mocks base method.
 func (m *MockAdmin) AdminProjectVariableSetCopy(ctx context.Context, pKey, vsName string, req sdk.CopyVariableSetToProject) (*sdk.ProjectVariableSet, error) {
 	m.ctrl.T.Helper()
@@ -7558,6 +7603,51 @@ func (m *MockInterface) AdminOrganizationMigrateUser(ctx context.Context, orgaId
 func (mr *MockInterfaceMockRecorder) AdminOrganizationMigrateUser(ctx, orgaIdentifier any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminOrganizationMigrateUser", reflect.TypeOf((*MockInterface)(nil).AdminOrganizationMigrateUser), ctx, orgaIdentifier)
+}
+
+// AdminProjectKeyUpdateEmail mocks base method.
+func (m *MockInterface) AdminProjectKeyUpdateEmail(ctx context.Context, projectKey, keyName string) (*sdk.ProjectKeyEmailUpdateReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectKeyUpdateEmail", ctx, projectKey, keyName)
+	ret0, _ := ret[0].(*sdk.ProjectKeyEmailUpdateReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectKeyUpdateEmail indicates an expected call of AdminProjectKeyUpdateEmail.
+func (mr *MockInterfaceMockRecorder) AdminProjectKeyUpdateEmail(ctx, projectKey, keyName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectKeyUpdateEmail", reflect.TypeOf((*MockInterface)(nil).AdminProjectKeyUpdateEmail), ctx, projectKey, keyName)
+}
+
+// AdminProjectKeysOutdatedEmail mocks base method.
+func (m *MockInterface) AdminProjectKeysOutdatedEmail(ctx context.Context) ([]sdk.ProjectKeyEmailStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectKeysOutdatedEmail", ctx)
+	ret0, _ := ret[0].([]sdk.ProjectKeyEmailStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectKeysOutdatedEmail indicates an expected call of AdminProjectKeysOutdatedEmail.
+func (mr *MockInterfaceMockRecorder) AdminProjectKeysOutdatedEmail(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectKeysOutdatedEmail", reflect.TypeOf((*MockInterface)(nil).AdminProjectKeysOutdatedEmail), ctx)
+}
+
+// AdminProjectKeysUpdateEmail mocks base method.
+func (m *MockInterface) AdminProjectKeysUpdateEmail(ctx context.Context) (*sdk.ProjectKeyEmailUpdateReport, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminProjectKeysUpdateEmail", ctx)
+	ret0, _ := ret[0].(*sdk.ProjectKeyEmailUpdateReport)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AdminProjectKeysUpdateEmail indicates an expected call of AdminProjectKeysUpdateEmail.
+func (mr *MockInterfaceMockRecorder) AdminProjectKeysUpdateEmail(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminProjectKeysUpdateEmail", reflect.TypeOf((*MockInterface)(nil).AdminProjectKeysUpdateEmail), ctx)
 }
 
 // AdminProjectVariableSetCopy mocks base method.

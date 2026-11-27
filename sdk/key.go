@@ -49,6 +49,33 @@ type ProjectKey struct {
 	LongKeyID string  `json:"long_key_id" db:"long_key_id" cli:"-"`
 }
 
+// ProjectKeyEmailStatus compares the emails of a project PGP key with the one the API template expects.
+type ProjectKeyEmailStatus struct {
+	ProjectKey    string   `json:"project_key"`
+	KeyName       string   `json:"key_name"`
+	LongKeyID     string   `json:"long_key_id"`
+	Default       bool     `json:"default"`
+	Disabled      bool     `json:"disabled"`
+	Emails        []string `json:"emails"`
+	ExpectedEmail string   `json:"expected_email"`
+}
+
+// ProjectKeyEmailUpdateReport lists the project PGP keys whose email was updated; Skipped counts the keys
+// already up to date or deleted meanwhile, MissingDefaultKey the projects without a default PGP key.
+type ProjectKeyEmailUpdateReport struct {
+	Updated           []ProjectKeyEmailStatus        `json:"updated"`
+	Skipped           int                            `json:"skipped"`
+	Failed            []ProjectKeyEmailUpdateFailure `json:"failed"`
+	MissingDefaultKey []string                       `json:"missing_default_key"`
+}
+
+// ProjectKeyEmailUpdateFailure is a project PGP key whose email could not be updated.
+type ProjectKeyEmailUpdateFailure struct {
+	ProjectKey string `json:"project_key"`
+	KeyName    string `json:"key_name"`
+	Error      string `json:"error"`
+}
+
 // ApplicationKey represent a key attach to an application
 type ApplicationKey struct {
 	ID            int64   `json:"id" db:"id" cli:"-"`

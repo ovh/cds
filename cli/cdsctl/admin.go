@@ -30,6 +30,7 @@ func adminCommands() []*cobra.Command {
 		adminUsers(),
 		adminGroups(),
 		adminVariableSets(),
+		adminKeys(),
 	}
 }
 
