@@ -44,10 +44,14 @@ export class ProjectV2RunStartComponent implements OnInit {
   // Repository a fork is taken from: the one declared by the workflow, else the workflow repository
   originRepository: { vcs: string, repo: string } = null;
   workflowRepository: { vcs: string, repo: string } = null;
+  // Most repositories have no fork: the field stays behind a link until opened or a fork is preselected
+  forkOpened: boolean = false;
   // Fork suggestions only, any fork can be typed; listing forks is slow so it never blocks the form
+  // and is only done once the field is shown
   forks: Array<Repository> = [];
   filteredForks: Array<Repository> = [];
   forksLoading: boolean = false;
+  forksError: boolean = false;
   private _forksRequest = 0;
   // Repository whose refs are loaded in the source fields, '' when none
   private _sourceKey: string = null;
@@ -209,6 +213,7 @@ export class ProjectV2RunStartComponent implements OnInit {
       this.originRepository = null;
       this._forksRequest++;
       this.forksLoading = false;
+      this.forksError = false;
       this.forks = [];
       this.filteredForks = [];
       this.validateForm.controls.fork.setValue(null, { emitViewToModelChange: false });
@@ -278,8 +283,12 @@ export class ProjectV2RunStartComponent implements OnInit {
 
     this.workflowRepository = wkf.repository ? { vcs: wkf.repository.vcs, repo: wkf.repository.name } : null;
     this.originRepository = this.workflowRepository ?? splitted;
-    this.loadForks();
-    this.validateForm.controls.fork.setValue(this.preselectedFork(splitted), { emitViewToModelChange: false });
+    const preselectedFork = this.preselectedFork(splitted);
+    this.validateForm.controls.fork.setValue(preselectedFork, { emitViewToModelChange: false });
+    this.forkOpened = this.forkOpened || !!preselectedFork;
+    if (this.forkOpened) {
+      this.loadForks();
+    }
 
     this._sourceKey = null;
     await this.updateSourceRepository();
@@ -293,20 +302,31 @@ export class ProjectV2RunStartComponent implements OnInit {
     this.forks = [];
     this.filteredForks = [];
     this.forksLoading = true;
+    this.forksError = false;
     this._cd.markForCheck();
     let forks: Array<Repository> = [];
+    let failed = false;
     try {
       forks = (await lastValueFrom(this._projectService.getVCSRepositoryForks(this.project.key, origin.vcs, origin.repo))) ?? [];
     } catch (e) {
       // Suggestions only: a fork can still be typed
+      failed = true;
     }
     if (request !== this._forksRequest) {
       return;
     }
     this.forks = forks;
     this.forksLoading = false;
+    this.forksError = failed;
     this.filterForks(this.validateForm.controls.fork.value);
     this._cd.markForCheck();
+  }
+
+  openFork(): void {
+    this.forkOpened = true;
+    this.loadForks();
+    this._cd.detectChanges();
+    this._elementRef.nativeElement.querySelector('#fork')?.focus();
   }
 
   // A run built from a fork is restarted on the same fork
