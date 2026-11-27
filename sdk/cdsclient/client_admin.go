@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -299,4 +300,45 @@ func (c *client) AdminWorkflowUpdateMaxRuns(projectKey string, workflowName stri
 		return err
 	}
 	return nil
+}
+
+func (c *client) AdminProjectKeysOutdatedEmail(ctx context.Context) ([]sdk.ProjectKeyEmailStatus, error) {
+	var res []sdk.ProjectKeyEmailStatus
+	if _, err := c.GetJSON(ctx, "/admin/keys/pgp/email/outdated", &res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// AdminProjectKeysUpdateEmail runs without client timeout: the API rewrites the keys of every project in one call.
+func (c *client) AdminProjectKeysUpdateEmail(ctx context.Context) (*sdk.ProjectKeyEmailUpdateReport, error) {
+	body, _, code, err := c.Stream(ctx, c.HTTPNoTimeoutClient(), http.MethodPost, "/admin/keys/pgp/email", nil)
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close() // nolint
+	bts, err := io.ReadAll(body)
+	if err != nil {
+		return nil, newTransportError(err)
+	}
+	if code >= 400 {
+		if err := sdk.DecodeError(bts); err != nil {
+			return nil, newAPIError(err)
+		}
+		return nil, newAPIError(fmt.Errorf("HTTP %d", code))
+	}
+	var report sdk.ProjectKeyEmailUpdateReport
+	if err := sdk.JSONUnmarshal(bts, &report); err != nil {
+		return nil, newError(err)
+	}
+	return &report, nil
+}
+
+func (c *client) AdminProjectKeyUpdateEmail(ctx context.Context, projectKey, keyName string) (*sdk.ProjectKeyEmailUpdateReport, error) {
+	var report sdk.ProjectKeyEmailUpdateReport
+	path := fmt.Sprintf("/admin/project/%s/keys/%s/email", projectKey, keyName)
+	if _, err := c.PostJSON(ctx, path, nil, &report); err != nil {
+		return nil, err
+	}
+	return &report, nil
 }
