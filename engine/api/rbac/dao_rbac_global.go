@@ -91,12 +91,13 @@ func loadRBACGlobalByRoleAndIDs(ctx context.Context, db gorp.SqlExecutor, role s
 }
 
 func getAllRBACGlobal(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Query) ([]rbacGlobal, error) {
-	var rbacGlobal []rbacGlobal
-	if err := gorpmapping.GetAll(ctx, db, q, &rbacGlobal); err != nil {
+	var rbacGlobals []rbacGlobal
+	if err := gorpmapping.GetAll(ctx, db, q, &rbacGlobals); err != nil {
 		return nil, err
 	}
 
-	for _, rg := range rbacGlobal {
+	globalsFiltered := make([]rbacGlobal, 0, len(rbacGlobals))
+	for _, rg := range rbacGlobals {
 		isValid, err := gorpmapping.CheckSignature(rg, rg.Signature)
 		if err != nil {
 			return nil, sdk.WrapError(err, "error when checking signature for rbac_global %d", rg.ID)
@@ -105,9 +106,9 @@ func getAllRBACGlobal(ctx context.Context, db gorp.SqlExecutor, q gorpmapping.Qu
 			log.Error(ctx, "rbac.getAllRBACGlobal> rbac_global %d data corrupted", rg.ID)
 			continue
 		}
-		rbacGlobal = append(rbacGlobal, rg)
+		globalsFiltered = append(globalsFiltered, rg)
 	}
-	return rbacGlobal, nil
+	return globalsFiltered, nil
 }
 
 func loadRBACGlobalsByIDs(ctx context.Context, db gorp.SqlExecutor, ids []int64) ([]rbacGlobal, error) {

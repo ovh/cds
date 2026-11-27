@@ -23,18 +23,13 @@ func (api *API) getGroupPermissionHandler() ([]service.RbacChecker, service.Hand
 			if err != nil {
 				return sdk.WrapError(err, "cannot load group %s", groupName)
 			}
-			permissions, err := rbac.LoadAllRBACByGroupID(ctx, api.mustDB(), gp.ID, rbac.LoadOptions.All)
+			entries, err := rbac.LoadEntriesByGroupID(ctx, api.mustDB(), gp.ID)
 			if err != nil {
-				return sdk.WrapError(err, "cannot load rbac for user %s", groupName)
+				return sdk.WrapError(err, "cannot load rbac for group %s", groupName)
 			}
-
-			rbacLoader := NewRBACLoader(api.mustDB())
-			for i := range permissions {
-				perm := &permissions[i]
-				if err := rbacLoader.FillRBACWithNames(ctx, perm); err != nil {
-					return err
-				}
+			if err := NewRBACLoader(api.mustDB()).FillRBACWithNames(ctx, &entries); err != nil {
+				return err
 			}
-			return service.WriteJSON(w, sdk.RBACsToPermissionSummary(permissions), http.StatusOK)
+			return service.WriteJSON(w, sdk.RBACsToPermissionSummary([]sdk.RBAC{entries}), http.StatusOK)
 		}
 }
